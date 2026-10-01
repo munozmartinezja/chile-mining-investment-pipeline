@@ -16,7 +16,9 @@ dependencies = [
   "pyarrow>=17,<20",
   "pydantic>=2.9,<3",
   "pytest>=8.3,<9",
+  "rapidfuzz>=3.10,<4",
   "ruff>=0.7,<1",
+  "tableauhyperapi>=0.0.22500,<1",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -33,4 +35,3 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
-

@@ -9,4 +9,5 @@ data/interim/*
 data/processed/*
 !data/processed/.gitkeep
 data/cmip.duckdb
+data/raw/sea/*.twbx
 .claude/

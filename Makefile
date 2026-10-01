@@ -8,10 +8,11 @@ setup:
 
 data:
 	$(PYTHON) -m cmip.load
+	$(PYTHON) -m cmip.extract.sea
+	$(PYTHON) -m cmip.match
 
 test:
 	$(PYTHON) -m pytest
 
 lint:
 	$(PYTHON) -m ruff check .
-
