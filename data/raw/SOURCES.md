@@ -23,3 +23,30 @@
 
 Raw files are immutable pipeline inputs. Generated outputs belong under
 `data/interim/`, `data/processed/`, or `data/cmip.duckdb`.
+
+## Servicio de Evaluación Ambiental (SEA) — September 2026
+
+- Publisher: Servicio de Evaluación Ambiental (SEA)
+- Download date: 2026-09-30
+- Projects source page:
+  https://www.sea.gob.cl/informacion-de-proyectos-ingresados-al-seia
+- Processing-times source page:
+  https://www.sea.gob.cl/informacion-de-plazos-de-tramitacion-en-el-seia
+- Tableau Public projects workbook:
+  https://public.tableau.com/workbooks/ProyectosIngresados2026
+- Tableau Public projects views:
+  https://public.tableau.com/workbooks/ProyectosIngresados2026/INGRESO and
+  https://public.tableau.com/workbooks/ProyectosIngresados2026/ComparacindePeriodos
+- Tableau Public processing-times workbook:
+  https://public.tableau.com/workbooks/PlazosEvaluacin
+- Tableau Public processing-times view:
+  https://public.tableau.com/workbooks/PlazosEvaluacin/Dashboard
+
+| File | SHA-256 |
+| --- | --- |
+| `sea/sea_proyectos_ingresados.twbx` | `f2be4f485926e230ad7ddd0fb68745d05d544f6fe0afcb17807a76232850a0f6` |
+| `sea/sea_plazos_tramitacion.twbx` | `ec80a746bdda54da8d7763aeb8401067a947983ddf977c24375cd888051f2246` |
+
+The pipeline reads the non-geometry `Data/TableauTemp/*.tmp` Hyper extract whose catalog
+contains `"Extract"."Extract"`. Packaged `V3.hyper` files contain geometry only and are
+not used.
