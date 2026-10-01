@@ -5,6 +5,7 @@ from pathlib import Path
 
 import duckdb
 import pandas as pd
+import pytest
 
 from cmip.extract.sea import EXPECTED_MINING_STATES, PRIVATE_COLUMNS
 
@@ -12,6 +13,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PROJECTS_PATH = PROJECT_ROOT / "data" / "interim" / "sea_projects.parquet"
 MINING_PATH = PROJECT_ROOT / "data" / "interim" / "sea_mining.parquet"
 DATABASE_PATH = PROJECT_ROOT / "data" / "processed" / "cmip.duckdb"
+
+# Integration tests over the real SEA snapshot. The source .twbx files are not
+# versioned (they contain personal data), so these run only after `make data`
+# on a machine that has them; CI covers the SEA logic through test_sea_unit.py.
+pytestmark = pytest.mark.skipif(
+    not (PROJECTS_PATH.exists() and MINING_PATH.exists() and DATABASE_PATH.exists()),
+    reason="requires `make data` with the local SEA .twbx extracts (not versioned)",
+)
 
 
 def test_sea_parquets_exclude_private_columns() -> None:
