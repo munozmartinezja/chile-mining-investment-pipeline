@@ -14,6 +14,7 @@ MATCH_COLUMNS = [
     "cochilco_id",
     "cochilco_nombre",
     "cochilco_empresa",
+    "cochilco_mina",
     "exp_id",
     "sea_nombre",
     "sea_empresa",
@@ -23,7 +24,11 @@ MATCH_COLUMNS = [
     "empresa_no_coincide",
     "match_tipo",
     "match_confirmado",
+    "criterio",
+    "historial",
 ]
+ALIASES_PATH = PROJECT_ROOT / "data" / "curated" / "company_aliases.csv"
+ALIAS_STATES = {"confirmado", "rechazado", "pendiente"}
 ABBREVIATIONS = {
     "cia": "compania",
     "comp": "compania",
@@ -63,7 +68,6 @@ GENERIC_MINING_WORDS = {
     "modificacion",
     "nueva",
     "nuevo",
-    "fase",
     "etapa",
     "planta",
     "mina",
@@ -105,20 +109,27 @@ def _token_sort_ratio(left: str, right: str) -> float:
 
 
 def strip_generic_mining_words(value: object) -> str:
-    """Normalize a project name and remove generic mining and phase tokens."""
+    """Normalize a name, retaining a phase marker while removing generic tokens."""
     tokens = normalize_text(value).split()
-    return " ".join(
-        token
-        for token in tokens
-        if token not in GENERIC_MINING_WORDS
-        and token not in ROMAN_NUMERALS
-        and re.fullmatch(r"\d+a?", token) is None
-    )
+    distinctive: list[str] = []
+    for token in tokens:
+        is_number = token in ROMAN_NUMERALS or re.fullmatch(r"\d+a?", token) is not None
+        if token in GENERIC_MINING_WORDS:
+            continue
+        if is_number and (not distinctive or distinctive[-1] != "fase"):
+            continue
+        distinctive.append(token)
+    return " ".join(distinctive)
 
 
 def project_name_score(left: object, right: object) -> float:
     """Score only the distinctive tokens in two project names."""
-    return _token_sort_ratio(strip_generic_mining_words(left), strip_generic_mining_words(right))
+    score = _token_sort_ratio(strip_generic_mining_words(left), strip_generic_mining_words(right))
+    left_phase = re.search(r"\bfase\s+([ivx]+|\d+)\b", normalize_text(left))
+    right_phase = re.search(r"\bfase\s+([ivx]+|\d+)\b", normalize_text(right))
+    if left_phase and (not right_phase or left_phase.group(1) != right_phase.group(1)):
+        score = min(score, 90.0)
+    return score
 
 
 def _first_text(*values: object) -> str:
@@ -129,11 +140,64 @@ def _first_text(*values: object) -> str:
     return ""
 
 
-def _company_score(company_name: str, candidate: dict[str, object]) -> float:
-    return max(
-        _token_sort_ratio(company_name, normalize_text(candidate.get("empresa_nombre"))),
-        _token_sort_ratio(company_name, normalize_text(candidate.get("titular_nombre"))),
-    )
+def company_matches_candidate(
+    project: dict[str, object],
+    candidate: dict[str, object],
+    aliases: pd.DataFrame | None = None,
+) -> bool:
+    """Return whether a SEA company/holder contains a confirmed project identifier."""
+    identifiers = {
+        normalize_text(project.get("empresa")),
+        normalize_text(project.get("mina")),
+    }
+    if aliases is not None and not aliases.empty:
+        required = {"cochilco_empresa", "alias", "estado"}
+        missing = required.difference(aliases.columns)
+        if missing:
+            raise ValueError(f"Missing company-alias columns: {sorted(missing)}")
+        company_key = normalize_text(project.get("empresa"))
+        confirmed = aliases.loc[
+            aliases["cochilco_empresa"].map(normalize_text).eq(company_key)
+            & aliases["estado"].eq("confirmado"),
+            "alias",
+        ]
+        identifiers.update(confirmed.map(normalize_text))
+    identifiers.difference_update({"", "n a", "na"})
+    sea_names = [
+        normalize_text(candidate.get("empresa_nombre")),
+        normalize_text(candidate.get("titular_nombre")),
+    ]
+    return any(identifier in sea_name for identifier in identifiers for sea_name in sea_names)
+
+
+def _validate_aliases(aliases: pd.DataFrame) -> None:
+    """Validate the alias catalog used by matching and notebook decisions."""
+    required = {"cochilco_empresa", "alias", "estado"}
+    missing = required.difference(aliases.columns)
+    if missing:
+        raise ValueError(f"Missing company-alias columns: {sorted(missing)}")
+    invalid = set(aliases["estado"]) - ALIAS_STATES
+    if invalid:
+        raise ValueError(f"Invalid alias states in CSV: {sorted(invalid)}")
+
+
+def apply_alias_decisions(
+    aliases: pd.DataFrame, decisions: dict[tuple[str, str], str]
+) -> pd.DataFrame:
+    """Apply J's status decisions to known aliases."""
+    _validate_aliases(aliases)
+    invalid_decisions = set(decisions.values()) - ALIAS_STATES
+    if invalid_decisions:
+        raise ValueError(f"Invalid alias state: {sorted(invalid_decisions)}")
+    known = set(zip(aliases["cochilco_empresa"], aliases["alias"], strict=True))
+    unknown = set(decisions) - known
+    if unknown:
+        raise ValueError(f"Unknown alias: {sorted(unknown)}")
+    result = aliases.copy()
+    for (company, alias), state in decisions.items():
+        target = result["cochilco_empresa"].eq(company) & result["alias"].eq(alias)
+        result.loc[target, "estado"] = state
+    return result
 
 
 def _match_type(ranked: list[tuple[float, dict[str, object]]]) -> str:
@@ -151,6 +215,7 @@ def _empty_candidate_row(project: dict[str, object]) -> dict[str, object]:
         "cochilco_id": project["project_id"],
         "cochilco_nombre": project["nombre_del_proyecto"],
         "cochilco_empresa": project["empresa"],
+        "cochilco_mina": project.get("mina", pd.NA),
         "exp_id": pd.NA,
         "sea_nombre": pd.NA,
         "sea_empresa": pd.NA,
@@ -160,13 +225,22 @@ def _empty_candidate_row(project: dict[str, object]) -> dict[str, object]:
         "empresa_no_coincide": True,
         "match_tipo": "sin_candidato",
         "match_confirmado": pd.NA,
+        "criterio": pd.NA,
+        "historial": pd.NA,
     }
 
 
 def rank_candidates(
-    cochilco: pd.DataFrame, sea_mining: pd.DataFrame, top_n: int = 5
+    cochilco: pd.DataFrame,
+    sea_mining: pd.DataFrame,
+    top_n: int = 5,
+    aliases: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Return the top SEA candidates per Cochilco project without assigning matches."""
+    if aliases is None:
+        aliases = pd.read_csv(ALIASES_PATH) if ALIASES_PATH.exists() else pd.DataFrame()
+    if not aliases.empty:
+        _validate_aliases(aliases)
     sea = sea_mining.loc[sea_mining["seco_nombre"].eq("Minería")].copy()
     sea["_region_key"] = sea["region"].map(_region_key)
     rows: list[dict[str, object]] = []
@@ -174,15 +248,7 @@ def rank_candidates(
         candidates = sea
         if normalize_text(project["region"]) != "varias":
             candidates = sea.loc[sea["_region_key"].eq(_region_key(project["region"]))]
-        company_name = normalize_text(project["empresa"])
         candidate_records = candidates.to_dict("records")
-        company_matches = [
-            candidate
-            for candidate in candidate_records
-            if _company_score(company_name, candidate) >= 80
-        ]
-        empresa_no_coincide = not company_matches
-        candidate_records = company_matches or candidate_records
         ranked: list[tuple[float, dict[str, object]]] = []
         for candidate in candidate_records:
             sea_company = _first_text(
@@ -191,7 +257,17 @@ def rank_candidates(
             score = project_name_score(
                 project["nombre_del_proyecto"], candidate["exp_nombre"]
             )
-            ranked.append((score, candidate | {"_sea_company": sea_company}))
+            company_match = company_matches_candidate(project, candidate, aliases)
+            ranked.append(
+                (
+                    score,
+                    candidate
+                    | {
+                        "_sea_company": sea_company,
+                        "_empresa_no_coincide": not company_match,
+                    },
+                )
+            )
         ranked.sort(key=lambda item: (-item[0], str(item[1]["exp_id"])))
         match_type = _match_type(ranked)
         # A project with no candidates in its region previously emitted no row, making a
@@ -209,15 +285,18 @@ def rank_candidates(
                     "cochilco_id": project["project_id"],
                     "cochilco_nombre": project["nombre_del_proyecto"],
                     "cochilco_empresa": project["empresa"],
+                    "cochilco_mina": project.get("mina", pd.NA),
                     "exp_id": candidate["exp_id"],
                     "sea_nombre": candidate["exp_nombre"],
                     "sea_empresa": candidate["_sea_company"],
                     "sea_estado": candidate["estado"],
                     "sea_fecha_ingreso": candidate["fecha_ingreso"],
                     "score": round(score, 1),
-                    "empresa_no_coincide": empresa_no_coincide,
+                    "empresa_no_coincide": candidate["_empresa_no_coincide"],
                     "match_tipo": match_type,
                     "match_confirmado": pd.NA,
+                    "criterio": pd.NA,
+                    "historial": pd.NA,
                 }
             )
     return pd.DataFrame(rows, columns=MATCH_COLUMNS)

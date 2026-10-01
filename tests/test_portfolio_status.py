@@ -20,13 +20,14 @@ def _review_candidates() -> pd.DataFrame:
             "cochilco_id": ["auto", "auto", "low", "low", "close", "close", "company"],
             "cochilco_nombre": ["A", "A", "B", "B", "C", "C", "D"],
             "cochilco_empresa": ["CA", "CA", "CB", "CB", "CC", "CC", "CD"],
+            "cochilco_mina": ["MA", "MA", "MB", "MB", "MC", "MC", "MD"],
             "exp_id": [101, 102, 201, 202, 301, 302, 401],
             "sea_nombre": ["A1", "A2", "B1", "B2", "C1", "C2", "D1"],
             "sea_empresa": ["SA", "SA", "SB", "SB", "SC", "SC", "SD"],
             "sea_estado": ["Aprobado"] * 7,
             "sea_fecha_ingreso": ["2020-01-01"] * 7,
-            "score": [98.0, 80.0, 59.0, 40.0, 98.0, 90.0, 100.0],
-            "empresa_no_coincide": [False, False, False, False, False, False, True],
+            "score": [98.0, 80.0, 59.0, 40.0, 94.0, 90.0, 100.0],
+            "empresa_no_coincide": [False, False, True, True, False, False, True],
             "match_tipo": [
                 "alto",
                 "alto",
@@ -41,7 +42,7 @@ def _review_candidates() -> pd.DataFrame:
     )
 
 
-def test_automatic_rules_confirm_high_margin_company_match_and_low_scores() -> None:
+def test_automatic_rules_confirm_company_match_and_low_mismatch() -> None:
     result = apply_automatic_match_rules(_review_candidates())
     decisions = result.loc[result["match_confirmado"].astype(str).ne("")]
 
@@ -49,9 +50,105 @@ def test_automatic_rules_confirm_high_margin_company_match_and_low_scores() -> N
         "records"
     ) == [
         {"cochilco_id": "auto", "match_confirmado": "101", "criterio": "regla_auto"},
-        {"cochilco_id": "low", "match_confirmado": "NA", "criterio": "regla_auto"},
+        {
+            "cochilco_id": "low",
+            "match_confirmado": "NA",
+            "criterio": "regla_sin_expediente",
+        },
     ]
     assert result.loc[result["cochilco_id"].isin(["close", "company"]), "criterio"].eq("").all()
+
+
+def test_reentry_rule_selects_newest_same_name_and_records_history() -> None:
+    review = pd.DataFrame(
+        {
+            "cochilco_id": ["cap-los-colorados"] * 5,
+            "exp_id": [2162201555, 2164006597, 2145025521, 9001, 9002],
+            "sea_nombre": [
+                "Modificación Proyecto Mina Los Colorados: Ajustes y Continuidad Operacional",
+                "Modificación Proyecto Mina Los Colorados - Ajustes y Continuidad Operacional",
+                "Modificación Plan Minero Mina Los Colorados",
+                "Proyecto alternativo repetido",
+                "Proyecto alternativo repetido",
+            ],
+            "sea_fecha_ingreso": [
+                "2024-06-11",
+                "2025-01-17",
+                "2020-01-14",
+                "2025-02-01",
+                "2025-03-01",
+            ],
+            # The newer filing wins within the chosen normalized name even when its
+            # fuzzy score is slightly lower.
+            "score": [100.0, 99.0, 68.3, 96.0, 96.0],
+            "empresa_no_coincide": [False, False, False, True, True],
+            "match_confirmado": [""] * 5,
+            "criterio": [""] * 5,
+            "historial": [""] * 5,
+        }
+    )
+
+    result = apply_automatic_match_rules(review)
+    selected = result.loc[result["match_confirmado"].ne("")].iloc[0]
+
+    assert selected["match_confirmado"] == "2164006597"
+    assert selected["criterio"] == "regla_reingreso"
+    assert selected["historial"] == "2162201555"
+
+
+def test_reentry_rule_ignores_repeated_names_from_wrong_company() -> None:
+    review = pd.DataFrame(
+        {
+            "cochilco_id": ["project"] * 3,
+            "exp_id": [1, 2, 3],
+            "sea_nombre": ["Exact project", "Unrelated repeat", "Unrelated repeat"],
+            "sea_fecha_ingreso": ["2024-01-01", "2024-02-01", "2024-03-01"],
+            "score": [100.0, 96.0, 95.0],
+            "empresa_no_coincide": [False, True, True],
+        }
+    )
+
+    result = apply_automatic_match_rules(review)
+    selected = result.loc[result["match_confirmado"].ne("")].iloc[0]
+
+    assert selected["match_confirmado"] == "1"
+    assert selected["criterio"] == "regla_auto"
+
+
+def test_reentry_rule_requires_repeated_name_to_include_best_candidate() -> None:
+    review = pd.DataFrame(
+        {
+            "cochilco_id": ["project"] * 3,
+            "exp_id": [1, 2, 3],
+            "sea_nombre": ["Exact project", "Secondary repeat", "Secondary repeat"],
+            "sea_fecha_ingreso": ["2024-01-01", "2024-02-01", "2024-03-01"],
+            "score": [100.0, 96.0, 95.0],
+            "empresa_no_coincide": [False, False, False],
+        }
+    )
+
+    result = apply_automatic_match_rules(review)
+    selected = result.loc[result["match_confirmado"].ne("")].iloc[0]
+
+    assert selected["match_confirmado"] == "1"
+    assert selected["criterio"] == "regla_auto"
+
+
+def test_no_case_rule_requires_all_candidates_to_miss_company() -> None:
+    review = pd.DataFrame(
+        {
+            "cochilco_id": ["project", "project"],
+            "exp_id": [1, 2],
+            "sea_nombre": ["Weak first", "Weak company candidate"],
+            "sea_fecha_ingreso": ["2024-01-01", "2024-02-01"],
+            "score": [70.0, 60.0],
+            "empresa_no_coincide": [True, False],
+        }
+    )
+
+    result = apply_automatic_match_rules(review)
+
+    assert result["match_confirmado"].eq("").all()
 
 
 def test_doubtful_cases_show_top_three_candidates_and_attributes() -> None:
@@ -67,9 +164,14 @@ def test_doubtful_cases_show_top_three_candidates_and_attributes() -> None:
     close = doubtful.loc[doubtful["cochilco_id"].eq("close")]
     assert close["exp_id"].tolist() == [301, 302, 303]
     assert close["rank_candidato"].tolist() == [1, 2, 3]
-    assert {"sea_nombre", "sea_empresa", "sea_estado", "score", "margen_top2"}.issubset(
-        doubtful.columns
-    )
+    assert {
+        "cochilco_mina",
+        "sea_nombre",
+        "sea_empresa",
+        "sea_estado",
+        "score",
+        "margen_top2",
+    }.issubset(doubtful.columns)
 
 
 def test_j_decisions_fill_only_explicit_projects_with_provenance() -> None:
@@ -81,6 +183,86 @@ def test_j_decisions_fill_only_explicit_projects_with_provenance() -> None:
     assert confirmed.set_index("cochilco_id").loc["close", "exp_id_confirmado"] == 302
     assert confirmed.set_index("cochilco_id").loc["close", "criterio"] == "decision_J"
     assert pd.isna(confirmed.set_index("cochilco_id").loc["company", "exp_id_confirmado"])
+
+
+def test_j_decision_adds_verified_sea_case_outside_top_n() -> None:
+    review = apply_automatic_match_rules(
+        _review_candidates().loc[lambda frame: frame["cochilco_id"].eq("close")]
+    )
+    sea_mining = pd.DataFrame(
+        {
+            "exp_id": [2130502645],
+            "exp_nombre": ["Desarrollo Minera Centinela"],
+            "empresa_nombre": ["Minera Centinela SpA"],
+            "titular_nombre": ["Titular alternativo"],
+            "estado": ["Aprobado"],
+            "fecha_ingreso": pd.to_datetime(["2015-07-21"]),
+        }
+    )
+
+    result = apply_j_decisions(
+        review, {"close": 2130502645}, sea_mining=sea_mining
+    )
+
+    manual = result.loc[result["exp_id"].eq(2130502645)].iloc[0]
+    assert manual["sea_nombre"] == "Desarrollo Minera Centinela"
+    assert manual["sea_empresa"] == "Minera Centinela SpA"
+    assert manual["sea_estado"] == "Aprobado"
+    assert manual["sea_fecha_ingreso"] == pd.Timestamp("2015-07-21")
+    assert pd.isna(manual["score"])
+    assert manual["match_tipo"] == "manual_J"
+    assert manual["match_confirmado"] == "2130502645"
+    assert manual["criterio"] == "decision_J"
+    assert manual["historial"] == "fuera_de_top_n"
+    assert result.loc[result["exp_id"].ne(2130502645), "match_confirmado"].eq("").all()
+
+    confirmed = build_confirmed_match_table(result)
+    assert len(confirmed) == 1
+    assert confirmed.iloc[0]["exp_id_confirmado"] == 2130502645
+
+
+def test_j_decision_rejects_case_absent_from_sea_mining() -> None:
+    review = apply_automatic_match_rules(
+        _review_candidates().loc[lambda frame: frame["cochilco_id"].eq("close")]
+    )
+    sea_mining = pd.DataFrame(
+        {
+            "exp_id": [999],
+            "exp_nombre": ["Otro proyecto"],
+            "empresa_nombre": ["Otra empresa"],
+            "titular_nombre": ["Otro titular"],
+            "estado": ["Aprobado"],
+            "fecha_ingreso": pd.to_datetime(["2015-01-01"]),
+        }
+    )
+
+    with pytest.raises(ValueError, match="is not a candidate"):
+        apply_j_decisions(review, {"close": 2130502645}, sea_mining=sea_mining)
+
+
+def test_j_decision_outside_top_n_without_sea_mining_keeps_current_error() -> None:
+    review = apply_automatic_match_rules(
+        _review_candidates().loc[lambda frame: frame["cochilco_id"].eq("close")]
+    )
+
+    with pytest.raises(ValueError, match="is not a candidate"):
+        apply_j_decisions(review, {"close": 2130502645}, sea_mining=None)
+
+
+@pytest.mark.parametrize("criterion", ["regla_auto", "regla_reingreso", "regla_sin_expediente"])
+def test_j_decisions_cannot_override_automatic_rules(criterion: str) -> None:
+    review = pd.DataFrame(
+        {
+            "cochilco_id": ["project"],
+            "exp_id": [101],
+            "score": [100.0],
+            "match_confirmado": ["101"],
+            "criterio": [criterion],
+        }
+    )
+
+    with pytest.raises(ValueError, match="override automatic rule"):
+        apply_j_decisions(review, {"project": "NA"})
 
 
 @pytest.mark.parametrize(
@@ -148,6 +330,32 @@ def test_confirmed_match_table_rejects_a_decision_without_provenance() -> None:
         build_confirmed_match_table(review)
 
 
+@pytest.mark.parametrize(
+    ("criterion", "history", "message"),
+    [
+        ("regla_auto", "100", "only valid for regla_reingreso"),
+        ("regla_reingreso", "not-an-id", "Invalid historial"),
+        ("regla_reingreso", "101", "selected exp_id"),
+        ("regla_reingreso", "999", "not a candidate"),
+    ],
+)
+def test_confirmed_match_table_validates_history(
+    criterion: str, history: str, message: str
+) -> None:
+    review = pd.DataFrame(
+        {
+            "cochilco_id": ["c1", "c1"],
+            "exp_id": [100, 101],
+            "match_confirmado": ["101", ""],
+            "criterio": [criterion, ""],
+            "historial": [history, ""],
+        }
+    )
+
+    with pytest.raises(ValueError, match=message):
+        build_confirmed_match_table(review)
+
+
 def test_portfolio_status_rejects_undocumented_duplicate_expedientes() -> None:
     cochilco = pd.DataFrame(
         {
@@ -189,7 +397,7 @@ def test_writer_emits_only_privacy_safe_confirmed_match_columns(tmp_path) -> Non
             "cochilco_id": ["c1", "c2"],
             "cochilco_empresa": ["Empresa privada", "Otra empresa"],
             "match_confirmado": ["101", "NA"],
-            "criterio": ["decision_J", "regla_auto"],
+            "criterio": ["decision_J", "regla_sin_expediente"],
         }
     ).to_csv(review_path, index=False)
     pd.DataFrame(
@@ -216,7 +424,12 @@ def test_writer_emits_only_privacy_safe_confirmed_match_columns(tmp_path) -> Non
     )
 
     confirmed = pd.read_csv(confirmed_path)
-    assert confirmed.columns.tolist() == ["cochilco_id", "exp_id_confirmado", "criterio"]
+    assert confirmed.columns.tolist() == [
+        "cochilco_id",
+        "exp_id_confirmado",
+        "criterio",
+        "historial",
+    ]
     assert "Empresa privada" not in confirmed_path.read_text(encoding="utf-8")
     assert "Persona privada" not in confirmed_path.read_text(encoding="utf-8")
     assert len(portfolio) == 2

@@ -6,7 +6,14 @@ import pandas as pd
 import pytest
 
 from cmip.extract.sea import PRIVATE_COLUMNS, _hyper_select_expression, build_sea_frames
-from cmip.match import normalize_text, project_name_score, rank_candidates
+from cmip.match import (
+    apply_alias_decisions,
+    company_matches_candidate,
+    normalize_text,
+    project_name_score,
+    rank_candidates,
+)
+from cmip.portfolio_status import apply_automatic_match_rules
 
 
 def _ingresados() -> pd.DataFrame:
@@ -129,6 +136,7 @@ def test_rank_candidates_filters_region_and_orders_top_three() -> None:
             "project_id": ["c1"],
             "nombre_del_proyecto": ["Continuidad Mina Cóndor"],
             "empresa": ["Cía. Minera Andina"],
+            "mina": ["Cóndor"],
             "region": ["Antofagasta"],
         }
     )
@@ -159,9 +167,11 @@ def test_rank_candidates_filters_region_and_orders_top_three() -> None:
 
     ranked = rank_candidates(cochilco, sea)
 
-    assert ranked["exp_id"].tolist() == [10, 12]
+    assert ranked.iloc[0]["exp_id"] == 10
+    assert set(ranked["exp_id"]) == {10, 11, 12, 13}
     assert ranked.iloc[0]["score"] == 100.0
-    assert ranked["empresa_no_coincide"].eq(False).all()
+    assert ranked.loc[ranked["exp_id"].isin([10, 12]), "empresa_no_coincide"].eq(False).all()
+    assert ranked.loc[ranked["exp_id"].isin([11, 13]), "empresa_no_coincide"].eq(True).all()
     assert ranked["match_confirmado"].isna().all()
     assert 99 not in ranked["exp_id"].tolist()
 
@@ -173,6 +183,142 @@ def test_rosario_fourth_line_does_not_match_pampa_pabellon_tailings() -> None:
     )
 
     assert score < 60
+
+
+def test_phase_in_cochilco_name_penalizes_candidate_without_phase() -> None:
+    score = project_name_score(
+        "Desarrollo Mantoverde Fase II", "Proyecto Desarrollo Mantoverde"
+    )
+
+    assert score < 95
+
+
+def test_project_name_score_distinguishes_phase_numbers() -> None:
+    score = project_name_score("Mantoverde Fase II", "Mantoverde Fase I")
+
+    assert score < 95
+
+
+def test_company_match_uses_confirmed_alias_company_or_mine() -> None:
+    aliases = pd.DataFrame(
+        {
+            "cochilco_empresa": ["BHP", "BHP"],
+            "alias": ["Minera Escondida", "Minera Spence"],
+            "estado": ["confirmado", "pendiente"],
+        }
+    )
+    project = {"empresa": "BHP", "mina": "Los Colorados"}
+
+    assert company_matches_candidate(
+        project, {"empresa_nombre": "MINERA ESCONDIDA LIMITADA", "titular_nombre": ""}, aliases
+    )
+    assert company_matches_candidate(
+        project, {"empresa_nombre": "Operadora Los Colorados SpA", "titular_nombre": ""}, aliases
+    )
+    assert not company_matches_candidate(
+        project,
+        {"empresa_nombre": "Compañía Minera Lomas Bayas", "titular_nombre": ""},
+        aliases,
+    )
+
+
+def test_alias_decisions_update_only_known_aliases_with_valid_states() -> None:
+    aliases = pd.DataFrame(
+        {
+            "cochilco_empresa": ["Capstone Copper", "SQM"],
+            "alias": ["Minera Mantoverde", "Sociedad Química y Minera"],
+            "estado": ["pendiente", "pendiente"],
+        }
+    )
+
+    result = apply_alias_decisions(
+        aliases, {("Capstone Copper", "Minera Mantoverde"): "confirmado"}
+    )
+
+    assert result["estado"].tolist() == ["confirmado", "pendiente"]
+    with pytest.raises(ValueError, match="Invalid alias state"):
+        apply_alias_decisions(
+            aliases, {("Capstone Copper", "Minera Mantoverde"): "tal_vez"}
+        )
+    with pytest.raises(ValueError, match="Unknown alias"):
+        apply_alias_decisions(aliases, {("X", "Empresa Inventada"): "rechazado"})
+
+
+def test_alias_decisions_identify_duplicate_alias_by_company() -> None:
+    aliases = pd.DataFrame(
+        {
+            "cochilco_empresa": ["ENAMI", "Rio Tinto - ENAMI"],
+            "alias": ["Empresa Nacional de Minería"] * 2,
+            "estado": ["confirmado", "confirmado"],
+        }
+    )
+
+    result = apply_alias_decisions(
+        aliases,
+        {("Rio Tinto - ENAMI", "Empresa Nacional de Minería"): "pendiente"},
+    )
+
+    assert result["estado"].tolist() == ["confirmado", "pendiente"]
+
+
+def test_mantoverde_phase_ii_does_not_auto_match_2016_case() -> None:
+    cochilco = pd.DataFrame(
+        {
+            "project_id": ["mantoverde-fase-ii"],
+            "nombre_del_proyecto": ["Desarrollo Mantoverde Fase II"],
+            "empresa": ["Capstone Copper"],
+            "mina": ["Mantoverde"],
+            "region": ["Atacama"],
+        }
+    )
+    sea = pd.DataFrame(
+        {
+            "exp_id": [2131806971],
+            "exp_nombre": ["Proyecto Desarrollo Mantoverde"],
+            "empresa_nombre": ["Mantos Copper S.A"],
+            "titular_nombre": ["Giancarlo Bruno Lagomarsino"],
+            "estado": ["Aprobado"],
+            "fecha_ingreso": pd.to_datetime(["2016-09-16"]),
+            "region": ["III"],
+            "seco_nombre": ["Minería"],
+        }
+    )
+
+    reviewed = apply_automatic_match_rules(rank_candidates(cochilco, sea))
+
+    assert reviewed["score"].item() < 95
+    assert reviewed["match_confirmado"].item() == "NA"
+    assert reviewed["criterio"].item() == "regla_sin_expediente"
+
+
+def test_los_colorados_does_not_match_lomas_bayas() -> None:
+    cochilco = pd.DataFrame(
+        {
+            "project_id": ["los-colorados"],
+            "nombre_del_proyecto": ["Extensión vida Concentrado Los Colorados"],
+            "empresa": ["BHP"],
+            "mina": ["Los Colorados"],
+            "region": ["Antofagasta"],
+        }
+    )
+    sea = pd.DataFrame(
+        {
+            "exp_id": [2166889895],
+            "exp_nombre": ["Extensión Vida Útil Compañía Minera Lomas Bayas 2038"],
+            "empresa_nombre": ["Compañía Minera Lomas Bayas"],
+            "titular_nombre": ["Jorge Antonio Saenz-diez Erazo"],
+            "estado": ["En Calificación"],
+            "fecha_ingreso": pd.to_datetime(["2025-11-25"]),
+            "region": ["II"],
+            "seco_nombre": ["Minería"],
+        }
+    )
+
+    reviewed = apply_automatic_match_rules(rank_candidates(cochilco, sea))
+
+    assert reviewed["empresa_no_coincide"].item()
+    assert reviewed["match_confirmado"].item() == "NA"
+    assert reviewed["criterio"].item() == "regla_sin_expediente"
 
 
 def test_chuquicamata_subterranea_top_match_is_not_sondajes() -> None:

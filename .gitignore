@@ -10,5 +10,7 @@ data/processed/*
 !data/processed/.gitkeep
 data/cmip.duckdb
 data/raw/sea/*.twbx
+docs/match_review.csv
 .claude/
 hyperd.log
+docs/superpowers/

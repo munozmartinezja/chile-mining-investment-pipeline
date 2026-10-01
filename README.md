@@ -37,13 +37,58 @@ Los expedientes ambientales provienen del Servicio de Evaluación Ambiental
 (SEA), con corte al 30-09-2026. Las URL, nombres de archivos y sumas de
 verificación están en [`data/raw/SOURCES.md`](data/raw/SOURCES.md).
 
+### Arquitectura del pipeline
+
+```mermaid
+flowchart LR
+    subgraph F["Fuentes públicas"]
+        A1["Cochilco · Anexo C<br/>.xlsx (dic-2025)"]
+        A2["SEA · Paneles Tableau<br/>.twbx (corte 30-09-2026)<br/>no versionados"]
+    end
+    subgraph E["Extracción y validación · make data"]
+        B1["cochilco.py<br/>59 filas · US$104.549,2 MM<br/>conciliación vs tablas de control"]
+        B2["sea.py<br/>13.735 expedientes<br/>sin datos personales<br/>fechas estrictas · eventos"]
+    end
+    subgraph D["Datos procesados"]
+        C1[("cochilco_projects")]
+        C2[("sea_projects<br/>sea_mining (1.961)")]
+    end
+    subgraph M["Cruce Cochilco ↔ SEIA"]
+        D1["match.py<br/>similitud de nombre<br/>+ alias de titulares"]
+        D2["notebooks/01_match_review<br/>reglas automáticas<br/>+ decisiones del analista"]
+        D3[("cochilco_seia_match.csv<br/>59 decisiones")]
+    end
+    subgraph AN["Análisis"]
+        E1["make survival<br/>Kaplan-Meier · Aalen-Johansen<br/>tendencia · Cox"]
+        E2["make portfolio<br/>estado ambiental de la cartera"]
+    end
+    subgraph O["Entregables"]
+        F1["docs/figures/*.png"]
+        F2["docs/survival_results.md"]
+        F3["Brief PDF · Power BI"]
+    end
+    A1 --> B1 --> C1
+    A2 --> B2 --> C2
+    C1 --> D1
+    C2 --> D1 --> D2 --> D3
+    C2 --> E1
+    D3 --> E2
+    C1 --> E2
+    E1 --> F1 & F2
+    E2 --> F1
+    F1 & F2 --> F3
+    Q["notebooks/00_data_checks<br/>cuadraturas · privacidad · fechas"] -.valida.-> C1 & C2 & D3
+```
+
+La supervivencia (`make survival`) usa solo datos del SEA; el estado de la cartera (`make portfolio`) requiere las 59 decisiones del cruce.
+
 ### Notebooks
 
 - [`notebooks/00_data_checks.ipynb`](notebooks/00_data_checks.ipynb): cuadratura
   de 104.549,2 MMUS$, conteos SEA, privacidad y completitud de fechas.
 - [`notebooks/01_match_review.ipynb`](notebooks/01_match_review.ipynb): reglas
-  automáticas, top-3 de casos dudosos, decisiones de J y escritura de
-  `match_confirmado` con `criterio` (`regla_auto` o `decision_J`).
+  automáticas, revisión de alias, top-3 de casos dudosos, decisiones de J y
+  escritura de `match_confirmado`, `criterio` e `historial`.
 
 ### Reproducir
 
@@ -61,13 +106,19 @@ make data
 make survival
 ```
 
+Para trabajar con los notebooks, instale el extra opcional:
+
+```bash
+uv pip install --python .venv/bin/python -e '.[notebooks]'
+```
+
 `make survival` usa solo datos SEA y genera el análisis de supervivencia y las
 figuras 1, 2 y 4. No depende del cruce Cochilco–SEA.
 
-Abra `notebooks/01_match_review.ipynb`, complete la celda `DECISIONES_J` y
-ejecute todo el notebook. Antes de guardar o versionar, limpie todos los outputs
-del notebook: pueden contener nombres del archivo local y `make test` exige que
-los `.ipynb` versionados no almacenen outputs. Cuando existan 59 decisiones,
+Abra `notebooks/01_match_review.ipynb`, revise primero `ALIAS_J`, complete luego
+`DECISIONES_J` y ejecute todo el notebook. Antes de guardar o versionar, limpie
+todos los outputs: pueden contener nombres del archivo local y `make test` exige
+que los `.ipynb` versionados no almacenen outputs. Cuando existan 59 decisiones,
 ejecute:
 
 ```bash
@@ -87,7 +138,8 @@ make lint
 
 `docs/match_review.csv` permanece local porque contiene nombres. El único cruce
 versionado es `data/curated/cochilco_seia_match.csv`, con las columnas
-`cochilco_id`, `exp_id_confirmado` y `criterio`.
+`cochilco_id`, `exp_id_confirmado`, `criterio` e `historial`. El catálogo
+`data/curated/company_aliases.csv` registra la revisión de sociedades titulares.
 
 Los `.twbx`, Parquet intermedios/procesados y bases DuckDB son artefactos
 locales. Las pruebas de integración SEA se omiten en CI cuando faltan esos datos;
@@ -130,13 +182,59 @@ Environmental cases come from Chile's Environmental Assessment Service (SEA),
 cut off at 2026-09-30. URLs, file names, and checksums are recorded in
 [`data/raw/SOURCES.md`](data/raw/SOURCES.md).
 
+### Pipeline architecture
+
+```mermaid
+flowchart LR
+    subgraph F["Public sources"]
+        A1["Cochilco · Anexo C<br/>.xlsx (Dec-2025)"]
+        A2["SEA · Tableau dashboards<br/>.twbx (cutoff 2026-09-30)<br/>not versioned"]
+    end
+    subgraph E["Extraction & validation · make data"]
+        B1["cochilco.py<br/>59 rows · US$104,549.2M<br/>reconciled vs control tables"]
+        B2["sea.py<br/>13,735 filings<br/>personal data dropped<br/>strict dates · events"]
+    end
+    subgraph D["Processed data"]
+        C1[("cochilco_projects")]
+        C2[("sea_projects<br/>sea_mining (1,961)")]
+    end
+    subgraph M["Cochilco ↔ SEIA matching"]
+        D1["match.py<br/>name similarity<br/>+ holder aliases"]
+        D2["notebooks/01_match_review<br/>automatic rules<br/>+ analyst decisions"]
+        D3[("cochilco_seia_match.csv<br/>59 decisions")]
+    end
+    subgraph AN["Analysis"]
+        E1["make survival<br/>Kaplan-Meier · Aalen-Johansen<br/>trend · Cox"]
+        E2["make portfolio<br/>portfolio environmental status"]
+    end
+    subgraph O["Deliverables"]
+        F1["docs/figures/*.png"]
+        F2["docs/survival_results.md"]
+        F3["Brief PDF · Power BI"]
+    end
+    A1 --> B1 --> C1
+    A2 --> B2 --> C2
+    C1 --> D1
+    C2 --> D1 --> D2 --> D3
+    C2 --> E1
+    D3 --> E2
+    C1 --> E2
+    E1 --> F1 & F2
+    E2 --> F1
+    F1 & F2 --> F3
+    Q["notebooks/00_data_checks<br/>reconciliations · privacy · dates"] -.validates.-> C1 & C2 & D3
+```
+
+La supervivencia (`make survival`) usa solo datos del SEA; el estado de la cartera (`make portfolio`) requiere las 59 decisions del cruce.
+
 ### Notebooks
 
 - [`notebooks/00_data_checks.ipynb`](notebooks/00_data_checks.ipynb): validates
   the USD 104,549.2 million total, SEA counts, privacy, and date completeness.
 - [`notebooks/01_match_review.ipynb`](notebooks/01_match_review.ipynb): applies
-  automatic rules, shows the top three candidates for uncertain cases, records
-  J's decisions, and writes `match_confirmado` plus `criterio`.
+  automatic rules, reviews company aliases, shows the top three candidates for
+  uncertain cases, records J's decisions, and writes `match_confirmado`,
+  `criterio`, and `historial`.
 
 ### Reproduce
 
@@ -154,13 +252,19 @@ make data
 make survival
 ```
 
+Install the optional notebook environment with:
+
+```bash
+uv pip install --python .venv/bin/python -e '.[notebooks]'
+```
+
 `make survival` uses SEA data only and produces the survival analysis plus
 figures 1, 2, and 4. It does not depend on the Cochilco–SEA match.
 
-Open `notebooks/01_match_review.ipynb`, complete the `DECISIONES_J` cell, and run
-the notebook. Clear all notebook outputs before saving or committing: they may
-contain names from the local file, and `make test` requires tracked notebooks to
-store no outputs. Once all 59 decisions exist, run:
+Open `notebooks/01_match_review.ipynb`, review `ALIAS_J` first, then complete
+`DECISIONES_J` and run the notebook. Clear all notebook outputs before saving or
+committing: they may contain names from the local file, and `make test` requires
+tracked notebooks to store no outputs. Once all 59 decisions exist, run:
 
 ```bash
 make portfolio
@@ -179,7 +283,8 @@ make lint
 
 `docs/match_review.csv` stays local because it contains names. The only
 versioned crosswalk is `data/curated/cochilco_seia_match.csv`, containing
-`cochilco_id`, `exp_id_confirmado`, and `criterio`.
+`cochilco_id`, `exp_id_confirmado`, `criterio`, and `historial`. The
+`data/curated/company_aliases.csv` catalog records company-name review status.
 
 The `.twbx` files, intermediate/processed Parquet files, and DuckDB databases
 are local artifacts. SEA integration tests are skipped in CI when these local

@@ -23,6 +23,11 @@ dependencies = [
   "tableauhyperapi>=0.0.22500,<1",
 ]
 
+[project.optional-dependencies]
+notebooks = [
+  "jupyterlab>=4,<5",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/cmip"]
 
