@@ -11,3 +11,4 @@ data/processed/*
 data/cmip.duckdb
 data/raw/sea/*.twbx
 .claude/
+hyperd.log

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 import duckdb
@@ -22,9 +23,50 @@ def test_sea_parquets_exclude_private_columns() -> None:
 def test_sea_projects_have_unique_ids_and_valid_durations() -> None:
     projects = pd.read_parquet(PROJECTS_PATH)
     assert projects["exp_id"].is_unique
-    assert projects["duracion_dias"].dropna().ge(0).all()
-    closed = projects["fecha_cierre"].notna() & projects["fecha_ingreso"].notna()
+    assert projects["fecha_ingreso"].notna().all()
+    consistent = ~projects["fecha_inconsistente"]
+    assert projects.loc[consistent, "duracion_dias"].notna().all()
+    assert projects.loc[consistent, "duracion_dias"].ge(0).all()
+    closed = consistent & projects["fecha_cierre"].notna()
     assert projects.loc[closed, "fecha_cierre"].ge(projects.loc[closed, "fecha_ingreso"]).all()
+
+
+def test_sea_date_coverage_and_bounds() -> None:
+    for path in (PROJECTS_PATH, MINING_PATH):
+        frame = pd.read_parquet(path)
+        assert frame["fecha_ingreso"].notna().all()
+        assert frame.loc[~frame["fecha_inconsistente"], "duracion_dias"].notna().all()
+        open_cases = frame["fecha_cierre"].isna()
+        assert frame.loc[open_cases, "evento"].eq("en_tramite").all()
+
+    projects = pd.read_parquet(PROJECTS_PATH)
+    assert projects["fecha_ingreso"].min().date() == date(2011, 1, 3)
+    assert projects["fecha_ingreso"].max().date() == date(2026, 8, 28)
+
+
+def test_sea_date_inconsistency_regression() -> None:
+    projects = pd.read_parquet(PROJECTS_PATH)
+    mining = pd.read_parquet(MINING_PATH)
+    inconsistent = projects.loc[projects["fecha_inconsistente"]]
+    inconsistent_mining = mining.loc[mining["fecha_inconsistente"]]
+
+    assert len(inconsistent) == 53
+    assert inconsistent["estado"].value_counts().to_dict() == {
+        "No Admitido a Tramitación": 49,
+        "Desistido": 4,
+    }
+    assert inconsistent["duracion_dias"].isna().all()
+    assert len(inconsistent_mining) == 4
+    assert inconsistent_mining["evento"].eq("no_admitido").all()
+
+
+def test_approved_duration_medians_are_plausible() -> None:
+    mining = pd.read_parquet(MINING_PATH)
+    approved = mining.loc[mining["evento"].eq("aprobado")]
+    medians = approved.groupby("instrumento")["duracion_dias"].median()
+    assert medians.index.isin(["DIA", "EIA"]).all()
+    assert medians.between(60, 1500).all()
+    assert medians["EIA"] > medians["DIA"]
 
 
 def test_sea_mining_state_count_regression() -> None:

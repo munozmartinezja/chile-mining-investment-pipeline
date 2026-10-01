@@ -5,8 +5,8 @@ from datetime import date
 import pandas as pd
 import pytest
 
-from cmip.extract.sea import PRIVATE_COLUMNS, build_sea_frames
-from cmip.match import normalize_text, rank_candidates
+from cmip.extract.sea import PRIVATE_COLUMNS, _hyper_select_expression, build_sea_frames
+from cmip.match import normalize_text, project_name_score, rank_candidates
 
 
 def _ingresados() -> pd.DataFrame:
@@ -63,6 +63,52 @@ def test_build_sea_frames_rejects_an_unmapped_state() -> None:
         build_sea_frames(ingresados, pd.DataFrame(), cutoff=date(2026, 9, 30))
 
 
+def test_hyper_date_and_timestamp_columns_are_cast_to_text() -> None:
+    from tableauhyperapi import SqlType, TableDefinition
+
+    date_column = TableDefinition.Column("exp_fpres", SqlType.date())
+    timestamp_column = TableDefinition.Column("exp_fcierre", SqlType.timestamp())
+    text_column = TableDefinition.Column("exp_nombre", SqlType.text())
+
+    assert _hyper_select_expression(date_column) == (
+        'CAST("exp_fpres" AS TEXT) AS "exp_fpres"'
+    )
+    assert _hyper_select_expression(timestamp_column) == (
+        'CAST("exp_fcierre" AS TEXT) AS "exp_fcierre"'
+    )
+    assert _hyper_select_expression(text_column) == '"exp_nombre"'
+
+
+def test_build_sea_frames_rejects_an_invalid_non_null_date() -> None:
+    ingresados = _ingresados()
+    ingresados["exp_fpres"] = ingresados["exp_fpres"].astype("object")
+    ingresados.loc[0, "exp_fpres"] = "not-a-date"
+
+    with pytest.raises(ValueError, match="Invalid date value in exp_fpres"):
+        build_sea_frames(ingresados, pd.DataFrame(), cutoff=date(2026, 9, 30))
+
+
+def test_build_sea_frames_keeps_allowed_inconsistent_dates_without_duration() -> None:
+    ingresados = _ingresados().iloc[[0]].copy()
+    ingresados["est_nombre"] = "Desistido"
+    ingresados["exp_fcierre"] = pd.to_datetime(["2019-12-31"])
+
+    projects, _ = build_sea_frames(ingresados, pd.DataFrame())
+
+    assert projects["fecha_inconsistente"].item() is True
+    assert pd.isna(projects["duracion_dias"].item())
+    assert projects["fecha_cierre"].item() == pd.Timestamp("2019-12-31")
+    assert projects["fecha_ingreso"].item() == pd.Timestamp("2020-01-01")
+
+
+def test_build_sea_frames_rejects_inconsistent_dates_in_timing_events() -> None:
+    ingresados = _ingresados().iloc[[0]].copy()
+    ingresados["exp_fcierre"] = pd.to_datetime(["2019-12-31"])
+
+    with pytest.raises(ValueError, match="date inconsistencies in timing-analysis events"):
+        build_sea_frames(ingresados, pd.DataFrame())
+
+
 @pytest.mark.parametrize(
     ("source", "expected"),
     [
@@ -113,7 +159,101 @@ def test_rank_candidates_filters_region_and_orders_top_three() -> None:
 
     ranked = rank_candidates(cochilco, sea)
 
-    assert ranked["exp_id"].tolist() == [10, 12, 11]
+    assert ranked["exp_id"].tolist() == [10, 12]
     assert ranked.iloc[0]["score"] == 100.0
+    assert ranked["empresa_no_coincide"].eq(False).all()
     assert ranked["match_confirmado"].isna().all()
     assert 99 not in ranked["exp_id"].tolist()
+
+
+def test_rosario_fourth_line_does_not_match_pampa_pabellon_tailings() -> None:
+    score = project_name_score(
+        "4ª Línea: Nueva concentradora en Rosario",
+        "Continuidad Relaves Espesados Pampa Pabellón",
+    )
+
+    assert score < 60
+
+
+def test_chuquicamata_subterranea_top_match_is_not_sondajes() -> None:
+    cochilco = pd.DataFrame(
+        {
+            "project_id": ["chuqui"],
+            "nombre_del_proyecto": ["Chuquicamata Subterránea"],
+            "empresa": ["Codelco"],
+            "region": ["Antofagasta"],
+        }
+    )
+    sea = pd.DataFrame(
+        {
+            "exp_id": [1, 2],
+            "exp_nombre": [
+                "Proyecto Chuquicamata Subterránea",
+                "Sondajes para Proyecto Chuquicamata Subterránea",
+            ],
+            "empresa_nombre": ["Codelco", "Codelco"],
+            "titular_nombre": ["Codelco", "Codelco"],
+            "estado": ["Aprobado", "Aprobado"],
+            "fecha_ingreso": pd.to_datetime(["2020-01-01", "2020-01-01"]),
+            "region": ["II", "II"],
+            "seco_nombre": ["Minería", "Minería"],
+        }
+    )
+
+    ranked = rank_candidates(cochilco, sea)
+
+    assert "sondajes" not in ranked.iloc[0]["sea_nombre"].casefold()
+
+
+def test_rank_candidates_keeps_project_when_region_has_no_candidates() -> None:
+    cochilco = pd.DataFrame(
+        {
+            "project_id": ["missing"],
+            "nombre_del_proyecto": ["Proyecto sin expediente"],
+            "empresa": ["Empresa sin expediente"],
+            "region": ["Tarapacá"],
+        }
+    )
+    sea = pd.DataFrame(
+        {
+            "exp_id": [1],
+            "exp_nombre": ["Otro proyecto"],
+            "empresa_nombre": ["Otra empresa"],
+            "titular_nombre": ["Otra empresa"],
+            "estado": ["Aprobado"],
+            "fecha_ingreso": pd.to_datetime(["2020-01-01"]),
+            "region": ["II"],
+            "seco_nombre": ["Minería"],
+        }
+    )
+
+    ranked = rank_candidates(cochilco, sea)
+
+    assert ranked["cochilco_id"].tolist() == ["missing"]
+    assert ranked["match_tipo"].tolist() == ["sin_candidato"]
+
+
+def test_rank_candidates_rejects_a_matched_sea_record_without_fecha_ingreso() -> None:
+    cochilco = pd.DataFrame(
+        {
+            "project_id": ["missing-date"],
+            "nombre_del_proyecto": ["Proyecto Cobre"],
+            "empresa": ["Minera Uno"],
+            "region": ["Antofagasta"],
+        }
+    )
+    sea = pd.DataFrame(
+        {
+            "exp_id": [1],
+            "exp_nombre": ["Proyecto Cobre"],
+            "empresa_nombre": ["Minera Uno"],
+            "titular_nombre": ["Minera Uno"],
+            "estado": ["Aprobado"],
+            "fecha_ingreso": [pd.NaT],
+            "region": ["II"],
+            "seco_nombre": ["Minería"],
+        }
+    )
+
+    with pytest.raises(ValueError, match="SEA candidate 1 has no fecha_ingreso"):
+        rank_candidates(cochilco, sea)

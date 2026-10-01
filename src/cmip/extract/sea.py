@@ -41,6 +41,9 @@ EVENTO_BY_ESTADO = {
     "No calificado": "termino_anticipado",
 }
 POST_RCA_STATES = frozenset({"Caducado", "Revocado", "Renuncia RCA"})
+TIMING_ANALYSIS_EVENTS = frozenset(
+    {"aprobado", "rechazado", "en_tramite", "termino_anticipado"}
+)
 EXPECTED_MINING_STATES = {
     "Aprobado": 1043,
     "Desistido": 371,
@@ -66,6 +69,16 @@ def _drop_private_columns(frame: pd.DataFrame) -> pd.DataFrame:
     return frame
 
 
+def _hyper_select_expression(column: object) -> str:
+    """Return a Hyper SELECT expression that materializes dates as ISO text."""
+    from tableauhyperapi import TypeTag
+
+    name = str(column.name)
+    if column.type.tag in {TypeTag.DATE, TypeTag.TIMESTAMP, TypeTag.TIMESTAMP_TZ}:
+        return f"CAST({name} AS TEXT) AS {name}"
+    return name
+
+
 def _read_hyper(path: Path) -> pd.DataFrame | None:
     try:
         from tableauhyperapi import Connection, HyperProcess, TableName, Telemetry
@@ -87,7 +100,7 @@ def _read_hyper(path: Path) -> pd.DataFrame | None:
             for column in definition.columns
             if snake_case(column.name.unescaped) not in PRIVATE_COLUMNS
         ]
-        projection = ", ".join(str(column.name) for column in safe_columns)
+        projection = ", ".join(_hyper_select_expression(column) for column in safe_columns)
         rows = connection.execute_list_query(f"SELECT {projection} FROM {table_name}")
 
     frame = pd.DataFrame(
@@ -125,6 +138,13 @@ def _normalize_input(frame: pd.DataFrame) -> pd.DataFrame:
     return _drop_private_columns(normalized)
 
 
+def _parse_datetime_column(frame: pd.DataFrame, column: str) -> None:
+    try:
+        frame[column] = pd.to_datetime(frame[column], errors="raise", format="mixed")
+    except (TypeError, ValueError) as error:
+        raise ValueError(f"Invalid date value in {column}: {error}") from error
+
+
 def _prepare_plazos(plazos: pd.DataFrame) -> pd.DataFrame:
     normalized = _normalize_input(plazos)
     if normalized.empty and "exp_id" not in normalized:
@@ -136,7 +156,7 @@ def _prepare_plazos(plazos: pd.DataFrame) -> pd.DataFrame:
     duplicates = selected.loc[selected["exp_id"].duplicated(), "exp_id"].tolist()
     if duplicates:
         raise ValueError(f"Duplicate exp_id values in SEA plazos: {duplicates[:10]}")
-    selected["exp_fecha_rca"] = pd.to_datetime(selected["exp_fecha_rca"], errors="coerce")
+    _parse_datetime_column(selected, "exp_fecha_rca")
     return selected
 
 
@@ -171,6 +191,11 @@ def build_sea_frames(
     if unmapped:
         raise ValueError(f"Unmapped SEA states: {unmapped}")
 
+    _parse_datetime_column(source, "exp_fpres")
+    _parse_datetime_column(source, "exp_fcierre")
+    if source["exp_fpres"].isna().any():
+        raise ValueError("exp_fpres contains null values")
+
     projects = source.loc[:, sorted(required)].rename(
         columns={
             "work_alias": "instrumento",
@@ -182,26 +207,43 @@ def build_sea_frames(
             "exp_fcierre": "fecha_cierre",
         }
     )
-    projects["fecha_ingreso"] = pd.to_datetime(projects["fecha_ingreso"], errors="coerce")
-    projects["fecha_cierre"] = pd.to_datetime(projects["fecha_cierre"], errors="coerce")
     projects = projects.merge(_prepare_plazos(plazos), on="exp_id", how="left", validate="1:1")
 
     duplicates = projects.loc[projects["exp_id"].duplicated(), "exp_id"].tolist()
     if duplicates:
         raise ValueError(f"Duplicate exp_id values in sea_projects: {duplicates[:10]}")
-    invalid_dates = projects["fecha_cierre"].notna() & (
+    projects["evento"] = projects["estado"].map(EVENTO_BY_ESTADO)
+    projects["fecha_inconsistente"] = projects["fecha_cierre"].notna() & (
         projects["fecha_cierre"] < projects["fecha_ingreso"]
     )
-    if invalid_dates.any():
-        raise ValueError("fecha_cierre precedes fecha_ingreso")
+    invalid_analysis_dates = projects["fecha_inconsistente"] & projects["evento"].isin(
+        TIMING_ANALYSIS_EVENTS
+    )
+    if invalid_analysis_dates.any():
+        invalid_ids = projects.loc[invalid_analysis_dates, "exp_id"].head(10).tolist()
+        raise ValueError(
+            "date inconsistencies in timing-analysis events; "
+            f"sample exp_id values: {invalid_ids}"
+        )
 
     effective_end = projects["fecha_cierre"].fillna(pd.Timestamp(cutoff))
     projects["duracion_dias"] = (effective_end - projects["fecha_ingreso"]).dt.days.astype(
         "Int64"
     )
+    projects.loc[projects["fecha_inconsistente"], "duracion_dias"] = pd.NA
     if projects["duracion_dias"].dropna().lt(0).any():
         raise ValueError("duracion_dias must be non-negative")
-    projects["evento"] = projects["estado"].map(EVENTO_BY_ESTADO)
+    invalid_open = projects["fecha_cierre"].isna() & projects["evento"].ne("en_tramite")
+    if invalid_open.any():
+        invalid_ids = projects.loc[invalid_open, "exp_id"].head(10).tolist()
+        raise ValueError(
+            "fecha_cierre is null outside en_tramite; " f"sample exp_id values: {invalid_ids}"
+        )
+    missing_consistent_duration = projects["duracion_dias"].isna() & ~projects[
+        "fecha_inconsistente"
+    ]
+    if missing_consistent_duration.any():
+        raise ValueError("duracion_dias is null for a date-consistent record")
     projects["estado_post_rca"] = projects["estado"].where(
         projects["estado"].isin(POST_RCA_STATES), pd.NA
     )
@@ -225,6 +267,13 @@ def validate_mining_state_counts(mining: pd.DataFrame) -> None:
             "SEA mining state-count regression failed: "
             f"mismatches={mismatches}, remaining={remaining}, total={len(mining)}"
         )
+
+
+def validate_date_inconsistency_count(projects: pd.DataFrame) -> None:
+    """Enforce the verified number of source-date anomalies at the cutoff."""
+    actual = int(projects["fecha_inconsistente"].sum())
+    if actual != 53:
+        raise ValueError(f"Expected 53 date inconsistencies at cutoff; found {actual}")
 
 
 def _load_frame(
@@ -267,6 +316,7 @@ def build_sea_pipeline(
     ingresados = read_twbx(raw_dir / "sea_proyectos_ingresados.twbx")
     plazos = read_twbx(raw_dir / "sea_plazos_tramitacion.twbx")
     projects, mining = build_sea_frames(ingresados, plazos)
+    validate_date_inconsistency_count(projects)
     validate_mining_state_counts(mining)
     write_sea_outputs(projects, mining, interim_dir, database_path)
     return projects, mining
