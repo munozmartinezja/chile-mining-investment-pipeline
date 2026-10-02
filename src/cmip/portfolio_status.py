@@ -335,10 +335,16 @@ def build_confirmed_match_table(review: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def classify_environmental_status(evento: object, exp_id: object) -> str:
-    """Map a confirmed SEA outcome to the five portfolio categories."""
+def classify_environmental_status(
+    evento: object, exp_id: object, etapa: object | None = None
+) -> str:
+    """Map a confirmed SEA outcome to the portfolio categories."""
     if exp_id is None or pd.isna(exp_id):
-        return "sin_ingreso_seia"
+        return (
+            "sin_expediente_en_ejecucion"
+            if etapa == "Ejecución"
+            else "sin_expediente_en_estudio"
+        )
     if evento == "aprobado":
         return "aprobado"
     if evento == "en_tramite":
@@ -391,9 +397,12 @@ def build_portfolio_status(
     if missing_sea.any():
         ids = result.loc[missing_sea, "exp_id_confirmado"].astype(int).tolist()
         raise ValueError(f"Confirmed exp_id not found in sea_mining: {ids}")
+    etapas = result["etapa"] if "etapa" in result else [None] * len(result)
     result["estado_ambiental"] = [
-        classify_environmental_status(evento, exp_id)
-        for evento, exp_id in zip(result["evento"], result["exp_id_confirmado"], strict=True)
+        classify_environmental_status(evento, exp_id, etapa)
+        for evento, exp_id, etapa in zip(
+            result["evento"], result["exp_id_confirmado"], etapas, strict=True
+        )
     ]
     return result.drop(columns=["cochilco_id", "exp_id"])
 

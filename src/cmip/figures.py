@@ -30,6 +30,8 @@ COLORS = {
     "termino_anticipado": "#6B7280",
     "en_evaluacion": "#3B82F6",
     "sin_ingreso_seia": "#94A3B8",
+    "sin_expediente_en_ejecucion": "#64748B",
+    "sin_expediente_en_estudio": "#CBD5E1",
     "desistido_o_rechazado": "#B45309",
     "otro": "#64748B",
 }
@@ -40,6 +42,8 @@ def _pretty_status(value: str) -> str:
         "aprobado": "Aprobado",
         "en_evaluacion": "En evaluación",
         "sin_ingreso_seia": "Sin ingreso SEA",
+        "sin_expediente_en_ejecucion": "Sin expediente: ejecución",
+        "sin_expediente_en_estudio": "Sin expediente: estudio",
         "desistido_o_rechazado": "Desistido o rechazado",
         "otro": "Otro",
     }

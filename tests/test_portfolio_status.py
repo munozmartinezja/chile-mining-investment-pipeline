@@ -266,21 +266,22 @@ def test_j_decisions_cannot_override_automatic_rules(criterion: str) -> None:
 
 
 @pytest.mark.parametrize(
-    ("evento", "exp_id", "expected"),
+    ("evento", "exp_id", "etapa", "expected"),
     [
-        ("aprobado", 1, "aprobado"),
-        ("en_tramite", 2, "en_evaluacion"),
-        ("desistido_o_abandonado", 3, "desistido_o_rechazado"),
-        ("rechazado", 4, "desistido_o_rechazado"),
-        ("termino_anticipado", 5, "desistido_o_rechazado"),
-        ("no_admitido", 6, "otro"),
-        (pd.NA, pd.NA, "sin_ingreso_seia"),
+        ("aprobado", 1, "Ejecución", "aprobado"),
+        ("en_tramite", 2, "Ejecución", "en_evaluacion"),
+        ("desistido_o_abandonado", 3, "Factibilidad", "desistido_o_rechazado"),
+        ("rechazado", 4, "Factibilidad", "desistido_o_rechazado"),
+        ("termino_anticipado", 5, "Factibilidad", "desistido_o_rechazado"),
+        ("no_admitido", 6, "Prefactibilidad", "otro"),
+        (pd.NA, pd.NA, "Ejecución", "sin_expediente_en_ejecucion"),
+        (pd.NA, pd.NA, "Prefactibilidad", "sin_expediente_en_estudio"),
     ],
 )
 def test_classify_environmental_status_maps_normalized_outcomes(
-    evento: object, exp_id: object, expected: str
+    evento: object, exp_id: object, etapa: object, expected: str
 ) -> None:
-    assert classify_environmental_status(evento, exp_id) == expected
+    assert classify_environmental_status(evento, exp_id, etapa) == expected
 
 
 def test_confirmed_match_table_uses_decision_not_candidate_score() -> None:
