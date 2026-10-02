@@ -71,8 +71,12 @@ def test_all_four_renderers_write_png_files(tmp_path) -> None:  # noqa: ANN001
     )
     portfolio = pd.DataFrame(
         {
-            "estado_ambiental": ["aprobado", "sin_ingreso_seia"],
-            "inversion_musd": [20.0, 30.0],
+            "estado_ambiental": [
+                "aprobado",
+                "sin_expediente_en_ejecucion",
+                "sin_expediente_en_estudio",
+            ],
+            "inversion_musd": [20.0, 10.0, 20.0],
         }
     )
     trend = pd.DataFrame(

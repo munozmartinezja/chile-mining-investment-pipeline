@@ -1,4 +1,4 @@
-.PHONY: setup data survival portfolio analysis test lint
+.PHONY: setup data survival portfolio analysis validation test lint
 
 PYTHON ?= .venv/bin/python
 
@@ -22,6 +22,9 @@ portfolio:
 analysis:
 	$(MAKE) survival
 	$(MAKE) portfolio
+
+validation:
+	$(PYTHON) -m cmip.validation
 
 test:
 	$(PYTHON) -m pytest
