@@ -14,3 +14,4 @@ docs/match_review.csv
 .claude/
 hyperd.log
 docs/superpowers/
+docs/validation_worksheet*.txt

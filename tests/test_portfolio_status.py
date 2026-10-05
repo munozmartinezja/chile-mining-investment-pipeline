@@ -5,6 +5,7 @@ import pytest
 
 from cmip.portfolio_status import (
     apply_automatic_match_rules,
+    apply_checklist_decisions,
     apply_j_decisions,
     build_confirmed_match_table,
     build_doubtful_cases,
@@ -12,6 +13,29 @@ from cmip.portfolio_status import (
     classify_environmental_status,
     write_portfolio_status,
 )
+
+
+def _checklist_sources(
+    response: str, source: str = ""
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    confirmed = pd.DataFrame(
+        {
+            "cochilco_id": ["project"],
+            "exp_id_confirmado": [999],
+            "criterio": ["regla_auto"],
+            "historial": [""],
+        }
+    )
+    checklist = pd.DataFrame(
+        {
+            "cochilco_id": ["project"],
+            "pregunta": ["Pregunta validada"],
+            "respuesta_J": [response],
+            "fuente_J": [source],
+        }
+    )
+    sea = pd.DataFrame({"exp_id": [101]})
+    return confirmed, checklist, sea
 
 
 def _review_candidates() -> pd.DataFrame:
@@ -266,6 +290,185 @@ def test_j_decisions_cannot_override_automatic_rules(criterion: str) -> None:
 
 
 @pytest.mark.parametrize(
+    "response", ["si", "rca_identificada", "expediente_encontrado"]
+)
+def test_checklist_affirmative_responses_set_validated_principal(response: str) -> None:
+    confirmed, checklist, sea = _checklist_sources(response, "principal: 101 | rca: 42")
+
+    result = apply_checklist_decisions(confirmed, checklist, sea)
+
+    assert result.loc[0, "exp_id_confirmado"] == 101
+    assert result.loc[0, "criterio"] == "decision_J_checklist"
+    assert result.loc[0, "estado_ambiental_override"] == ""
+
+
+@pytest.mark.parametrize("response", ["sin_expediente", "otra_fase"])
+def test_checklist_empty_responses_clear_automatic_match(response: str) -> None:
+    confirmed, checklist, sea = _checklist_sources(response)
+
+    result = apply_checklist_decisions(confirmed, checklist, sea)
+
+    assert pd.isna(result.loc[0, "exp_id_confirmado"])
+    assert result.loc[0, "criterio"] == "decision_J_checklist"
+    assert result.loc[0, "estado_ambiental_override"] == ""
+
+
+@pytest.mark.parametrize(
+    ("response", "expected_status"),
+    [
+        ("rca_previa", "rca_previa_2011"),
+        ("fila_agregada", "agregado_no_asignable"),
+        ("pertinencia", "pertinencia"),
+        ("no_determinado", "no_determinado"),
+    ],
+)
+def test_checklist_special_responses_set_environmental_override(
+    response: str, expected_status: str
+) -> None:
+    confirmed, checklist, sea = _checklist_sources(response, "nota: revisión J")
+
+    result = apply_checklist_decisions(confirmed, checklist, sea)
+
+    assert pd.isna(result.loc[0, "exp_id_confirmado"])
+    assert result.loc[0, "criterio"] == "decision_J_checklist"
+    assert result.loc[0, "estado_ambiental_override"] == expected_status
+
+
+def test_checklist_affirmative_response_requires_principal() -> None:
+    confirmed, checklist, sea = _checklist_sources("si", "rca: 42")
+
+    with pytest.raises(ValueError, match="affirmative.*principal.*project"):
+        apply_checklist_decisions(confirmed, checklist, sea)
+
+
+def test_checklist_principal_must_exist_in_sea() -> None:
+    confirmed, checklist, sea = _checklist_sources("si", "principal: 404")
+
+    with pytest.raises(ValueError, match="404.*sea_mining"):
+        apply_checklist_decisions(confirmed, checklist, sea)
+
+
+def test_checklist_two_questions_accept_same_principal_and_principal_over_empty() -> None:
+    confirmed, checklist, sea = _checklist_sources(
+        "rca_identificada", "principal: 101"
+    )
+    checklist = pd.concat(
+        [
+            checklist,
+            pd.DataFrame(
+                {
+                    "cochilco_id": ["project"],
+                    "pregunta": ["Segunda pregunta"],
+                    "respuesta_J": ["sin_expediente"],
+                    "fuente_J": ["nota: sin expediente separado"],
+                }
+            ),
+        ],
+        ignore_index=True,
+    )
+
+    result = apply_checklist_decisions(confirmed, checklist, sea)
+
+    assert result.loc[0, "exp_id_confirmado"] == 101
+    assert result.loc[0, "estado_ambiental_override"] == ""
+
+
+def test_checklist_aggregate_precedes_prior_rca_and_empty_response() -> None:
+    confirmed, checklist, sea = _checklist_sources("fila_agregada", "principal: 999")
+    checklist = pd.concat(
+        [
+            checklist,
+            pd.DataFrame(
+                {
+                    "cochilco_id": ["project", "project"],
+                    "pregunta": ["Segunda pregunta", "Tercera pregunta"],
+                    "respuesta_J": ["rca_previa", "sin_expediente"],
+                    "fuente_J": ["modificaciones: 101", ""],
+                }
+            ),
+        ],
+        ignore_index=True,
+    )
+
+    result = apply_checklist_decisions(confirmed, checklist, sea)
+
+    assert pd.isna(result.loc[0, "exp_id_confirmado"])
+    assert result.loc[0, "estado_ambiental_override"] == "agregado_no_asignable"
+
+
+def test_checklist_rejects_contradictory_principals() -> None:
+    confirmed, checklist, sea = _checklist_sources("si", "principal: 101")
+    checklist = pd.concat(
+        [
+            checklist,
+            pd.DataFrame(
+                {
+                    "cochilco_id": ["project"],
+                    "pregunta": ["Segunda pregunta"],
+                    "respuesta_J": ["expediente_encontrado"],
+                    "fuente_J": ["principal: 102"],
+                }
+            ),
+        ],
+        ignore_index=True,
+    )
+    sea = pd.DataFrame({"exp_id": [101, 102]})
+
+    with pytest.raises(ValueError, match="Contradictory.*principal.*project"):
+        apply_checklist_decisions(confirmed, checklist, sea)
+
+
+def test_checklist_rejects_incompatible_special_categories() -> None:
+    confirmed, checklist, sea = _checklist_sources("pertinencia", "nota: consulta")
+    checklist = pd.concat(
+        [
+            checklist,
+            pd.DataFrame(
+                {
+                    "cochilco_id": ["project"],
+                    "pregunta": ["Segunda pregunta"],
+                    "respuesta_J": ["no_determinado"],
+                    "fuente_J": ["nota: instrumento desconocido"],
+                }
+            ),
+        ],
+        ignore_index=True,
+    )
+
+    with pytest.raises(ValueError, match="Contradictory.*environmental.*project"):
+        apply_checklist_decisions(confirmed, checklist, sea)
+
+
+def test_checklist_principal_displaces_conflicting_automatic_assignment() -> None:
+    confirmed, checklist, sea = _checklist_sources("si", "principal: 101")
+    confirmed = pd.concat(
+        [
+            confirmed,
+            pd.DataFrame(
+                {
+                    "cochilco_id": ["automatic-project"],
+                    "exp_id_confirmado": [101],
+                    "criterio": ["regla_auto"],
+                    "historial": [""],
+                }
+            ),
+        ],
+        ignore_index=True,
+    )
+
+    result = apply_checklist_decisions(confirmed, checklist, sea).set_index(
+        "cochilco_id"
+    )
+
+    assert result.loc["project", "exp_id_confirmado"] == 101
+    assert pd.isna(result.loc["automatic-project", "exp_id_confirmado"])
+    assert (
+        result.loc["automatic-project", "criterio"]
+        == "regla_desplazada_por_checklist"
+    )
+
+
+@pytest.mark.parametrize(
     ("evento", "exp_id", "etapa", "expected"),
     [
         ("aprobado", 1, "Ejecución", "aprobado"),
@@ -316,6 +519,37 @@ def test_confirmed_match_table_rejects_unreviewed_projects() -> None:
 
     with pytest.raises(ValueError, match="review decision.*c2"):
         build_confirmed_match_table(review)
+
+
+def test_confirmed_match_table_rejects_duplicate_primary_expediente() -> None:
+    review = pd.DataFrame(
+        {
+            "cochilco_id": ["adecuacion-spence", "crecimiento-spence"],
+            "exp_id": [2158456424, 2158456424],
+            "match_confirmado": ["2158456424", "2158456424"],
+            "criterio": ["regla_auto", "regla_auto"],
+        }
+    )
+
+    with pytest.raises(ValueError, match="principal.*2158456424"):
+        build_confirmed_match_table(review)
+
+    exceptions = pd.DataFrame(
+        {
+            "exp_id": [2158456424, 2158456424],
+            "cochilco_id": ["adecuacion-spence", "crecimiento-spence"],
+            "motivo": ["Mismo alcance", "Mismo alcance"],
+        }
+    )
+    documented = build_confirmed_match_table(
+        review, shared_expediente_exceptions=exceptions
+    )
+    assert documented["exp_id_confirmado"].tolist() == [2158456424, 2158456424]
+
+    with pytest.raises(ValueError, match="principal.*2158456424"):
+        build_confirmed_match_table(
+            review, shared_expediente_exceptions=exceptions.iloc[[0]]
+        )
 
 
 def test_confirmed_match_table_rejects_a_decision_without_provenance() -> None:
@@ -387,6 +621,56 @@ def test_portfolio_status_rejects_undocumented_duplicate_expedientes() -> None:
         build_portfolio_status(cochilco, confirmed, sea)
 
 
+def test_portfolio_status_accepts_only_listed_shared_expediente_pairs() -> None:
+    cochilco = pd.DataFrame(
+        {
+            "project_id": ["new", "demolition", "extension"],
+            "etapa": ["Factibilidad"] * 3,
+            "inversion_musd": [100.0, 20.0, 10.0],
+            "nota_agregacion": [False] * 3,
+        }
+    )
+    confirmed = pd.DataFrame(
+        {
+            "cochilco_id": ["new", "demolition", "extension"],
+            "exp_id_confirmado": [2167965265] * 3,
+            "criterio": ["decision_J_checklist"] * 3,
+            "historial": [""] * 3,
+            "estado_ambiental_override": [""] * 3,
+        }
+    )
+    sea = pd.DataFrame(
+        {
+            "exp_id": [2167965265],
+            "instrumento": ["DIA"],
+            "evento": ["en_tramite"],
+            "fecha_ingreso": pd.to_datetime(["2026-01-01"]),
+            "duracion_dias": [100],
+            "estado": ["En Calificación"],
+        }
+    )
+    exceptions = pd.DataFrame(
+        {
+            "exp_id": [2167965265] * 3,
+            "cochilco_id": ["new", "demolition", "extension"],
+            "motivo": ["Mismo proyecto, fases distintas"] * 3,
+        }
+    )
+
+    result = build_portfolio_status(
+        cochilco, confirmed, sea, shared_expediente_exceptions=exceptions
+    )
+
+    assert result["estado_ambiental"].eq("en_evaluacion").all()
+    with pytest.raises(ValueError, match="Duplicate confirmed exp_id"):
+        build_portfolio_status(
+            cochilco,
+            confirmed,
+            sea,
+            shared_expediente_exceptions=exceptions.iloc[:2],
+        )
+
+
 def test_writer_emits_only_privacy_safe_confirmed_match_columns(tmp_path) -> None:  # noqa: ANN001
     review_path = tmp_path / "match_review.csv"
     cochilco_path = tmp_path / "cochilco.parquet"
@@ -421,7 +705,13 @@ def test_writer_emits_only_privacy_safe_confirmed_match_columns(tmp_path) -> Non
     ).to_parquet(sea_path, index=False)
 
     portfolio = write_portfolio_status(
-        review_path, cochilco_path, sea_path, confirmed_path, output_path
+        review_path,
+        cochilco_path,
+        sea_path,
+        confirmed_path,
+        output_path,
+        checklist_path=None,
+        shared_exceptions_path=None,
     )
 
     confirmed = pd.read_csv(confirmed_path)
@@ -430,6 +720,7 @@ def test_writer_emits_only_privacy_safe_confirmed_match_columns(tmp_path) -> Non
         "exp_id_confirmado",
         "criterio",
         "historial",
+        "estado_ambiental_override",
     ]
     assert "Empresa privada" not in confirmed_path.read_text(encoding="utf-8")
     assert "Persona privada" not in confirmed_path.read_text(encoding="utf-8")

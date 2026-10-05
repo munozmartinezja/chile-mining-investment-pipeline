@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -15,8 +16,16 @@ COCHILCO_PATH = PROCESSED_DIR / "cochilco_projects.parquet"
 SEA_PATH = PROJECT_ROOT / "data" / "interim" / "sea_mining.parquet"
 CONFIRMED_MATCH_PATH = CURATED_DIR / "cochilco_seia_match.csv"
 PORTFOLIO_STATUS_PATH = PROCESSED_DIR / "cochilco_seia.parquet"
+CHECKLIST_PATH = PROJECT_ROOT / "docs" / "validation_checklist.csv"
+SHARED_EXCEPTIONS_PATH = CURATED_DIR / "shared_expediente_exceptions.csv"
 
-MATCH_OUTPUT_COLUMNS = ["cochilco_id", "exp_id_confirmado", "criterio", "historial"]
+MATCH_OUTPUT_COLUMNS = [
+    "cochilco_id",
+    "exp_id_confirmado",
+    "criterio",
+    "historial",
+    "estado_ambiental_override",
+]
 SEA_STATUS_COLUMNS = [
     "exp_id",
     "instrumento",
@@ -31,7 +40,26 @@ DECISION_CRITERIA = {
     "regla_reingreso",
     "regla_sin_expediente",
     "decision_J",
+    "decision_J_checklist",
+    "regla_desplazada_por_checklist",
 }
+AFFIRMATIVE_CHECKLIST_RESPONSES = {
+    "si",
+    "rca_identificada",
+    "expediente_encontrado",
+}
+EMPTY_CHECKLIST_RESPONSES = {"sin_expediente", "otra_fase"}
+SPECIAL_CHECKLIST_STATUSES = {
+    "rca_previa": "rca_previa_2011",
+    "fila_agregada": "agregado_no_asignable",
+    "pertinencia": "pertinencia",
+    "no_determinado": "no_determinado",
+}
+CHECKLIST_RESPONSES = (
+    AFFIRMATIVE_CHECKLIST_RESPONSES
+    | EMPTY_CHECKLIST_RESPONSES
+    | set(SPECIAL_CHECKLIST_STATUSES)
+)
 
 
 def _decision_text(value: object) -> str:
@@ -55,6 +83,15 @@ def _candidate_order(candidates: pd.DataFrame) -> pd.DataFrame:
     ordered["_score_numeric"] = pd.to_numeric(ordered["score"], errors="coerce").fillna(
         float("-inf")
     )
+    if "ranking_match" in ordered:
+        ordered["_ranking_match_numeric"] = pd.to_numeric(
+            ordered["ranking_match"], errors="coerce"
+        ).fillna(float("inf"))
+        return ordered.sort_values(
+            ["_ranking_match_numeric", "exp_id"],
+            ascending=[True, True],
+            na_position="last",
+        ).drop(columns="_ranking_match_numeric")
     return ordered.sort_values(
         ["_score_numeric", "exp_id"], ascending=[False, True], na_position="last"
     )
@@ -240,7 +277,194 @@ def apply_j_decisions(
     return result
 
 
-def build_confirmed_match_table(review: pd.DataFrame) -> pd.DataFrame:
+def _principal_from_source(source: object) -> int | None:
+    text = _decision_text(source)
+    matches = re.findall(r"(?:^|\s+\|\s+)principal:\s*(\d+)(?=\s|$)", text)
+    if not matches:
+        return None
+    principals = {int(value) for value in matches}
+    if len(principals) != 1:
+        raise ValueError(f"Contradictory principal segments in fuente_J: {text!r}")
+    return principals.pop()
+
+
+def apply_checklist_decisions(
+    confirmed: pd.DataFrame,
+    checklist: pd.DataFrame,
+    sea_mining: pd.DataFrame,
+) -> pd.DataFrame:
+    """Override automatic matches with J's validated checklist decisions."""
+    confirmed_required = {"cochilco_id", "exp_id_confirmado", "criterio"}
+    checklist_required = {"cochilco_id", "pregunta", "respuesta_J", "fuente_J"}
+    missing_confirmed = confirmed_required.difference(confirmed.columns)
+    missing_checklist = checklist_required.difference(checklist.columns)
+    if missing_confirmed:
+        raise ValueError(f"Missing confirmed columns: {sorted(missing_confirmed)}")
+    if missing_checklist:
+        raise ValueError(f"Missing checklist columns: {sorted(missing_checklist)}")
+    if checklist.duplicated(["cochilco_id", "pregunta"]).any():
+        raise ValueError("Checklist key (cochilco_id, pregunta) must be unique")
+    if "exp_id" not in sea_mining:
+        raise ValueError("sea_mining has no exp_id column")
+
+    result = confirmed.copy()
+    if "historial" not in result:
+        result["historial"] = ""
+    if "estado_ambiental_override" not in result:
+        result["estado_ambiental_override"] = ""
+    result["estado_ambiental_override"] = result["estado_ambiental_override"].map(
+        _decision_text
+    )
+    known_ids = set(result["cochilco_id"].astype(str))
+    checklist_ids = set(checklist["cochilco_id"].astype(str))
+    unknown_ids = checklist_ids - known_ids
+    if unknown_ids:
+        raise ValueError(f"Checklist contains unknown cochilco_id values: {sorted(unknown_ids)}")
+
+    responses = checklist["respuesta_J"].map(_decision_text).str.casefold()
+    invalid = set(responses) - CHECKLIST_RESPONSES
+    if invalid:
+        raise ValueError(f"Invalid respuesta_J values: {sorted(invalid)}")
+    sea_ids = set(pd.to_numeric(sea_mining["exp_id"], errors="raise").astype(int))
+
+    checklist_work = checklist.copy()
+    checklist_work["_response"] = responses
+    for cochilco_id, decisions in checklist_work.groupby("cochilco_id", sort=False):
+        affirmative = decisions.loc[
+            decisions["_response"].isin(AFFIRMATIVE_CHECKLIST_RESPONSES)
+        ]
+        principals: set[int] = set()
+        for row in affirmative.itertuples(index=False):
+            principal = _principal_from_source(row.fuente_J)
+            if principal is None:
+                raise ValueError(
+                    "Checklist affirmative response requires a principal in fuente_J "
+                    f"for {cochilco_id}"
+                )
+            principals.add(principal)
+        if len(principals) > 1:
+            raise ValueError(
+                f"Contradictory checklist principal values for {cochilco_id}: "
+                f"{sorted(principals)}"
+            )
+
+        special_responses = set(decisions["_response"]) & set(
+            SPECIAL_CHECKLIST_STATUSES
+        )
+        if principals and special_responses:
+            raise ValueError(
+                f"Contradictory principal and environmental decisions for {cochilco_id}"
+            )
+        if len(special_responses - {"fila_agregada", "rca_previa"}) > 1:
+            raise ValueError(
+                f"Contradictory environmental checklist decisions for {cochilco_id}: "
+                f"{sorted(special_responses)}"
+            )
+        if special_responses & {"pertinencia", "no_determinado"} and len(
+            special_responses
+        ) > 1:
+            raise ValueError(
+                f"Contradictory environmental checklist decisions for {cochilco_id}: "
+                f"{sorted(special_responses)}"
+            )
+
+        principal = next(iter(principals), None)
+        if principal is not None and principal not in sea_ids:
+            raise ValueError(
+                f"Checklist principal {principal} for {cochilco_id} is absent from sea_mining"
+            )
+        if principal is not None:
+            override = ""
+        elif "fila_agregada" in special_responses:
+            override = SPECIAL_CHECKLIST_STATUSES["fila_agregada"]
+        elif "rca_previa" in special_responses:
+            override = SPECIAL_CHECKLIST_STATUSES["rca_previa"]
+        elif special_responses:
+            override = SPECIAL_CHECKLIST_STATUSES[next(iter(special_responses))]
+        else:
+            override = ""
+
+        target = result["cochilco_id"].astype(str).eq(str(cochilco_id))
+        result.loc[target, "exp_id_confirmado"] = (
+            principal if principal is not None else pd.NA
+        )
+        result.loc[target, "criterio"] = "decision_J_checklist"
+        result.loc[target, "historial"] = ""
+        result.loc[target, "estado_ambiental_override"] = override
+
+    duplicated_ids = result.loc[
+        result["exp_id_confirmado"].notna()
+        & result["exp_id_confirmado"].duplicated(keep=False),
+        "exp_id_confirmado",
+    ].unique()
+    for exp_id in duplicated_ids:
+        same_expediente = result["exp_id_confirmado"].eq(exp_id)
+        checklist_owner = same_expediente & result["criterio"].eq(
+            "decision_J_checklist"
+        )
+        if checklist_owner.sum() != 1:
+            continue
+        displaced = same_expediente & ~checklist_owner
+        result.loc[displaced, "exp_id_confirmado"] = pd.NA
+        result.loc[displaced, "criterio"] = "regla_desplazada_por_checklist"
+        result.loc[displaced, "historial"] = ""
+        result.loc[displaced, "estado_ambiental_override"] = ""
+
+    result["exp_id_confirmado"] = pd.to_numeric(
+        result["exp_id_confirmado"], errors="coerce"
+    ).astype("Int64")
+    return result.loc[:, MATCH_OUTPUT_COLUMNS]
+
+
+def _validate_shared_expediente_assignments(
+    confirmed: pd.DataFrame,
+    shared_expediente_exceptions: pd.DataFrame | None,
+) -> None:
+    duplicated = confirmed.loc[
+        confirmed["exp_id_confirmado"].notna()
+        & confirmed["exp_id_confirmado"].duplicated(keep=False),
+        ["cochilco_id", "exp_id_confirmado"],
+    ]
+    if duplicated.empty:
+        return
+    exceptions = (
+        shared_expediente_exceptions
+        if shared_expediente_exceptions is not None
+        else pd.DataFrame(columns=["exp_id", "cochilco_id", "motivo"])
+    )
+    required = {"exp_id", "cochilco_id", "motivo"}
+    missing = required.difference(exceptions.columns)
+    if missing:
+        raise ValueError(f"Missing shared-expediente exception columns: {sorted(missing)}")
+    if exceptions["motivo"].map(_decision_text).eq("").any():
+        raise ValueError("Shared-expediente exceptions require a motivo")
+    allowed = set(
+        zip(
+            pd.to_numeric(exceptions["exp_id"], errors="raise").astype(int),
+            exceptions["cochilco_id"].astype(str),
+            strict=True,
+        )
+    )
+    actual = set(
+        zip(
+            duplicated["exp_id_confirmado"].astype(int),
+            duplicated["cochilco_id"].astype(str),
+            strict=True,
+        )
+    )
+    undocumented = actual - allowed
+    if undocumented:
+        ids = sorted({exp_id for exp_id, _ in undocumented})
+        raise ValueError(
+            "An expediente cannot be principal for two Cochilco projects; "
+            f"Duplicate confirmed exp_id without documented exception: {ids}"
+        )
+
+
+def build_confirmed_match_table(
+    review: pd.DataFrame,
+    shared_expediente_exceptions: pd.DataFrame | None = None,
+) -> pd.DataFrame:
     """Reduce candidate rows to one explicit human decision per Cochilco project."""
     required = {"cochilco_id", "match_confirmado", "criterio"}
     missing = required.difference(review.columns)
@@ -321,6 +545,7 @@ def build_confirmed_match_table(review: pd.DataFrame) -> pd.DataFrame:
                 "exp_id_confirmado": exp_id,
                 "criterio": criterion,
                 "historial": history,
+                "estado_ambiental_override": "",
             }
         )
     if unreviewed:
@@ -332,6 +557,7 @@ def build_confirmed_match_table(review: pd.DataFrame) -> pd.DataFrame:
         )
     result = pd.DataFrame(records, columns=MATCH_OUTPUT_COLUMNS)
     result["exp_id_confirmado"] = result["exp_id_confirmado"].astype("Int64")
+    _validate_shared_expediente_assignments(result, shared_expediente_exceptions)
     return result
 
 
@@ -355,7 +581,10 @@ def classify_environmental_status(
 
 
 def build_portfolio_status(
-    cochilco: pd.DataFrame, confirmed: pd.DataFrame, sea_mining: pd.DataFrame
+    cochilco: pd.DataFrame,
+    confirmed: pd.DataFrame,
+    sea_mining: pd.DataFrame,
+    shared_expediente_exceptions: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Join the 59-project Cochilco portfolio to confirmed SEA records."""
     if cochilco["project_id"].duplicated().any():
@@ -377,11 +606,7 @@ def build_portfolio_status(
         missing = joined.loc[joined["criterio"].isna(), "project_id"].tolist()
         raise ValueError(f"Missing confirmed matches for Cochilco projects: {missing[:5]}")
 
-    matched = joined.loc[joined["exp_id_confirmado"].notna()].copy()
-    duplicated = matched["exp_id_confirmado"].duplicated(keep=False)
-    if duplicated.any() and not matched.loc[duplicated, "nota_agregacion"].fillna(False).all():
-        ids = matched.loc[duplicated, "exp_id_confirmado"].astype(int).unique().tolist()
-        raise ValueError(f"Duplicate confirmed exp_id without documented aggregation: {ids}")
+    _validate_shared_expediente_assignments(confirmed, shared_expediente_exceptions)
 
     sea = sea_mining.loc[:, SEA_STATUS_COLUMNS]
     if sea["exp_id"].duplicated().any():
@@ -398,10 +623,19 @@ def build_portfolio_status(
         ids = result.loc[missing_sea, "exp_id_confirmado"].astype(int).tolist()
         raise ValueError(f"Confirmed exp_id not found in sea_mining: {ids}")
     etapas = result["etapa"] if "etapa" in result else [None] * len(result)
+    overrides = (
+        result["estado_ambiental_override"].map(_decision_text)
+        if "estado_ambiental_override" in result
+        else [""] * len(result)
+    )
     result["estado_ambiental"] = [
-        classify_environmental_status(evento, exp_id, etapa)
-        for evento, exp_id, etapa in zip(
-            result["evento"], result["exp_id_confirmado"], etapas, strict=True
+        override or classify_environmental_status(evento, exp_id, etapa)
+        for evento, exp_id, etapa, override in zip(
+            result["evento"],
+            result["exp_id_confirmado"],
+            etapas,
+            overrides,
+            strict=True,
         )
     ]
     return result.drop(columns=["cochilco_id", "exp_id"])
@@ -413,12 +647,26 @@ def write_portfolio_status(
     sea_path: Path = SEA_PATH,
     confirmed_path: Path = CONFIRMED_MATCH_PATH,
     output_path: Path = PORTFOLIO_STATUS_PATH,
+    checklist_path: Path | None = CHECKLIST_PATH,
+    shared_exceptions_path: Path | None = SHARED_EXCEPTIONS_PATH,
 ) -> pd.DataFrame:
     """Read local inputs and write privacy-safe match and portfolio artifacts."""
     review = pd.read_csv(review_path, dtype={"match_confirmado": "string"}, keep_default_na=False)
+    sea_mining = pd.read_parquet(sea_path)
     confirmed = build_confirmed_match_table(review)
+    if checklist_path is not None:
+        checklist = pd.read_csv(checklist_path, keep_default_na=False)
+        confirmed = apply_checklist_decisions(confirmed, checklist, sea_mining)
+    shared_exceptions = (
+        pd.read_csv(shared_exceptions_path)
+        if shared_exceptions_path is not None
+        else pd.DataFrame(columns=["exp_id", "cochilco_id", "motivo"])
+    )
     portfolio = build_portfolio_status(
-        pd.read_parquet(cochilco_path), confirmed, pd.read_parquet(sea_path)
+        pd.read_parquet(cochilco_path),
+        confirmed,
+        sea_mining,
+        shared_expediente_exceptions=shared_exceptions,
     )
     confirmed_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.parent.mkdir(parents=True, exist_ok=True)

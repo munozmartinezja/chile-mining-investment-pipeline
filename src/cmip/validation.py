@@ -43,9 +43,27 @@ ENVIRONMENTAL_STATES = [
     "en_evaluacion",
     "desistido_o_rechazado",
     "otro",
+    "agregado_no_asignable",
+    "rca_previa_2011",
+    "pertinencia",
+    "no_determinado",
     "sin_expediente_en_ejecucion",
     "sin_expediente_en_estudio",
 ]
+ENVIRONMENTAL_SEMANTICS = {
+    "agregado_no_asignable": (
+        "Fila agregada de Cochilco sin un expediente SEA principal asignable."
+    ),
+    "rca_previa_2011": "Proyecto cubierto por una RCA base anterior a 2011.",
+    "pertinencia": "Proyecto respaldado por una consulta de pertinencia, no un expediente.",
+    "no_determinado": "La revisión manual no pudo determinar el instrumento aplicable.",
+    "sin_expediente_en_ejecucion": (
+        "Sin expediente confirmado y etapa Cochilco Ejecución."
+    ),
+    "sin_expediente_en_estudio": (
+        "Sin expediente confirmado y etapa distinta de Ejecución."
+    ),
+}
 # Applied to an accent-stripped, case-folded expediente name. Word boundaries avoid
 # unrelated substrings while singular/plural alternatives capture árido(s)/cantera(s).
 QUARRY_NAME_REGEX = re.compile(r"\b(?:aridos?|canteras?)\b")
@@ -302,10 +320,17 @@ def build_claims_register(
         )
     )
 
+    override_case = (
+        "WHEN NULLIF(TRIM(estado_ambiental_override), '') IS NOT NULL "
+        "THEN estado_ambiental_override"
+        if "estado_ambiental_override" in portfolio
+        else ""
+    )
     environmental_sql = _duckdb_frame(
-        """
+        f"""
         SELECT
           CASE
+            {override_case}
             WHEN exp_id_confirmado IS NULL AND etapa = 'Ejecución'
               THEN 'sin_expediente_en_ejecucion'
             WHEN exp_id_confirmado IS NULL THEN 'sin_expediente_en_estudio'
@@ -342,12 +367,8 @@ def build_claims_register(
             if state in environmental_sql.index
             else 0.0
         )
-        semantic = (
-            "Sin expediente confirmado y etapa Cochilco Ejecución."
-            if state == "sin_expediente_en_ejecucion"
-            else "Sin expediente confirmado y etapa distinta de Ejecución."
-            if state == "sin_expediente_en_estudio"
-            else "Estado basado en el desenlace del expediente SEA confirmado."
+        semantic = ENVIRONMENTAL_SEMANTICS.get(
+            state, "Estado basado en el desenlace del expediente SEA confirmado."
         )
         rows.extend(
             [
@@ -561,16 +582,69 @@ def build_validation_checklist(
     confirmed_match_path: Path = CONFIRMED_MATCH_PATH,
     checklist_path: Path | None = CHECKLIST_PATH,
     orphans_path: Path | None = CHECKLIST_ORPHANS_PATH,
+    candidate_review: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Build J's obligations, retaining prior answers and archiving removed IDs."""
     portfolio = pd.read_parquet(portfolio_path)
-    sea = pd.read_parquet(sea_path).set_index("exp_id")
+    sea_source = pd.read_parquet(sea_path)
+    sea = sea_source.set_index("exp_id")
     decisions = pd.read_csv(confirmed_match_path)
     decision_ids = decisions.loc[decisions["criterio"].eq("decision_J"), "cochilco_id"]
     portfolio_by_id = portfolio.set_index("project_id", drop=False)
     missing_decisions = set(decision_ids) - set(portfolio_by_id.index)
     if missing_decisions:
         raise ValueError(f"decision_J projects missing from portfolio: {sorted(missing_decisions)}")
+
+    if candidate_review is None:
+        cochilco_required = {
+            "project_id",
+            "nombre_del_proyecto",
+            "empresa",
+            "region",
+        }
+        sea_required = {
+            "exp_id",
+            "exp_nombre",
+            "seco_nombre",
+            "region",
+            "estado",
+            "fecha_ingreso",
+        }
+        if cochilco_required.issubset(portfolio) and sea_required.issubset(sea_source):
+            from cmip.match import rank_candidates
+
+            candidate_review = rank_candidates(portfolio, sea_source, top_n=1)
+        else:
+            candidate_review = pd.DataFrame()
+
+    suggestions: dict[str, str] = {}
+    if not candidate_review.empty:
+        required_suggestion_columns = {
+            "cochilco_id",
+            "exp_id",
+            "sea_nombre",
+            "inversion_ratio",
+        }
+        missing_suggestion_columns = required_suggestion_columns.difference(
+            candidate_review.columns
+        )
+        if missing_suggestion_columns:
+            raise ValueError(
+                "Missing candidate-review columns: "
+                f"{sorted(missing_suggestion_columns)}"
+            )
+        for cochilco_id, candidates in candidate_review.groupby(
+            "cochilco_id", sort=False, dropna=False
+        ):
+            candidate = candidates.iloc[0]
+            if pd.isna(candidate["exp_id"]):
+                continue
+            ratio = candidate["inversion_ratio"]
+            ratio_text = "NA" if pd.isna(ratio) else f"{float(ratio):.3f}"
+            suggestions[str(cochilco_id)] = (
+                f"{int(float(candidate['exp_id']))} | {candidate['sea_nombre']} | "
+                f"inversion_ratio={ratio_text}"
+            )
 
     def checklist_row(
         project: pd.Series, question: str, group_order: int
@@ -592,6 +666,7 @@ def build_validation_checklist(
             "empresa": project["empresa"],
             "etapa": project["etapa"],
             "inversion_musd": project["inversion_musd"],
+            "candidato_sugerido": suggestions.get(str(project["project_id"]), ""),
             "exp_id_confirmado": exp_id,
             "sea_nombre": sea_name,
             "url_expediente": expediente_url,
@@ -616,6 +691,28 @@ def build_validation_checklist(
         group_order = 1 if pd.notna(project["exp_id_confirmado"]) else 2
         rows.append(checklist_row(project, question, group_order))
 
+    # The original checklist already gave every execution-stage missing case an RCA
+    # obligation. Add the other rule-based no-expediente cases without duplicating
+    # those execution obligations; this is the set of 14 previously unseen projects.
+    if "criterio" in portfolio:
+        additional_missing = portfolio.loc[
+            portfolio["exp_id_confirmado"].isna()
+            & portfolio["criterio"].eq("regla_sin_expediente")
+            & ~portfolio["etapa"].eq("Ejecución")
+            & ~portfolio["project_id"].isin(set(decision_ids))
+        ]
+        for _, project in additional_missing.iterrows():
+            rows.append(
+                checklist_row(
+                    project,
+                    (
+                        "¿Existe expediente propio 2011-2026 o el proyecto usa una RCA "
+                        "previa o una consulta de pertinencia?"
+                    ),
+                    group_order=2,
+                )
+            )
+
     execution = portfolio.loc[
         portfolio["exp_id_confirmado"].isna() & portfolio["etapa"].eq("Ejecución")
     ]
@@ -636,6 +733,7 @@ def build_validation_checklist(
         "empresa",
         "etapa",
         "inversion_musd",
+        "candidato_sugerido",
         "exp_id_confirmado",
         "sea_nombre",
         "url_expediente",
@@ -733,6 +831,7 @@ def write_validation_checklist(
     confirmed_match_path: Path = CONFIRMED_MATCH_PATH,
     checklist_path: Path = CHECKLIST_PATH,
     orphans_path: Path = CHECKLIST_ORPHANS_PATH,
+    candidate_review: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Regenerate the checklist without discarding J responses or removed projects."""
     result = build_validation_checklist(
@@ -741,6 +840,7 @@ def write_validation_checklist(
         confirmed_match_path,
         checklist_path=checklist_path,
         orphans_path=orphans_path,
+        candidate_review=candidate_review,
     )
     _write_csv_atomically(result, checklist_path)
     return result
@@ -751,7 +851,7 @@ def main() -> None:
     claims = build_claims_register()
     sensitivity = build_sensitivity_table()
     bootstrap = bootstrap_eia_high_investment_approval_24m()
-    checklist = write_validation_checklist()
+    checklist = pd.read_csv(CHECKLIST_PATH, keep_default_na=False)
     answered = int(checklist["respuesta_J"].astype(str).str.strip().ne("").sum())
     print("\nRegistro de cifras\n", claims.to_string(index=False))
     print("\nSensibilidad\n", sensitivity.to_string(index=False))

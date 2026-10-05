@@ -1,19 +1,22 @@
-cochilco_empresa,alias,estado
-Antofagasta Minerals,Minera Los Pelambres,confirmado
-Antofagasta Minerals,Minera Centinela,confirmado
-Antofagasta Minerals,Compañía Minera Zaldívar,confirmado
-BHP,Minera Escondida,confirmado
-BHP,Minera Spence,confirmado
-BHP,Compañía Minera Cerro Colorado,confirmado
-Capstone Copper,Minera Mantoverde,confirmado
-Capstone Copper,Minera Santo Domingo,confirmado
-Freeport-McMoran,Sociedad Contractual Minera El Abra,confirmado
-Lundin Mining,Minera Candelaria,confirmado
-Kinross Gold Corporation,Compañía Minera Mantos de Oro,confirmado
-CAP S.A.,Compañía Minera del Pacífico,confirmado
-Codelco,Corporación Nacional del Cobre,confirmado
-ENAMI,Empresa Nacional de Minería,confirmado
-Rio Tinto - ENAMI,Empresa Nacional de Minería,confirmado
-Compañía Minera Doña Inés de Collahuasi SCM,Doña Inés de Collahuasi,confirmado
-SQM,Sociedad Química y Minera,confirmado
-Sociedad Punta del Cobre S.A.,Pucobre,confirmado
+cochilco_empresa,alias,estado,fuente
+Antofagasta Minerals,Minera Los Pelambres,confirmado,catalogo_inicial
+Antofagasta Minerals,Minera Centinela,confirmado,catalogo_inicial
+Antofagasta Minerals,Compañía Minera Zaldívar,confirmado,catalogo_inicial
+BHP,Minera Escondida,confirmado,catalogo_inicial
+BHP,Minera Escondida Limitada,confirmado,revision_J_2026-10
+BHP,Minera Spence,confirmado,revision_J_2026-10
+BHP,Compañía Minera Cerro Colorado,confirmado,revision_J_2026-10
+Capstone Copper,Mantoverde,confirmado,revision_J_2026-10
+Capstone Copper,Minera Mantoverde,confirmado,catalogo_inicial
+Capstone Copper,Minera Santo Domingo,confirmado,catalogo_inicial
+Freeport-McMoran,Sociedad Contractual Minera El Abra,confirmado,revision_J_2026-10
+Anglo American,Anglo American Sur,confirmado,revision_J_2026-10
+Lundin Mining,Minera Candelaria,confirmado,catalogo_inicial
+Kinross Gold Corporation,Compañía Minera Mantos de Oro,confirmado,catalogo_inicial
+CAP S.A.,Compañía Minera del Pacífico,confirmado,catalogo_inicial
+Codelco,Corporación Nacional del Cobre,confirmado,catalogo_inicial
+ENAMI,Empresa Nacional de Minería,confirmado,catalogo_inicial
+Rio Tinto - ENAMI,Empresa Nacional de Minería,confirmado,catalogo_inicial
+Compañía Minera Doña Inés de Collahuasi SCM,Doña Inés de Collahuasi,confirmado,catalogo_inicial
+SQM,Sociedad Química y Minera,confirmado,catalogo_inicial
+Sociedad Punta del Cobre S.A.,Pucobre,confirmado,catalogo_inicial
