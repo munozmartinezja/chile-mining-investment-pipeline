@@ -33,6 +33,10 @@ COLORS = {
     "sin_expediente_en_ejecucion": "#64748B",
     "sin_expediente_en_estudio": "#CBD5E1",
     "desistido_o_rechazado": "#B45309",
+    "agregado_no_asignable": "#7C3AED",
+    "rca_previa_2011": "#0F766E",
+    "pertinencia": "#0891B2",
+    "no_determinado": "#6B7280",
     "otro": "#64748B",
 }
 
@@ -45,6 +49,10 @@ def _pretty_status(value: str) -> str:
         "sin_expediente_en_ejecucion": "Sin expediente: ejecución",
         "sin_expediente_en_estudio": "Sin expediente: estudio",
         "desistido_o_rechazado": "Desistido o rechazado",
+        "agregado_no_asignable": "Agregado no asignable",
+        "rca_previa_2011": "RCA previa a 2011",
+        "pertinencia": "Pertinencia",
+        "no_determinado": "No determinado",
         "otro": "Otro",
     }
     return labels.get(value, value.replace("_", " ").capitalize())
@@ -175,7 +183,7 @@ def plot_portfolio(portfolio: pd.DataFrame, title: str, path: Path) -> None:
         .sort_values("inversion_musd")
     )
     labels = distribution["estado_ambiental"].map(_pretty_status)
-    colors = distribution["estado_ambiental"].map(COLORS)
+    colors = distribution["estado_ambiental"].map(COLORS).fillna("#64748B")
     fig, ax = plt.subplots(figsize=(8, 4.8))
     bars = ax.barh(labels, distribution["inversion_musd"], color=colors)
     ax.bar_label(bars, fmt="%.0f", padding=3, fontsize=8)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -174,6 +175,140 @@ def test_rank_candidates_filters_region_and_orders_top_three() -> None:
     assert ranked.loc[ranked["exp_id"].isin([11, 13]), "empresa_no_coincide"].eq(True).all()
     assert ranked["match_confirmado"].isna().all()
     assert 99 not in ranked["exp_id"].tolist()
+
+
+def test_investment_ratio_only_bonuses_a_name_or_mine_match() -> None:
+    cochilco = pd.DataFrame(
+        {
+            "project_id": ["c1"],
+            "nombre_del_proyecto": ["Proyecto Cóndor"],
+            "empresa": ["Minera Uno"],
+            "mina": ["Cóndor"],
+            "region": ["Antofagasta"],
+            "inversion_musd": [100.0],
+        }
+    )
+    sea = pd.DataFrame(
+        {
+            "exp_id": [10, 11],
+            "exp_nombre": ["Proyecto Cóndor", "Proyecto totalmente distinto"],
+            "empresa_nombre": ["Minera Uno", "Minera Uno"],
+            "titular_nombre": [None, None],
+            "estado": ["Aprobado", "Aprobado"],
+            "fecha_ingreso": pd.to_datetime(["2020-01-01", "2020-01-01"]),
+            "region": ["II", "II"],
+            "seco_nombre": ["Minería", "Minería"],
+            "inversion_musd": [100.0, 100.0],
+        }
+    )
+
+    ranked = rank_candidates(cochilco, sea)
+
+    unrelated = ranked.loc[ranked["exp_id"].eq(11)].iloc[0]
+    assert unrelated["inversion_ratio"] == pytest.approx(1.0)
+    assert unrelated["score"] < 75
+    reviewed = apply_automatic_match_rules(ranked)
+    selected = reviewed.loc[reviewed["match_confirmado"].ne("")].iloc[0]
+    assert selected["exp_id"] == 10
+
+
+def test_principal_expediente_prefers_scope_over_comparable_update() -> None:
+    cochilco = pd.DataFrame(
+        {
+            "project_id": ["centinela"],
+            "nombre_del_proyecto": ["Desarrollo Minera Centinela"],
+            "empresa": ["Antofagasta Minerals"],
+            "mina": ["Centinela"],
+            "region": ["Antofagasta"],
+            "inversion_musd": [pd.NA],
+        }
+    )
+    sea = pd.DataFrame(
+        {
+            "exp_id": [2140811184, 2130502645],
+            "exp_nombre": [
+                "Actualización Proyecto Desarrollo Minera Centinela",
+                "Desarrollo Minera Centinela",
+            ],
+            "empresa_nombre": ["Minera Centinela", "Minera Centinela"],
+            "titular_nombre": [None, None],
+            "estado": ["Aprobado", "Aprobado"],
+            "fecha_ingreso": pd.to_datetime(["2018-06-20", "2015-06-04"]),
+            "region": ["II", "II"],
+            "seco_nombre": ["Minería", "Minería"],
+            "inversion_musd": [0.0, 4350.0],
+        }
+    )
+    aliases = pd.DataFrame(
+        {
+            "cochilco_empresa": ["Antofagasta Minerals"],
+            "alias": ["Minera Centinela"],
+            "estado": ["confirmado"],
+        }
+    )
+
+    ranked = rank_candidates(cochilco, sea, aliases=aliases)
+
+    assert ranked.iloc[0]["exp_id"] == 2130502645
+    assert ranked.iloc[1]["exp_id"] == 2140811184
+
+
+def test_real_operating_subsidiary_regressions_rank_expected_expedientes() -> None:
+    root = Path(__file__).resolve().parents[1]
+    cochilco_path = root / "data/processed/cochilco_projects.parquet"
+    sea_path = root / "data/interim/sea_mining.parquet"
+    if not cochilco_path.exists() or not sea_path.exists():
+        pytest.skip("requires local Cochilco and SEA parquets")
+    expected = {
+        "bhp-laguna-seca-expansion": 2164534221,
+        "bhp-nueva-concentradora-los-colorados": 2167965265,
+        "freeport-mcmoran-continuidad-operacional-minera-el-abra": 2167925893,
+        "anglo-american-proyecto-los-bronces-integrado": 2143785006,
+        "bhp-reapertura-cerro-colorado": 2168781721,
+        "capstone-copper-mv-optimized-mv-o": 2162419886,
+    }
+    cochilco = pd.read_parquet(cochilco_path)
+    sea = pd.read_parquet(sea_path)
+
+    ranked = rank_candidates(
+        cochilco.loc[cochilco["project_id"].isin(expected)], sea, top_n=1
+    )
+
+    actual = ranked.set_index("cochilco_id")["exp_id"].astype(int).to_dict()
+    assert actual == expected
+
+    spence_ids = {
+        "bhp-adecuacion-operacional-spence",
+        "bhp-crecimiento-concentradora-spence",
+    }
+    spence = rank_candidates(
+        cochilco.loc[cochilco["project_id"].isin(spence_ids)], sea, top_n=1
+    ).set_index("cochilco_id")
+    assert int(spence.loc["bhp-adecuacion-operacional-spence", "exp_id"]) == 2158456424
+    assert int(spence.loc["bhp-crecimiento-concentradora-spence", "exp_id"]) != 2158456424
+
+
+def test_aliases_match_exact_local_sea_holder_names() -> None:
+    root = Path(__file__).resolve().parents[1]
+    sea_path = root / "data/interim/sea_mining.parquet"
+    aliases_path = root / "data/curated/company_aliases.csv"
+    if not sea_path.exists():
+        pytest.skip("requires local SEA parquet")
+    sea = pd.read_parquet(sea_path).set_index("exp_id")
+    aliases = pd.read_csv(aliases_path)
+    cases = {
+        2164534221: "BHP",
+        2167965265: "BHP",
+        2167925893: "Freeport-McMoran",
+        2143785006: "Anglo American",
+        2168781721: "BHP",
+        2162419886: "Capstone Copper",
+    }
+
+    for exp_id, company in cases.items():
+        assert company_matches_candidate(
+            {"empresa": company, "mina": ""}, sea.loc[exp_id].to_dict(), aliases
+        )
 
 
 def test_rosario_fourth_line_does_not_match_pampa_pabellon_tailings() -> None:

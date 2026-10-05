@@ -27,7 +27,7 @@ def test_validation_notebook_ends_with_the_two_gate_assertions() -> None:
     assert last_cell["cell_type"] == "code"
     assert "GATE" in source
     assert 'claims["estado"].eq("verificada").all()' in source
-    assert "answered == 26" in source
+    assert "answered == 40" in source
 
 
 def test_validation_notebook_resolves_checklist_when_launched_from_notebooks(

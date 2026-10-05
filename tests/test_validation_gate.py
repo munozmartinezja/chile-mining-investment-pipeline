@@ -176,8 +176,22 @@ def _synthetic_checklist_sources(tmp_path):  # noqa: ANN001
 def test_validation_checklist_builds_human_urls_and_orders_groups(tmp_path) -> None:  # noqa: ANN001
     portfolio, sea, decisions = _synthetic_checklist_sources(tmp_path)
 
+    candidate_review = pd.DataFrame(
+        {
+            "cochilco_id": ["decision-na"],
+            "exp_id": [999],
+            "sea_nombre": ["Candidato sugerido"],
+            "inversion_ratio": [1.04],
+            "score": [98.0],
+        }
+    )
     checklist = build_validation_checklist(
-        portfolio, sea, decisions, checklist_path=None, orphans_path=None
+        portfolio,
+        sea,
+        decisions,
+        checklist_path=None,
+        orphans_path=None,
+        candidate_review=candidate_review,
     )
 
     confirmed = checklist.loc[checklist["cochilco_id"].eq("con-expediente")].iloc[0]
@@ -187,6 +201,9 @@ def test_validation_checklist_builds_human_urls_and_orders_groups(tmp_path) -> N
         "id_expediente=123&modo=ficha"
     )
     assert missing["url_expediente"] == ""
+    assert missing["candidato_sugerido"] == (
+        "999 | Candidato sugerido | inversion_ratio=1.040"
+    )
     assert confirmed["url_busqueda"] == (
         "https://www.google.com/search?q=site%3Aseia.sea.gob.cl+"
         "%22Do%C3%B1a+%22In%C3%A9s%22+Proyecto%22"

@@ -75,8 +75,12 @@ def test_all_four_renderers_write_png_files(tmp_path) -> None:  # noqa: ANN001
                 "aprobado",
                 "sin_expediente_en_ejecucion",
                 "sin_expediente_en_estudio",
+                "agregado_no_asignable",
+                "rca_previa_2011",
+                "pertinencia",
+                "no_determinado",
             ],
-            "inversion_musd": [20.0, 10.0, 20.0],
+            "inversion_musd": [20.0, 10.0, 20.0, 4.0, 3.0, 2.0, 1.0],
         }
     )
     trend = pd.DataFrame(

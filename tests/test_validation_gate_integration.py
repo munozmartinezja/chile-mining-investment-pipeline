@@ -9,10 +9,11 @@ from cmip.validation import (
     bootstrap_eia_high_investment_approval_24m,
     build_claims_register,
     build_sensitivity_table,
-    build_validation_checklist,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+PORTFOLIO_PATH = ROOT / "data/processed/cochilco_seia.parquet"
+SHARED_EXCEPTIONS_PATH = ROOT / "data/curated/shared_expediente_exceptions.csv"
 REQUIRED_DATA = [
     ROOT / "data/processed/cochilco_seia.parquet",
     ROOT / "data/processed/survival_km_summary.parquet",
@@ -58,6 +59,10 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
         "aj_EIA_aprobado_24m",
         "eia_en_evaluacion_n",
         "eia_en_evaluacion_inversion",
+        "estado_agregado_no_asignable_n",
+        "estado_rca_previa_2011_n",
+        "estado_pertinencia_n",
+        "estado_no_determinado_n",
     }.issubset(claim_ids)
 
 
@@ -100,9 +105,10 @@ def test_bootstrap_is_fixed_seed_and_reports_eia_high_investment_interval() -> N
     assert first.loc[0, "ic95_sup_pct"] > first.loc[0, "estimacion_pct"]
 
 
-@requires_local_data
-def test_validation_checklist_has_20_j_decisions_plus_six_execution_checks() -> None:
-    checklist = build_validation_checklist()
+def test_validation_checklist_is_the_complete_immutable_review_source() -> None:
+    checklist = pd.read_csv(
+        ROOT / "docs/validation_checklist.csv", keep_default_na=False
+    )
 
     assert checklist.columns.tolist() == [
         "cochilco_id",
@@ -110,6 +116,7 @@ def test_validation_checklist_has_20_j_decisions_plus_six_execution_checks() -> 
         "empresa",
         "etapa",
         "inversion_musd",
+        "candidato_sugerido",
         "exp_id_confirmado",
         "sea_nombre",
         "url_expediente",
@@ -118,20 +125,61 @@ def test_validation_checklist_has_20_j_decisions_plus_six_execution_checks() -> 
         "respuesta_J",
         "fuente_J",
     ]
-    assert len(checklist) == 26
-    assert checklist["pregunta"].str.contains("corresponde|Existe expediente propio").sum() == 20
+    assert len(checklist) == 40
+    assert checklist["pregunta"].str.contains("corresponde|Existe expediente propio").sum() == 34
     assert checklist["pregunta"].eq("¿N° de RCA vigente que cubre la ejecución?").sum() == 6
     assert checklist["url_busqueda"].str.startswith("https://www.google.com/search?q=").all()
-    confirmed = checklist["exp_id_confirmado"].notna()
+    confirmed = checklist["exp_id_confirmado"].ne("")
     assert checklist.loc[confirmed, "url_expediente"].str.contains(r"id_expediente=\d+&").all()
     assert checklist.loc[~confirmed, "url_expediente"].eq("").all()
 
 
-def test_versioned_validation_checklist_has_26_rows() -> None:
+def test_versioned_validation_checklist_has_40_rows() -> None:
     path = ROOT / "docs/validation_checklist.csv"
     if not all(source.exists() for source in REQUIRED_DATA):
         pytest.skip("requires local portfolio and SEA analysis parquets")
 
     checklist = pd.read_csv(path, keep_default_na=False)
 
-    assert len(checklist) == 26
+    assert len(checklist) == 40
+    assert checklist["respuesta_J"].str.strip().ne("").all()
+    assert not checklist.duplicated(["cochilco_id", "pregunta"]).any()
+
+
+@requires_local_data
+def test_final_environmental_status_totals_portfolio_investment() -> None:
+    portfolio = pd.read_parquet(PORTFOLIO_PATH)
+
+    totals = portfolio.groupby("estado_ambiental")["inversion_musd"].sum()
+
+    assert totals.sum() == pytest.approx(104_549.2, abs=0.05)
+    assert {
+        "agregado_no_asignable",
+        "pertinencia",
+        "no_determinado",
+    }.issubset(totals.index)
+
+
+@requires_local_data
+def test_no_confirmed_expediente_is_duplicated_outside_curated_exceptions() -> None:
+    portfolio = pd.read_parquet(PORTFOLIO_PATH)
+    exceptions = pd.read_csv(SHARED_EXCEPTIONS_PATH)
+    duplicated = portfolio.loc[
+        portfolio["exp_id_confirmado"].notna()
+        & portfolio["exp_id_confirmado"].duplicated(keep=False),
+        ["project_id", "exp_id_confirmado"],
+    ].copy()
+    actual = {
+        (int(row.exp_id_confirmado), row.project_id)
+        for row in duplicated.itertuples(index=False)
+    }
+    allowed = set(
+        zip(
+            exceptions["exp_id"].astype(int),
+            exceptions["cochilco_id"],
+            strict=True,
+        )
+    )
+
+    assert actual
+    assert actual <= allowed
