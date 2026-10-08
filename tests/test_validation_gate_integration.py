@@ -51,12 +51,22 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
     )
     claim_ids = set(register["claim_id"])
     assert {
+        "cartera_proyectos_n",
+        "sea_poblacion_admitida_n",
+        "clasificacion_ingenua_sin_permiso_pct",
+        "estado_sin_expediente_en_estudio_pct",
+        "estado_aprobado_pct",
         "estado_sin_expediente_en_ejecucion_n",
         "estado_sin_expediente_en_estudio_n",
         "km_DIA_mediana",
         "km_EIA_mediana",
+        "km_DIA_aprobado_24m",
+        "km_EIA_aprobado_24m",
         "aj_DIA_aprobado_24m",
         "aj_EIA_aprobado_24m",
+        "eia_100m_aj_aprobado_24m_estimacion",
+        "eia_100m_aj_aprobado_24m_ic95_inf",
+        "eia_100m_aj_aprobado_24m_ic95_sup",
         "eia_en_evaluacion_n",
         "eia_en_evaluacion_inversion",
         "estado_agregado_no_asignable_n",

@@ -225,6 +225,26 @@ def _step_at(curve: pd.DataFrame, column: str, time_days: float) -> float:
     return float(eligible.iloc[-1]) if not eligible.empty else 0.0
 
 
+def _direct_cumulative_incidence_at(
+    durations: np.ndarray,
+    event_codes: np.ndarray,
+    event_of_interest: int,
+    horizon_days: float,
+) -> float:
+    """Independently calculate one cumulative-incidence point from raw arrays."""
+    survival = 1.0
+    incidence = 0.0
+    for time in np.unique(durations[durations <= horizon_days]):
+        at_risk = np.count_nonzero(durations >= time)
+        target_events = np.count_nonzero(
+            (durations == time) & (event_codes == event_of_interest)
+        )
+        all_events = np.count_nonzero((durations == time) & (event_codes != 0))
+        incidence += survival * target_events / at_risk
+        survival *= 1.0 - all_events / at_risk
+    return float(incidence)
+
+
 def _normalized_name(value: object) -> str:
     normalized = unicodedata.normalize("NFKD", str(value).casefold())
     return "".join(character for character in normalized if not unicodedata.combining(character))
@@ -319,6 +339,73 @@ def build_claims_register(
             "Monto nominal de cartera; no es inversión ejecutada ni ajustada por probabilidad.",
         )
     )
+    portfolio_n = int(len(portfolio))
+    portfolio_n_sql = int(
+        _duckdb_frame("SELECT COUNT(*) AS value FROM read_parquet(?)", portfolio_path).loc[
+            0, "value"
+        ]
+    )
+    admitted_n = int(len(population))
+    admitted_n_sql = int(
+        _duckdb_frame(
+            """
+            SELECT COUNT(*) AS value
+            FROM read_parquet(?)
+            WHERE admitido = TRUE AND fecha_inconsistente = FALSE
+            """,
+            sea_path,
+        ).loc[0, "value"]
+    )
+    rows.extend(
+        [
+            _claim(
+                "cartera_proyectos_n",
+                "Proyectos de la cartera Cochilco",
+                portfolio_n,
+                "proyectos",
+                str(portfolio_path.relative_to(PROJECT_ROOT)),
+                "Conteo de proyectos de la cartera.",
+                portfolio_n_sql,
+                0.0,
+                "Una fila agregada de Cochilco cuenta como proyecto de cartera.",
+            ),
+            _claim(
+                "sea_poblacion_admitida_n",
+                "Expedientes mineros admitidos en la población de supervivencia",
+                admitted_n,
+                "expedientes",
+                str(sea_path.relative_to(PROJECT_ROOT)),
+                "Conteo de expedientes admitidos con fechas consistentes.",
+                admitted_n_sql,
+                0.0,
+                "Unidad de análisis: expediente principal; modificaciones excluidas.",
+            ),
+        ]
+    )
+    naive_unmatched_n = int(portfolio["criterio"].astype(str).str.startswith("decision_J").sum())
+    naive_unmatched_n_sql = int(
+        _duckdb_frame(
+            """
+            SELECT COUNT(*) AS value
+            FROM read_parquet(?)
+            WHERE CAST(criterio AS VARCHAR) LIKE 'decision_J%'
+            """,
+            portfolio_path,
+        ).loc[0, "value"]
+    )
+    rows.append(
+        _claim(
+            "clasificacion_ingenua_sin_permiso_pct",
+            "Porcentaje que una clasificación ingenua marcaba sin permiso",
+            100 * naive_unmatched_n / portfolio_n,
+            "%",
+            str(portfolio_path.relative_to(PROJECT_ROOT)),
+            "Casos enviados a decisión manual divididos por proyectos de cartera.",
+            100 * naive_unmatched_n_sql / portfolio_n_sql,
+            0.05,
+            "Proxy prevalidación; no representa el estado ambiental final.",
+        )
+    )
 
     override_case = (
         "WHEN NULLIF(TRIM(estado_ambiental_override), '') IS NOT NULL "
@@ -397,6 +484,25 @@ def build_claims_register(
             ]
         )
 
+    for state in ("sin_expediente_en_estudio", "aprobado"):
+        state_amount = float(environmental_pipeline.loc[state, "inversion_musd"])
+        sql_amount = float(environmental_sql.loc[state, "inversion_musd"])
+        rows.append(
+            _claim(
+                f"estado_{state}_pct",
+                f"Porcentaje de inversión en estado ambiental {state}",
+                100 * state_amount / total,
+                "%",
+                str(portfolio_path.relative_to(PROJECT_ROOT)),
+                "Inversión del estado dividida por inversión total de cartera.",
+                100 * sql_amount / total_sql,
+                0.05,
+                ENVIRONMENTAL_SEMANTICS.get(
+                    state, "Estado basado en el desenlace del expediente SEA confirmado."
+                ),
+            )
+        )
+
     for instrument in ("DIA", "EIA"):
         group = population.loc[population["instrumento"].eq(instrument)]
         curve = manual_kaplan_meier(group["duration_days"], group["approval_event"])
@@ -430,6 +536,23 @@ def build_claims_register(
                     "real con riesgos competitivos.",
                 )
             )
+        km_24_value = 100 * float(km_summary.loc[instrument, "prob_aprobacion_24m"])
+        km_24_recalculated = 100 * (
+            1.0 - _step_at(curve, "survival_probability", 24 * DAYS_PER_MONTH)
+        )
+        rows.append(
+            _claim(
+                f"km_{instrument}_aprobado_24m",
+                f"Probabilidad KM de aprobación a 24 meses: {instrument}",
+                km_24_value,
+                "%",
+                str(km_summary_path.relative_to(PROJECT_ROOT)),
+                "Uno menos la supervivencia KM a 24 meses.",
+                km_24_recalculated,
+                0.5,
+                "KM censura riesgos competitivos; se usa solo para mostrar la brecha con AJ.",
+            )
+        )
 
     aj_24 = aj_summary.loc[aj_summary["horizonte_meses"].eq(24)].set_index(
         ["instrumento", "outcome"]
@@ -457,6 +580,78 @@ def build_claims_register(
                     "Incidencia acumulada marginal; conserva todos los desenlaces competidores.",
                 )
             )
+
+    high_investment_eia = population.loc[
+        population["instrumento"].eq("EIA") & population["inversion_musd"].ge(100)
+    ].reset_index(drop=True)
+    if high_investment_eia.empty:
+        raise ValueError("No EIA >=100 MMUS$ records available for bootstrap")
+    replicas = 1000
+    seed = 20261002
+    rng = np.random.default_rng(seed)
+    bootstrap_primary = np.empty(replicas, dtype=float)
+    bootstrap_independent = np.empty(replicas, dtype=float)
+    for replica in range(replicas):
+        positions = rng.integers(0, len(high_investment_eia), size=len(high_investment_eia))
+        sample = high_investment_eia.iloc[positions]
+        sample_curve = manual_aalen_johansen(
+            sample["duration_days"], sample["competing_event"], event_of_interest=1
+        )
+        bootstrap_primary[replica] = 100 * _step_at(
+            sample_curve, "cumulative_incidence", 24 * DAYS_PER_MONTH
+        )
+        bootstrap_independent[replica] = 100 * _direct_cumulative_incidence_at(
+            sample["duration_days"].to_numpy(float),
+            sample["competing_event"].to_numpy(int),
+            event_of_interest=1,
+            horizon_days=24 * DAYS_PER_MONTH,
+        )
+    primary_interval = np.quantile(bootstrap_primary, [0.025, 0.975])
+    independent_interval = np.quantile(bootstrap_independent, [0.025, 0.975])
+    full_curve = manual_aalen_johansen(
+        high_investment_eia["duration_days"],
+        high_investment_eia["competing_event"],
+        event_of_interest=1,
+    )
+    central = 100 * _step_at(full_curve, "cumulative_incidence", 24 * DAYS_PER_MONTH)
+    central_independent = 100 * _direct_cumulative_incidence_at(
+        high_investment_eia["duration_days"].to_numpy(float),
+        high_investment_eia["competing_event"].to_numpy(int),
+        event_of_interest=1,
+        horizon_days=24 * DAYS_PER_MONTH,
+    )
+    bootstrap_note = (
+        "EIA de inversión >=100 MMUS$; intervalo percentil de 1.000 réplicas "
+        "con semilla fija 20261002."
+    )
+    for suffix, label, value, recalculated in (
+        ("estimacion", "Estimación central", central, central_independent),
+        (
+            "ic95_inf",
+            "Límite inferior IC 95% bootstrap",
+            primary_interval[0],
+            independent_interval[0],
+        ),
+        (
+            "ic95_sup",
+            "Límite superior IC 95% bootstrap",
+            primary_interval[1],
+            independent_interval[1],
+        ),
+    ):
+        rows.append(
+            _claim(
+                f"eia_100m_aj_aprobado_24m_{suffix}",
+                f"{label}: aprobación AJ de EIA >=100 MMUS$ a 24 meses",
+                float(value),
+                "%",
+                str(sea_path.relative_to(PROJECT_ROOT)),
+                "Bootstrap percentil sobre la incidencia acumulada Aalen–Johansen.",
+                float(recalculated),
+                0.05,
+                bootstrap_note,
+            )
+        )
 
     eia_mask = portfolio["instrumento"].eq("EIA") & portfolio["evento"].eq("en_tramite")
     eia_n = int(eia_mask.sum())

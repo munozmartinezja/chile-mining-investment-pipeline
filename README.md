@@ -15,19 +15,28 @@ tramitación ambiental en el SEA.
 
 ### Hallazgos
 
-- El tiempo mediano KM hasta aprobación entre proyectos que siguen en juego es
-  **7,7 meses para DIA** (IC 95%: 7,2–8,1) y **28,8 meses para EIA**
-  (23,7–32,9).
-- La incidencia acumulada de aprobación a 24 meses —la cifra principal con
-  riesgos competitivos— es **66,5% para DIA** y **31,1% para EIA**.
-- A 24 meses, KM entrega 96,2% para DIA y 41,2% para EIA: sobreestima la
-  incidencia de aprobación en **29,7 y 10,1 puntos porcentuales**, respectivamente,
-  porque censura los desenlaces competidores.
-- El desistimiento o abandono a 24 meses acumula **22,5% en DIA** y **19,2% en
-  EIA**; rechazo y término anticipado suman 9,7% y 8,0%, respectivamente.
+**Un quinto de la cartera minera 2025–2034 aún no ingresa al SEIA:** 21.893,9
+MMUS$ en 8 proyectos, equivalentes al 20,9% de la inversión total.
 
-Las tablas, supuestos y límites están en
-[`docs/survival_results.md`](docs/survival_results.md).
+- Mediana KM hasta aprobación: **7,7 meses para DIA** (IC 95%: 7,2–8,1) y
+  **28,8 meses para EIA** (23,7–32,9).
+- Para EIA de al menos 100 MMUS$, la aprobación Aalen–Johansen a 24 meses tiene
+  un **IC bootstrap de 26,4%–49,8%** (estimación central: 38,4%).
+- La inversión actualmente en evaluación alcanza **24.780 MMUS$ en 15
+  proyectos**.
+- La inversión aprobada suma **32.621,4 MMUS$**, o **31,2%** de la cartera.
+
+Briefs ejecutivos: [español](docs/brief/brief_c1_es.pdf) ·
+[English](docs/brief/brief_c1_en.pdf).
+
+#### Validación
+
+La compuerta de publicación exige que cada cifra esté en el registro de
+`build_claims_register()` con estado `verificada` y un recálculo independiente.
+El cruce completo de 59 proyectos se revisó manualmente mediante un checklist de
+40 fichas. Esa revisión corrigió la clasificación ingenua de 64% “sin permiso” a
+21% de la inversión realmente `sin_expediente_en_estudio`; el 64% no es un
+hallazgo vigente.
 
 ### Fuentes
 
@@ -136,6 +145,19 @@ make test
 make lint
 ```
 
+### Power BI
+
+Ejecute `make powerbi` para generar seis Parquet livianos y con esquema
+explícito en `data/powerbi/`. En Power BI Desktop, use **Obtener datos →
+Parquet** para cargar cada archivo y mantenga el locale del archivo en
+`es-CL`. Las relaciones, la tabla calendario, las medidas DAX con formato y el
+diseño exacto de las tres páginas están en
+[`docs/powerbi/model.md`](docs/powerbi/model.md).
+
+Los Parquet son artefactos locales ignorados por Git. El archivo `.pbix` se
+versionará en `dashboards/` cuando J termine de construirlo y validarlo en
+Power BI Desktop.
+
 `docs/match_review.csv` permanece local porque contiene nombres. El único cruce
 versionado es `data/curated/cochilco_seia_match.csv`, con las columnas
 `cochilco_id`, `exp_id_confirmado`, `criterio` e `historial`. El catálogo
@@ -160,19 +182,27 @@ environmental-review outcomes.
 
 ### Findings
 
-- Median KM time to approval among projects that remain in play is **7.7 months
-  for DIA** (95% CI: 7.2–8.1) and **28.8 months for EIA** (23.7–32.9).
-- The 24-month cumulative incidence of approval—the principal competing-risk
-  estimate—is **66.5% for DIA** and **31.1% for EIA**.
-- At 24 months, KM reports 96.2% for DIA and 41.2% for EIA, overestimating
-  approval incidence by **29.7 and 10.1 percentage points**, respectively,
-  because competing outcomes are censored.
-- The 24-month cumulative incidence of withdrawal or abandonment is **22.5% for
-  DIA** and **19.2% for EIA**; rejection plus early termination total 9.7% and
-  8.0%, respectively.
+**One fifth of the 2025–2034 mining portfolio has yet to enter SEIA:**
+US$21,893.9m across 8 projects, equal to 20.9% of total investment.
 
-Tables, assumptions, and limitations are documented in
-[`docs/survival_results.md`](docs/survival_results.md).
+- Median KM time to approval is **7.7 months for DIA** (95% CI: 7.2–8.1) and
+  **28.8 months for EIA** (23.7–32.9).
+- For EIAs of at least US$100m, 24-month Aalen–Johansen approval has a
+  **26.4%–49.8% bootstrap CI** (central estimate: 38.4%).
+- Investment currently under review totals **US$24,780m across 15 projects**.
+- Approved investment totals **US$32,621.4m**, or **31.2%** of the portfolio.
+
+Executive briefs: [Español](docs/brief/brief_c1_es.pdf) ·
+[English](docs/brief/brief_c1_en.pdf).
+
+#### Validation
+
+The publication gate requires every figure to appear in
+`build_claims_register()` with status `verificada` and an independent
+recalculation. The full 59-project match was manually reviewed through a
+40-record checklist. That review corrected the naive 64% “without a permit”
+classification to 21% of investment actually `sin_expediente_en_estudio`; 64%
+is not a current finding.
 
 ### Sources
 
@@ -280,6 +310,18 @@ make analysis
 make test
 make lint
 ```
+
+### Power BI
+
+Run `make powerbi` to generate six compact, explicitly typed Parquet files in
+`data/powerbi/`. In Power BI Desktop, use **Get data → Parquet** to load each
+file and keep the file locale set to `es-CL`. Relationships, the calendar
+table, formatted DAX measures, and the exact three-page layout are specified in
+[`docs/powerbi/model.md`](docs/powerbi/model.md).
+
+The Parquet files are local artifacts ignored by Git. The `.pbix` file will be
+versioned under `dashboards/` after J finishes building and validating it in
+Power BI Desktop.
 
 `docs/match_review.csv` stays local because it contains names. The only
 versioned crosswalk is `data/curated/cochilco_seia_match.csv`, containing
