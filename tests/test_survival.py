@@ -32,6 +32,7 @@ def _sea_sample() -> pd.DataFrame:
             "fecha_inconsistente": [False, False, False, False, True],
             "inversion_musd": [1.0, 2.0, 3.0, 4.0, 5.0],
             "region": ["II", "III", "IV", "RM", "VIII"],
+            "tipologia": ["i1", "i5", "i3", "i4", "i2"],
         }
     )
 
@@ -39,10 +40,37 @@ def _sea_sample() -> pd.DataFrame:
 def test_build_survival_population_filters_and_encodes_events() -> None:
     result = build_survival_population(_sea_sample())
 
-    assert result["exp_id"].tolist() == [1, 2, 3]
-    assert result["approval_event"].tolist() == [1, 0, 0]
-    assert result["competing_event"].tolist() == [1, 0, 3]
-    assert result["duration_days"].tolist() == [30.0, 60.0, 90.0]
+    assert result["exp_id"].tolist() == [1, 3]
+    assert result["approval_event"].tolist() == [1, 0]
+    assert result["competing_event"].tolist() == [1, 3]
+    assert result["duration_days"].tolist() == [30.0, 90.0]
+
+
+def test_survival_population_excludes_i5_family_by_tipologia_not_name() -> None:
+    """Catch quarry/non-mining rows leaking in through names without keywords."""
+    source = pd.DataFrame(
+        {
+            "exp_id": [1, 2, 3, 4, 5],
+            "exp_nombre": [
+                "Mina metálica",
+                "Ruta 66",
+                "Planta sin palabra áridos",
+                "Otro proyecto",
+                "Proyecto minero válido",
+            ],
+            "tipologia": ["i1", "i5", "i5.1", "i5.2", "i4"],
+            "instrumento": ["DIA"] * 5,
+            "evento": ["aprobado"] * 5,
+            "duracion_dias": [30] * 5,
+            "fecha_ingreso": pd.to_datetime(["2020-01-01"] * 5),
+            "admitido": [True] * 5,
+            "fecha_inconsistente": [False] * 5,
+            "inversion_musd": [1.0] * 5,
+            "region": ["II"] * 5,
+        }
+    )
+
+    assert build_survival_population(source)["exp_id"].tolist() == [1, 5]
 
 
 class _RecordingKM:
@@ -69,7 +97,7 @@ def test_km_and_aj_receive_only_the_filtered_population() -> None:
     fit_kaplan_meier(population, fitter_factory=_RecordingKM)
     fit_competing_risks(population, fitter_factory=_RecordingAJ)
 
-    assert _RecordingKM.calls == [([30.0, 60.0], [1, 0], "DIA"), ([90.0], [0], "EIA")]
+    assert _RecordingKM.calls == [([30.0], [1], "DIA"), ([90.0], [0], "EIA")]
     assert all(120.0 not in call[0] and 150.0 not in call[0] for call in _RecordingAJ.calls)
     assert {call[2] for call in _RecordingAJ.calls} == {1, 2, 3, 4}
 

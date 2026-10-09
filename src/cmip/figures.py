@@ -20,7 +20,10 @@ from cmip.survival import (
 
 FIGURES_DIR = PROJECT_ROOT / "docs" / "figures"
 PORTFOLIO_PATH = PROCESSED_DIR / "cochilco_seia.parquet"
-SOURCE = "Fuente: Cochilco (dic-2025), SEA (corte 30-09-2026). Elaboración propia."
+SOURCE = (
+    "Fuente: Cochilco (dic-2025), SEA (descarga 30-09-2026; "
+    "último registro 25-08-2026). Elaboración propia."
+)
 COLORS = {
     "DIA": "#176B87",
     "EIA": "#D97706",
@@ -32,7 +35,7 @@ COLORS = {
     "sin_ingreso_seia": "#94A3B8",
     "sin_expediente_en_ejecucion": "#64748B",
     "sin_expediente_en_estudio": "#CBD5E1",
-    "desistido_o_rechazado": "#B45309",
+    "desistido_rechazado_o_no_calificado": "#B45309",
     "agregado_no_asignable": "#7C3AED",
     "rca_previa_2011": "#0F766E",
     "pertinencia": "#0891B2",
@@ -48,7 +51,7 @@ def _pretty_status(value: str) -> str:
         "sin_ingreso_seia": "Sin ingreso SEA",
         "sin_expediente_en_ejecucion": "Sin expediente: ejecución",
         "sin_expediente_en_estudio": "Sin expediente: estudio",
-        "desistido_o_rechazado": "Desistido o rechazado",
+        "desistido_rechazado_o_no_calificado": "Desistido, rechazado o no calificado",
         "agregado_no_asignable": "Agregado no asignable",
         "rca_previa_2011": "RCA previa a 2011",
         "pertinencia": "Pertinencia",

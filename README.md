@@ -15,16 +15,27 @@ tramitación ambiental en el SEA.
 
 ### Hallazgos
 
-**Un quinto de la cartera minera 2025–2034 aún no ingresa al SEIA:** 21.893,9
-MMUS$ en 8 proyectos, equivalentes al 20,9% de la inversión total.
+**20,9% de la inversión minera 2025–2034 no tiene expediente SEIA
+identificado:** 21.893,9 MMUS$ en 8 proyectos, todos en etapa de estudio.
 
-- Mediana KM hasta aprobación: **7,7 meses para DIA** (IC 95%: 7,2–8,1) y
-  **28,8 meses para EIA** (23,7–32,9).
-- Para EIA de al menos 100 MMUS$, la aprobación Aalen–Johansen a 24 meses tiene
-  un **IC bootstrap de 26,4%–49,8%** (estimación central: 38,4%).
+- La aprobación acumulada Aalen–Johansen de EIA es **31,7% a 24 meses** y
+  **51,7% a 36 meses**.
+- Para EIA ≥100 MMUS$, la aprobación Aalen–Johansen a 24 meses tiene un
+  **IC bootstrap por familia de reingreso de 27,6%–52,0%** (estimación central:
+  39,6%; 2.000 réplicas, semilla 20261002).
 - La inversión actualmente en evaluación alcanza **24.780 MMUS$ en 15
   proyectos**.
-- La inversión aprobada suma **32.621,4 MMUS$**, o **31,2%** de la cartera.
+- La inversión con RCA favorable suma **32.746,4 MMUS$**, o **31,3%** de la
+  cartera.
+
+Sensibilidades fuera del PDF (DIA / EIA, respectivamente):
+
+| Población | n | Aprobación AJ a 24 meses |
+|---|---:|---:|
+| Principal, sin tipologías `i5*` | 1.002 / 124 | 70,2% / 31,7% |
+| Con áridos y registros no mineros `i5*` | 1.515 / 130 | 66,5% / 31,3% |
+| Sin desistimientos a 60 días o menos | 878 / 112 | 80,2% / 35,2% |
+| Reingresos deduplicados | 882 / 107 | 76,6% / 32,8% |
 
 Briefs ejecutivos: [español](docs/brief/brief_c1_es.pdf) ·
 [English](docs/brief/brief_c1_en.pdf).
@@ -33,18 +44,23 @@ Briefs ejecutivos: [español](docs/brief/brief_c1_es.pdf) ·
 
 La compuerta de publicación exige que cada cifra esté en el registro de
 `build_claims_register()` con estado `verificada` y un recálculo independiente.
-El cruce completo de 59 proyectos se revisó manualmente mediante un checklist de
-40 fichas. Esa revisión corrigió la clasificación ingenua de 64% “sin permiso” a
-21% de la inversión realmente `sin_expediente_en_estudio`; el 64% no es un
-hallazgo vigente.
+El checklist conserva sus 40 filas respondidas y agrega 21 asignaciones
+automáticas pendientes. Por ello, 38 de 59 cruces están revisados ficha por
+ficha y la compuerta de publicación permanece cerrada hasta que J responda las
+21 filas nuevas. `make brief-draft` genera PDF con marca de agua para revisar el
+diseño; `make brief` falla mientras exista una respuesta vacía. Cuando J use
+`confirmado`, se mantiene el expediente sugerido; un `principal: <exp_id>` en
+`fuente_J` prevalece.
 
 ### Fuentes
 
 La fuente de cartera es la Comisión Chilena del Cobre (Cochilco), *Cartera de
 Proyectos de Inversión Minera en Chile 2025–2034*, Anexo C, diciembre de 2025.
 Los expedientes ambientales provienen del Servicio de Evaluación Ambiental
-(SEA), con corte al 30-09-2026. Las URL, nombres de archivos y sumas de
-verificación están en [`data/raw/SOURCES.md`](data/raw/SOURCES.md).
+(SEA), descargados el 30-09-2026. El último registro observado es del
+25-08-2026, fecha usada para censurar casos abiertos. Las URL, nombres de
+archivos y sumas de verificación están en
+[`data/raw/SOURCES.md`](data/raw/SOURCES.md).
 
 ### Arquitectura del pipeline
 
@@ -182,15 +198,26 @@ environmental-review outcomes.
 
 ### Findings
 
-**One fifth of the 2025–2034 mining portfolio has yet to enter SEIA:**
-US$21,893.9m across 8 projects, equal to 20.9% of total investment.
+**20.9% of 2025–2034 mining investment has no identified SEIA filing:**
+US$21,893.9m across 8 projects, all at study stage.
 
-- Median KM time to approval is **7.7 months for DIA** (95% CI: 7.2–8.1) and
-  **28.8 months for EIA** (23.7–32.9).
-- For EIAs of at least US$100m, 24-month Aalen–Johansen approval has a
-  **26.4%–49.8% bootstrap CI** (central estimate: 38.4%).
+- EIA Aalen–Johansen cumulative approval is **31.7% at 24 months** and **51.7%
+  at 36 months**.
+- For EIAs ≥US$100m, 24-month Aalen–Johansen approval has a **27.6%–52.0%
+  re-entry-family cluster bootstrap CI** (central estimate: 39.6%; 2,000
+  replicates, seed 20261002).
 - Investment currently under review totals **US$24,780m across 15 projects**.
-- Approved investment totals **US$32,621.4m**, or **31.2%** of the portfolio.
+- Investment with a favourable RCA totals **US$32,746.4m**, or **31.3%** of the
+  portfolio.
+
+Sensitivity results excluded from the PDF (DIA / EIA, respectively):
+
+| Population | n | 24-month AJ approval |
+|---|---:|---:|
+| Main population, excluding `i5*` types | 1,002 / 124 | 70.2% / 31.7% |
+| Including aggregates and non-mining `i5*` records | 1,515 / 130 | 66.5% / 31.3% |
+| Excluding withdrawals at 60 days or earlier | 878 / 112 | 80.2% / 35.2% |
+| Deduplicated re-entries | 882 / 107 | 76.6% / 32.8% |
 
 Executive briefs: [Español](docs/brief/brief_c1_es.pdf) ·
 [English](docs/brief/brief_c1_en.pdf).
@@ -199,17 +226,19 @@ Executive briefs: [Español](docs/brief/brief_c1_es.pdf) ·
 
 The publication gate requires every figure to appear in
 `build_claims_register()` with status `verificada` and an independent
-recalculation. The full 59-project match was manually reviewed through a
-40-record checklist. That review corrected the naive 64% “without a permit”
-classification to 21% of investment actually `sin_expediente_en_estudio`; 64%
-is not a current finding.
+recalculation. The checklist preserves its 40 answered rows and adds 21 pending
+automatic assignments. Consequently, 38 of 59 matches have been reviewed
+filing by filing, and the publication gate remains closed until J answers the
+21 new rows. `make brief-draft` creates watermarked review PDFs; `make brief`
+fails while any response is empty.
 
 ### Sources
 
 The portfolio source is the Chilean Copper Commission (Cochilco), *Mining
 Investment Project Portfolio in Chile 2025–2034*, Annex C, December 2025.
 Environmental cases come from Chile's Environmental Assessment Service (SEA),
-cut off at 2026-09-30. URLs, file names, and checksums are recorded in
+downloaded on 2026-09-30. The latest observed record is 2026-08-25, which is
+the censoring date for open cases. URLs, file names, and checksums are recorded in
 [`data/raw/SOURCES.md`](data/raw/SOURCES.md).
 
 ### Pipeline architecture

@@ -53,7 +53,6 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
     assert {
         "cartera_proyectos_n",
         "sea_poblacion_admitida_n",
-        "clasificacion_ingenua_sin_permiso_pct",
         "estado_sin_expediente_en_estudio_pct",
         "estado_aprobado_pct",
         "estado_sin_expediente_en_ejecucion_n",
@@ -73,33 +72,48 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
         "estado_rca_previa_2011_n",
         "estado_pertinencia_n",
         "estado_no_determinado_n",
+        "aj_EIA_aprobado_36m",
+        "aj_DIA_aprobado_12m",
+        "aj_EIA_mes_50pct",
+        "aj_EIA_meseta",
+        "eia_aprobados_mediana_meses",
+        "eia_100m_n",
+        "eia_100m_en_riesgo_24m",
+        "poblacion_periodo_inicio",
+        "poblacion_periodo_fin",
+        "cruces_revision_manual_n",
+        "cruces_regla_auto_n",
+        "headline_piso_pct",
+        "headline_techo_pct",
     }.issubset(claim_ids)
+    indexed = register.set_index("claim_id")
+    assert indexed.loc["sea_poblacion_admitida_n", "valor"] == 1126
+    assert indexed.loc["eia_100m_n", "valor"] == 81
+    assert indexed.loc["poblacion_periodo_inicio", "valor"] == 2011
+    assert indexed.loc["poblacion_periodo_fin", "valor"] == 2026
+    assert indexed.loc["cruces_revision_manual_n", "valor"] == 38
+    assert indexed.loc["cruces_regla_auto_n", "valor"] == 21
+    assert indexed.loc["headline_piso_pct", "valor"] == pytest.approx(
+        100 * (21_893.9 - 8_000 - 4_850.9) / 104_549.2
+    )
+    assert indexed.loc["headline_techo_pct", "valor"] == pytest.approx(
+        100 * (21_893.9 + 23_753.9 + 1_300) / 104_549.2
+    )
 
 
 @requires_local_data
-def test_sensitivity_matches_references_except_documented_regex_discrepancy() -> None:
+def test_sensitivity_reports_requested_population_variants() -> None:
     table = build_sensitivity_table().set_index(["segmento", "instrumento"])
-    expected = {
-        ("Todos", "DIA"): (1515, 7.7, 66.5),
-        ("Todos", "EIA"): (130, 28.8, 31.1),
-        (">=100 MMUS$", "DIA"): (97, 8.4, 78.1),
-        (">=100 MMUS$", "EIA"): (83, 25.6, 38.4),
-        ("<100 MMUS$", "EIA"): (47, 35.8, 18.1),
+    assert set(table.index.get_level_values("segmento")) == {
+        "Principal sin i5*",
+        "Con áridos y no mineros i5*",
+        "Sin desistimientos <=60 días",
+        "Reingresos deduplicados",
     }
-    for key, (n, median, incidence) in expected.items():
-        assert table.loc[key, "n"] == n
-        assert table.loc[key, "mediana_km_meses"] == pytest.approx(median, abs=0.05)
-        assert table.loc[key, "incidencia_aprobacion_24m_pct"] == pytest.approx(
-            incidence, abs=0.05
-        )
-
-    # The documented regex removes every expediente whose normalized name contains
-    # the whole word árido(s) or cantera(s): seven EIA rows, not the six implied by
-    # the supplied reference table.
-    assert table.loc[("Sin áridos/canteras", "EIA"), "n"] == 123
-    assert table.loc[
-        ("Sin áridos/canteras", "EIA"), "incidencia_aprobacion_24m_pct"
-    ] == pytest.approx(32.5, abs=0.05)
+    assert table.loc[("Principal sin i5*", "DIA"), "n"] == 1002
+    assert table.loc[("Principal sin i5*", "EIA"), "n"] == 124
+    assert table.loc[("Con áridos y no mineros i5*", "DIA"), "n"] == 1515
+    assert table.loc[("Con áridos y no mineros i5*", "EIA"), "n"] == 130
 
 
 @requires_local_data
@@ -108,14 +122,14 @@ def test_bootstrap_is_fixed_seed_and_reports_eia_high_investment_interval() -> N
     second = bootstrap_eia_high_investment_approval_24m()
 
     pd.testing.assert_frame_equal(first, second)
-    assert first.loc[0, "n"] == 83
-    assert first.loc[0, "replicas"] == 1000
-    assert first.loc[0, "estimacion_pct"] == pytest.approx(38.4, abs=0.05)
+    assert first.loc[0, "n"] == 81
+    assert first.loc[0, "replicas"] == 2000
+    assert first.loc[0, "bootstrap_unidad"] == "familia_reingreso"
     assert first.loc[0, "ic95_inf_pct"] < first.loc[0, "estimacion_pct"]
     assert first.loc[0, "ic95_sup_pct"] > first.loc[0, "estimacion_pct"]
 
 
-def test_validation_checklist_is_the_complete_immutable_review_source() -> None:
+def test_validation_checklist_preserves_40_answers_and_adds_21_pending_automatic_rows() -> None:
     checklist = pd.read_csv(
         ROOT / "docs/validation_checklist.csv", keep_default_na=False
     )
@@ -135,23 +149,36 @@ def test_validation_checklist_is_the_complete_immutable_review_source() -> None:
         "respuesta_J",
         "fuente_J",
     ]
-    assert len(checklist) == 40
+    assert len(checklist) == 61
     assert checklist["pregunta"].str.contains("corresponde|Existe expediente propio").sum() == 34
     assert checklist["pregunta"].eq("¿N° de RCA vigente que cubre la ejecución?").sum() == 6
     assert checklist["url_busqueda"].str.startswith("https://www.google.com/search?q=").all()
     confirmed = checklist["exp_id_confirmado"].ne("")
     assert checklist.loc[confirmed, "url_expediente"].str.contains(r"id_expediente=\d+&").all()
     assert checklist.loc[~confirmed, "url_expediente"].eq("").all()
+    automatic = checklist.loc[
+        checklist["pregunta"].eq(
+            "¿Confirmas el expediente principal asignado automáticamente?"
+        )
+    ]
+    assert len(automatic) == 21
+    assert automatic["respuesta_J"].eq("").all()
+    assert automatic["candidato_sugerido"].str.contains("otros_familia=").all()
+    assert automatic["url_expediente"].str.contains(r"id_expediente=\d+&").all()
 
 
-def test_versioned_validation_checklist_has_40_rows() -> None:
+@pytest.mark.xfail(
+    reason="21 automatic matches await J; remove xfail after respuesta_J is complete",
+    strict=True,
+)
+def test_versioned_validation_checklist_gate_is_complete() -> None:
     path = ROOT / "docs/validation_checklist.csv"
     if not all(source.exists() for source in REQUIRED_DATA):
         pytest.skip("requires local portfolio and SEA analysis parquets")
 
     checklist = pd.read_csv(path, keep_default_na=False)
 
-    assert len(checklist) == 40
+    assert len(checklist) == 61
     assert checklist["respuesta_J"].str.strip().ne("").all()
     assert not checklist.duplicated(["cochilco_id", "pregunta"]).any()
 

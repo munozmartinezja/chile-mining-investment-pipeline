@@ -63,6 +63,20 @@ def test_build_sea_frames_drops_private_columns_and_computes_survival() -> None:
     assert mining["exp_id"].tolist() == [1, 2]
 
 
+def test_open_non_mining_record_after_mining_currency_date_has_zero_duration() -> None:
+    ingresados = _ingresados().iloc[[2]].copy()
+    ingresados["est_nombre"] = "En Calificación"
+    ingresados["exp_fpres"] = pd.to_datetime(["2026-08-27"])
+    ingresados["exp_fcierre"] = pd.NaT
+
+    projects, mining = build_sea_frames(
+        ingresados, pd.DataFrame(), cutoff=date(2026, 8, 25)
+    )
+
+    assert projects["duracion_dias"].item() == 0
+    assert mining.empty
+
+
 def test_build_sea_frames_rejects_an_unmapped_state() -> None:
     ingresados = _ingresados().iloc[[0]].copy()
     ingresados["est_nombre"] = "Estado inventado"

@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 from cmip.config import PROCESSED_DIR, PROJECT_ROOT
-from cmip.match import normalize_text
+from cmip.match import is_viable_principal_state, reentry_family_key
 
 CURATED_DIR = PROJECT_ROOT / "data" / "curated"
 REVIEW_PATH = PROJECT_ROOT / "docs" / "match_review.csv"
@@ -48,6 +48,7 @@ AFFIRMATIVE_CHECKLIST_RESPONSES = {
     "rca_identificada",
     "expediente_encontrado",
 }
+CONFIRM_ASSIGNED_RESPONSE = "confirmado"
 EMPTY_CHECKLIST_RESPONSES = {"sin_expediente", "otra_fase"}
 SPECIAL_CHECKLIST_STATUSES = {
     "rca_previa": "rca_previa_2011",
@@ -59,6 +60,8 @@ CHECKLIST_RESPONSES = (
     AFFIRMATIVE_CHECKLIST_RESPONSES
     | EMPTY_CHECKLIST_RESPONSES
     | set(SPECIAL_CHECKLIST_STATUSES)
+    | {CONFIRM_ASSIGNED_RESPONSE}
+    | {""}
 )
 
 
@@ -130,17 +133,28 @@ def apply_automatic_match_rules(review: pd.DataFrame) -> pd.DataFrame:
         high = ordered.loc[
             ordered["_score_numeric"].ge(95) & ~ordered["empresa_no_coincide"].astype(bool)
         ].copy()
-        high["_normalized_name"] = high["sea_nombre"].map(normalize_text)
-        best_name = normalize_text(best.get("sea_nombre"))
-        repeated = high.loc[high["_normalized_name"].eq(best_name)].copy()
+        high["_family"] = high.apply(
+            lambda row: reentry_family_key(row.get("sea_nombre"), row.get("sea_empresa")),
+            axis=1,
+        )
+        best_family = reentry_family_key(best.get("sea_nombre"), best.get("sea_empresa"))
+        repeated = high.loc[
+            high["_family"].map(lambda family, target=best_family: family == target)
+        ].copy()
         if len(repeated) >= 2:
             repeated["_date"] = pd.to_datetime(
                 repeated["sea_fecha_ingreso"], errors="raise"
             )
-            repeated = repeated.sort_values(
+            viable = (
+                repeated.loc[repeated["sea_estado"].map(is_viable_principal_state)]
+                if "sea_estado" in repeated
+                else repeated
+            )
+            principal_pool = viable if not viable.empty else repeated
+            principal_pool = principal_pool.sort_values(
                 ["_date", "exp_id"], ascending=[False, False]
             )
-            selected = repeated.iloc[0]
+            selected = principal_pool.iloc[0]
             decision = str(int(float(selected["exp_id"])))
             previous = repeated.loc[repeated.index != selected.name].sort_values(
                 ["_date", "exp_id"]
@@ -330,6 +344,10 @@ def apply_checklist_decisions(
     checklist_work = checklist.copy()
     checklist_work["_response"] = responses
     for cochilco_id, decisions in checklist_work.groupby("cochilco_id", sort=False):
+        decisions = decisions.loc[decisions["_response"].ne("")]
+        if decisions.empty:
+            continue
+        confirms_assigned = decisions["_response"].eq(CONFIRM_ASSIGNED_RESPONSE).any()
         affirmative = decisions.loc[
             decisions["_response"].isin(AFFIRMATIVE_CHECKLIST_RESPONSES)
         ]
@@ -342,6 +360,12 @@ def apply_checklist_decisions(
                     f"for {cochilco_id}"
                 )
             principals.add(principal)
+        confirmed_rows = decisions.loc[
+            decisions["_response"].eq(CONFIRM_ASSIGNED_RESPONSE)
+        ]
+        for row in confirmed_rows.itertuples(index=False):
+            if (principal := _principal_from_source(row.fuente_J)) is not None:
+                principals.add(principal)
         if len(principals) > 1:
             raise ValueError(
                 f"Contradictory checklist principal values for {cochilco_id}: "
@@ -368,7 +392,15 @@ def apply_checklist_decisions(
                 f"{sorted(special_responses)}"
             )
 
+        target = result["cochilco_id"].astype(str).eq(str(cochilco_id))
+        assigned = result.loc[target, "exp_id_confirmado"].dropna()
         principal = next(iter(principals), None)
+        if confirms_assigned and principal is None:
+            if assigned.empty:
+                raise ValueError(
+                    f"Checklist confirmado requires an assigned principal for {cochilco_id}"
+                )
+            principal = int(assigned.iloc[0])
         if principal is not None and principal not in sea_ids:
             raise ValueError(
                 f"Checklist principal {principal} for {cochilco_id} is absent from sea_mining"
@@ -384,7 +416,6 @@ def apply_checklist_decisions(
         else:
             override = ""
 
-        target = result["cochilco_id"].astype(str).eq(str(cochilco_id))
         result.loc[target, "exp_id_confirmado"] = (
             principal if principal is not None else pd.NA
         )
@@ -576,7 +607,7 @@ def classify_environmental_status(
     if evento == "en_tramite":
         return "en_evaluacion"
     if evento in ADVERSE_EVENTS:
-        return "desistido_o_rechazado"
+        return "desistido_rechazado_o_no_calificado"
     return "otro"
 
 
@@ -653,15 +684,17 @@ def write_portfolio_status(
     """Read local inputs and write privacy-safe match and portfolio artifacts."""
     review = pd.read_csv(review_path, dtype={"match_confirmado": "string"}, keep_default_na=False)
     sea_mining = pd.read_parquet(sea_path)
-    confirmed = build_confirmed_match_table(review)
-    if checklist_path is not None:
-        checklist = pd.read_csv(checklist_path, keep_default_na=False)
-        confirmed = apply_checklist_decisions(confirmed, checklist, sea_mining)
     shared_exceptions = (
         pd.read_csv(shared_exceptions_path)
         if shared_exceptions_path is not None
         else pd.DataFrame(columns=["exp_id", "cochilco_id", "motivo"])
     )
+    confirmed = build_confirmed_match_table(
+        review, shared_expediente_exceptions=shared_exceptions
+    )
+    if checklist_path is not None:
+        checklist = pd.read_csv(checklist_path, keep_default_na=False)
+        confirmed = apply_checklist_decisions(confirmed, checklist, sea_mining)
     portfolio = build_portfolio_status(
         pd.read_parquet(cochilco_path),
         confirmed,

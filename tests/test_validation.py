@@ -88,3 +88,30 @@ def test_csv_fallback_normalizes_to_same_projects(projects, tmp_path) -> None:
 
     assert csv_projects["project_id"].tolist() == projects["project_id"].tolist()
     assert csv_projects["inversion_musd"].tolist() == projects["inversion_musd"].tolist()
+    assert csv_projects["condicion"].tolist() == projects["condicion"].tolist()
+    assert csv_projects["tipo"].tolist() == projects["tipo"].tolist()
+
+
+def test_table_1_condition_and_type_shares_differ_from_control_table_basis(
+    projects, annex_tables
+) -> None:
+    total = projects["inversion_musd"].sum()
+    condition = 100 * projects.groupby("condicion")["inversion_musd"].sum() / total
+    project_type = 100 * projects.groupby("tipo")["inversion_musd"].sum() / total
+
+    assert condition.to_dict() == pytest.approx(
+        {"Base": 44.4854, "Probable": 9.8519, "Posible": 9.1737, "Potencial": 36.4890},
+        abs=0.0001,
+    )
+    assert project_type.to_dict() == pytest.approx(
+        {"Nuevo": 19.5449, "Reposición": 50.2512, "Expansión": 30.2040},
+        abs=0.0001,
+    )
+    control_type = annex_tables[5].loc[
+        annex_tables[5]["Unidad"].eq("MMUS$")
+        & annex_tables[5]["Columna1"].isin(["Nuevo", "Reposición", "Expansión"])
+    ].set_index("Columna1")["Total"]
+    assert (100 * control_type / total).to_dict() == pytest.approx(
+        {"Nuevo": 19.5449, "Reposición": 46.7063, "Expansión": 33.7489},
+        abs=0.0001,
+    )

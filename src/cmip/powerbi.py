@@ -105,7 +105,10 @@ POWERBI_SCHEMAS = {
 ENVIRONMENTAL_STATUS = {
     "aprobado": ("Aprobado", 1),
     "en_evaluacion": ("En evaluación", 2),
-    "desistido_o_rechazado": ("Desistido o rechazado", 3),
+    "desistido_rechazado_o_no_calificado": (
+        "Desistido, rechazado o no calificado",
+        3,
+    ),
     "pertinencia": ("Pertinencia", 4),
     "rca_previa_2011": ("RCA previa a 2011", 5),
     "agregado_no_asignable": ("Agregado no asignable", 6),
@@ -118,7 +121,7 @@ ENVIRONMENTAL_STATUS = {
 STATE_LABELS_EN = {
     "aprobado": "approved",
     "en_evaluacion": "under review",
-    "desistido_o_rechazado": "withdrawn or rejected",
+    "desistido_rechazado_o_no_calificado": "withdrawn, rejected or not qualified",
     "otro": "other",
     "agregado_no_asignable": "non-assignable aggregate",
     "rca_previa_2011": "pre-2011 RCA",
@@ -297,9 +300,6 @@ def _english_claim_text(claim_id: str) -> str:
         "cartera_inversion_total": "Total portfolio investment",
         "cartera_proyectos_n": "Projects in the Cochilco portfolio",
         "sea_poblacion_admitida_n": "Admitted mining filings in the survival population",
-        "clasificacion_ingenua_sin_permiso_pct": (
-            "Share that a naive classification marked as lacking a permit"
-        ),
         "eia_100m_aj_aprobado_24m_estimacion": (
             "Central estimate: 24-month AJ approval for EIAs ≥US$100m"
         ),
@@ -311,6 +311,25 @@ def _english_claim_text(claim_id: str) -> str:
         ),
         "eia_en_evaluacion_n": "Portfolio EIAs currently under review",
         "eia_en_evaluacion_inversion": "Investment in portfolio EIAs currently under review",
+        "aj_DIA_aprobado_12m": "12-month cumulative approval incidence: DIA",
+        "aj_EIA_aprobado_36m": "36-month cumulative approval incidence: EIA",
+        "aj_EIA_mes_50pct": "Month when EIA cumulative approval reaches 50%",
+        "aj_EIA_meseta": "EIA approval incidence at the last time with at least 10 at risk",
+        "eia_aprobados_mediana_meses": "Descriptive median duration of approved EIAs",
+        "eia_100m_n": "EIAs with investment of at least US$100m",
+        "eia_100m_en_riesgo_24m": "EIAs with investment of at least US$100m at risk at 24 months",
+        "poblacion_periodo_inicio": "First filing year in the survival population",
+        "poblacion_periodo_fin": "Last filing year in the survival population",
+        "cruces_revision_manual_n": "Portfolio matches reviewed filing by filing",
+        "cruces_regla_auto_n": "Portfolio matches pending filing-by-filing confirmation",
+        "headline_piso_pct": "Lower headline sensitivity bound",
+        "headline_techo_pct": "Upper headline sensitivity bound",
+        "sea_fecha_datos_dia": "Day of the SEA data currency date",
+        "sea_fecha_datos_mes": "Month of the SEA data currency date",
+        "sea_fecha_datos_anio": "Year of the SEA data currency date",
+        "headline_amount_round_mmusd": "Rounded investment without an identified SEIA filing",
+        "confidence_level_pct": "Confidence interval level",
+        "aj_threshold_pct": "Cumulative approval threshold",
     }
     if claim_id in exact:
         return exact[claim_id]

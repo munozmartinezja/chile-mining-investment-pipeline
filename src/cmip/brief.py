@@ -1,5 +1,7 @@
 """Build the bilingual one-page executive brief from verified claims only."""
 
+# ruff: noqa: E501  # Approved publication copy is kept as literal, auditable lines.
+
 from __future__ import annotations
 
 import argparse
@@ -26,88 +28,71 @@ PORTFOLIO_FIGURE_PATHS = {
 INCIDENCE_FIGURE_PATHS = {
     lang: FIGURES_DIR / f"incidencia_brief_{lang}.png" for lang in ("es", "en")
 }
+CLAIMS_MAP_PATH = BRIEF_DIR / "claims_map.csv"
 
 TEXTS = {
     "es": {
-        "headline": "Un quinto de la cartera minera 2025-2034 aún no ingresa al SEIA",
-        "subtitle": "{amount} MMUS$ en {n} proyectos ({share}% de la inversión total)",
-        "km_title": "Tiempo hasta aprobación",
-        "km_body": "DIA {dia} meses ({dia_lo}-{dia_hi})\nEIA {eia} meses ({eia_lo}-{eia_hi})",
-        "bootstrap_title": "EIA grandes aprobados a 24 meses",
-        "bootstrap_body": "{lo}-{hi}% IC bootstrap\nestimación central {center}%",
-        "evaluation_title": "En evaluación hoy",
-        "evaluation_body": "{amount} MMUS$\n{n} proyectos",
-        "approved_title": "Inversión aprobada",
-        "approved_body": "{amount} MMUS$\n{share}% de la cartera",
-        "portfolio_title": "El capital sin expediente en estudio equivale a un quinto",
-        "incidence_title": "Los riesgos competitivos reducen la aprobación observada",
+        "headline": "{share}% de la inversión minera 2025–2034 no tiene expediente SEIA identificado",
+        "subtitle": "{amount} MMUS$ en {n} proyectos, todos en etapa de estudio · corte SEA {fecha_datos}",
+        "km_title": "Aprobación acumulada de EIA",
+        "km_body": "{aj24}% a 24 meses · {aj36}% a 36 meses{m50}",
+        "bootstrap_title": "EIA ≥100 MMUS$ aprobados a 24 meses",
+        "bootstrap_body": "{center}% (IC95% {lo}–{hi}) · n={n}",
+        "evaluation_title": "En calificación al corte SEA",
+        "evaluation_body": "{amount} MMUS$ · {n} proyectos",
+        "approved_title": "Con RCA favorable",
+        "approved_body": "{amount} MMUS$ · {share}% de la cartera",
+        "portfolio_title": "Proyectos en estudio sin expediente identificado: {share}% de la inversión",
+        "incidence_title": "Ignorar desistimientos y rechazos (Kaplan–Meier) sobrestima la aprobación",
         "months_axis": "Meses desde el ingreso",
         "approval_axis": "Probabilidad de aprobación",
         "km_legend": "Kaplan-Meier",
         "aj_legend": "Aalen-Johansen",
-        "gap": "Brecha KM - Aalen-Johansen a 24 meses: DIA +{dia} pp | EIA +{eia} pp",
         "implications": "Implicancias para contratistas",
         "bullets": (
-            "La ventana de licitación de ~{amount} MMUS$ depende de un permiso que aún "
-            "no se pide. Con la mediana de un EIA, la RCA llega como mínimo ~{years} "
-            "años después del ingreso.",
-            "Para EIA grandes, solo entre {low_ratio} y {high_ratio} está aprobado a "
-            "24 meses: planificar con ese rango, no con las fechas de puesta en marcha "
-            "de Cochilco.",
-            "La judicialización agrega riesgo de plazo: existen rechazos seguidos de "
-            "aprobación por reclamación y RCA anuladas por un tribunal ambiental.",
+            "Estos ~{amount_round} MMUS$ aún deben ingresar al SEIA antes de construir. A 24 meses de su ingreso, {aj24}% de los EIA está aprobado.",
+            "Para EIA ≥100 MMUS$ estimamos {center}% aprobado a 24 meses (IC95% {lo}–{hi}%): conviene planificar con holgura de permisos sobre las fechas de puesta en marcha de Cochilco.",
+            "La cifra puede ser mayor: {n_agg} filas agregadas de Codelco ({amount_agg} MMUS$) no permiten asignar un expediente único.",
         ),
         "method_title": "Método y alcance",
         "method_lines": (
-            "Fuentes: Cochilco, Anexo C (dic-2025), y SEA (corte 30-09-2026).",
-            "Población: {population} expedientes mineros admitidos. Kaplan-Meier y "
-            "Aalen-Johansen.",
-            "Unidad: expediente principal; las modificaciones no cuentan como cruce.",
-            "Cruce de {projects} proyectos validado manualmente; cada cifra tiene "
-            "recálculo independiente.",
-            "Una clasificación ingenua indicaba {naive}% sin permiso; tras corregir "
-            "proyectos en ejecución, filiales operativas y filas agregadas, la cifra "
-            "es {corrected}%.",
+            "Fuentes: Cochilco, Cartera de Proyectos de Inversión Minera 2025–2034 (Anexo C, dic-2025). SEA: descarga 30-09-2026, último registro {fecha_datos}.",
+            "Población: {population} expedientes mineros admitidos, ingresados entre {p_ini} y {p_fin}; excluye áridos. Kaplan–Meier y Aalen–Johansen; meses = días/30,44.",
+            "Cartera: expediente principal por proyecto; las modificaciones no cuentan como cruce. Tiempos: cada expediente, incluidos reingresos.",
+            "{n_manual} de {n_total} cruces revisados ficha por ficha. Sensibilidad del titular: {piso}%–{techo}% según 2 clasificaciones y las filas agregadas.",
+            "Cifras recalculadas por un script independiente; código y datos en el repositorio.",
         ),
     },
     "en": {
-        "headline": "One fifth of the 2025-2034 mining portfolio has yet to enter SEIA",
-        "subtitle": "US${amount}m across {n} projects ({share}% of total investment)",
-        "km_title": "Time to approval",
-        "km_body": "DIA {dia} months ({dia_lo}-{dia_hi})\nEIA {eia} months ({eia_lo}-{eia_hi})",
-        "bootstrap_title": "Large EIAs approved by 24 months",
-        "bootstrap_body": "{lo}-{hi}% bootstrap CI\ncentral estimate {center}%",
-        "evaluation_title": "Under review today",
-        "evaluation_body": "US${amount}m\n{n} projects",
-        "approved_title": "Approved investment",
-        "approved_body": "US${amount}m\n{share}% of portfolio",
-        "portfolio_title": "Capital still without a filing accounts for one fifth",
-        "incidence_title": "Competing risks lower observed approval",
+        "headline": "{share}% of 2025–2034 mining investment has no identified SEIA filing",
+        "subtitle": "US${amount}m across {n} projects, all at study stage · SEA data to {fecha_datos}",
+        "km_title": "Cumulative EIA approval",
+        "km_body": "{aj24}% at 24 months · {aj36}% at 36 months{m50}",
+        "bootstrap_title": "EIAs ≥US$100m approved at 24 months",
+        "bootstrap_body": "{center}% (95% CI {lo}–{hi}) · n={n}",
+        "evaluation_title": "Under review at SEA cut-off",
+        "evaluation_body": "US${amount}m · {n} projects",
+        "approved_title": "Favourable RCA",
+        "approved_body": "US${amount}m · {share}% of portfolio",
+        "portfolio_title": "Study-stage projects with no identified filing: {share}% of investment",
+        "incidence_title": "Ignoring withdrawals and rejections (Kaplan–Meier) overstates approval",
         "months_axis": "Months since filing",
         "approval_axis": "Approval probability",
         "km_legend": "Kaplan-Meier",
         "aj_legend": "Aalen-Johansen",
-        "gap": "KM - Aalen-Johansen gap at 24 months: DIA +{dia} pp | EIA +{eia} pp",
         "implications": "Implications for contractors",
         "bullets": (
-            "The ~US${amount}m tendering window depends on a permit not yet requested. "
-            "At the EIA median, an RCA arrives at least ~{years} years after filing.",
-            "For large EIAs, only {low_ratio} to {high_ratio} are approved by 24 months: "
-            "plan to that range, not Cochilco's commissioning dates.",
-            "Litigation adds schedule risk: some rejections are later approved on appeal, "
-            "and some RCAs are annulled by an environmental court.",
+            "These ~US${amount_round}m still need to enter SEIA before construction. At 24 months after filing, {aj24}% of EIAs are approved.",
+            "For EIAs ≥US$100m, we estimate {center}% approved at 24 months (95% CI {lo}–{hi}%): permit schedules should include contingency beyond Cochilco's commissioning dates.",
+            "The figure may be higher: {n_agg} aggregate Codelco rows (US${amount_agg}m) cannot be assigned a unique filing.",
         ),
         "method_title": "Method and scope",
         "method_lines": (
-            "Sources: Cochilco, Annex C (Dec-2025), and SEA (cut-off 2026-09-30).",
-            "Population: {population} admitted mining filings. Kaplan-Meier and "
-            "Aalen-Johansen.",
-            "Unit: principal filing; modifications do not count as a match.",
-            "The {projects}-project match was manually validated; every figure has an "
-            "independent recalculation.",
-            "A naive classification suggested {naive}% without a permit; after correcting "
-            "projects in execution, operating subsidiaries, and aggregate rows, the figure "
-            "is {corrected}%.",
+            "Sources: Cochilco, 2025–2034 Mining Investment Project Portfolio (Annex C, Dec-2025). SEA: downloaded 30-09-2026; latest record {fecha_datos}.",
+            "Population: {population} admitted mining filings entered between {p_ini} and {p_fin}; excludes aggregates. Kaplan–Meier and Aalen–Johansen; months = days/30.44.",
+            "Portfolio: one principal filing per project; modifications do not count as a match. Times: each filing, including re-entries.",
+            "{n_manual} of {n_total} matches reviewed filing by filing. Headline sensitivity: {piso}%–{techo}% under 2 classifications and aggregate rows.",
+            "Figures recalculated by an independent script; code and data in the repository.",
         ),
     },
 }
@@ -116,7 +101,6 @@ BRIEF_CLAIM_IDS = (
     "cartera_inversion_total",
     "cartera_proyectos_n",
     "sea_poblacion_admitida_n",
-    "clasificacion_ingenua_sin_permiso_pct",
     "estado_sin_expediente_en_estudio_inversion",
     "estado_sin_expediente_en_estudio_n",
     "estado_sin_expediente_en_estudio_pct",
@@ -124,23 +108,33 @@ BRIEF_CLAIM_IDS = (
     "estado_aprobado_pct",
     "estado_en_evaluacion_inversion",
     "estado_en_evaluacion_n",
-    "estado_desistido_o_rechazado_inversion",
+    "estado_desistido_rechazado_o_no_calificado_inversion",
     "estado_agregado_no_asignable_inversion",
+    "estado_agregado_no_asignable_n",
     "estado_pertinencia_inversion",
     "estado_no_determinado_inversion",
-    "km_DIA_mediana",
-    "km_DIA_ic95_inf",
-    "km_DIA_ic95_sup",
-    "km_EIA_mediana",
-    "km_EIA_ic95_inf",
-    "km_EIA_ic95_sup",
     "km_DIA_aprobado_24m",
     "km_EIA_aprobado_24m",
     "aj_DIA_aprobado_24m",
     "aj_EIA_aprobado_24m",
+    "aj_EIA_aprobado_36m",
+    "aj_EIA_mes_50pct",
     "eia_100m_aj_aprobado_24m_estimacion",
     "eia_100m_aj_aprobado_24m_ic95_inf",
     "eia_100m_aj_aprobado_24m_ic95_sup",
+    "eia_100m_n",
+    "poblacion_periodo_inicio",
+    "poblacion_periodo_fin",
+    "cruces_revision_manual_n",
+    "cruces_regla_auto_n",
+    "headline_piso_pct",
+    "headline_techo_pct",
+    "sea_fecha_datos_dia",
+    "sea_fecha_datos_mes",
+    "sea_fecha_datos_anio",
+    "headline_amount_round_mmusd",
+    "confidence_level_pct",
+    "aj_threshold_pct",
 )
 
 
@@ -192,27 +186,43 @@ def _brief_copy(metrics: pd.DataFrame, lang: str) -> dict[str, object]:
     def number(claim_id: str, decimals: int = 0) -> str:
         return format_number(values[claim_id], decimals, lang)
 
+    date_separator = "-"
+    data_date = date_separator.join(
+        (
+            number("sea_fecha_datos_dia"),
+            number("sea_fecha_datos_mes").zfill(2),
+            str(int(values["sea_fecha_datos_anio"])),
+        )
+    )
+    month_50 = values["aj_EIA_mes_50pct"]
+    if pd.isna(month_50):
+        m50 = ""
+    elif lang == "es":
+        m50 = f" · 50% a ~{number('aj_EIA_mes_50pct', 0)} meses"
+    else:
+        m50 = f" · 50% at ~{number('aj_EIA_mes_50pct', 0)} months"
+
     copy: dict[str, object] = {
-        "headline": text["headline"],
+        "headline": text["headline"].format(
+            share=number("estado_sin_expediente_en_estudio_pct", 1)
+        ),
         "subtitle": text["subtitle"].format(
             amount=number("estado_sin_expediente_en_estudio_inversion"),
             n=number("estado_sin_expediente_en_estudio_n"),
-            share=number("estado_sin_expediente_en_estudio_pct", 1),
+            fecha_datos=data_date,
         ),
         "km_title": text["km_title"],
         "km_body": text["km_body"].format(
-            dia=number("km_DIA_mediana", 1),
-            dia_lo=number("km_DIA_ic95_inf", 1),
-            dia_hi=number("km_DIA_ic95_sup", 1),
-            eia=number("km_EIA_mediana", 1),
-            eia_lo=number("km_EIA_ic95_inf", 1),
-            eia_hi=number("km_EIA_ic95_sup", 1),
+            aj24=number("aj_EIA_aprobado_24m", 1),
+            aj36=number("aj_EIA_aprobado_36m", 1),
+            m50=m50,
         ),
         "bootstrap_title": text["bootstrap_title"],
         "bootstrap_body": text["bootstrap_body"].format(
             lo=number("eia_100m_aj_aprobado_24m_ic95_inf", 1),
             hi=number("eia_100m_aj_aprobado_24m_ic95_sup", 1),
             center=number("eia_100m_aj_aprobado_24m_estimacion", 1),
+            n=number("eia_100m_n"),
         ),
         "evaluation_title": text["evaluation_title"],
         "evaluation_body": text["evaluation_body"].format(
@@ -224,40 +234,35 @@ def _brief_copy(metrics: pd.DataFrame, lang: str) -> dict[str, object]:
             amount=number("estado_aprobado_inversion"),
             share=number("estado_aprobado_pct", 1),
         ),
-        "portfolio_title": text["portfolio_title"],
-        "incidence_title": text["incidence_title"],
-        "gap": text["gap"].format(
-            dia=format_number(
-                values["km_DIA_aprobado_24m"] - values["aj_DIA_aprobado_24m"], 1, lang
-            ),
-            eia=format_number(
-                values["km_EIA_aprobado_24m"] - values["aj_EIA_aprobado_24m"], 1, lang
-            ),
+        "portfolio_title": text["portfolio_title"].format(
+            share=number("estado_sin_expediente_en_estudio_pct", 1)
         ),
+        "incidence_title": text["incidence_title"],
         "implications": text["implications"],
         "method_title": text["method_title"],
     }
-    low_ratio = "1 de cada 4" if lang == "es" else "1 in 4"
-    high_ratio = "1 de cada 2" if lang == "es" else "1 in 2"
     copy["bullets"] = tuple(
         bullet.format(
-            amount=format_number(
-                round(values["estado_sin_expediente_en_estudio_inversion"], -2),
-                0,
-                lang,
-            ),
-            years=format_number(values["km_EIA_mediana"] / 12, 1, lang),
-            low_ratio=low_ratio,
-            high_ratio=high_ratio,
+            amount_round=number("headline_amount_round_mmusd"),
+            aj24=number("aj_EIA_aprobado_24m", 1),
+            center=number("eia_100m_aj_aprobado_24m_estimacion", 1),
+            lo=number("eia_100m_aj_aprobado_24m_ic95_inf", 1),
+            hi=number("eia_100m_aj_aprobado_24m_ic95_sup", 1),
+            n_agg=number("estado_agregado_no_asignable_n"),
+            amount_agg=number("estado_agregado_no_asignable_inversion"),
         )
         for bullet in text["bullets"]
     )
     copy["method_lines"] = tuple(
         line.format(
             population=number("sea_poblacion_admitida_n"),
-            projects=number("cartera_proyectos_n"),
-            naive=number("clasificacion_ingenua_sin_permiso_pct"),
-            corrected=number("estado_sin_expediente_en_estudio_pct"),
+            p_ini=str(int(values["poblacion_periodo_inicio"])),
+            p_fin=str(int(values["poblacion_periodo_fin"])),
+            fecha_datos=data_date,
+            n_manual=number("cruces_revision_manual_n"),
+            n_total=number("cartera_proyectos_n"),
+            piso=number("headline_piso_pct", 1),
+            techo=number("headline_techo_pct", 1),
         )
         for line in text["method_lines"]
     )
@@ -281,7 +286,7 @@ def make_brief_portfolio_figure(
             "Agregado Codelco\n(permisos múltiples o previos)",
             "Sin expediente: en estudio",
             "No determinado",
-            "Desistido o rechazado",
+            "Desistido, rechazado o no calificado",
             "Pertinencia",
             "Inversión (MMUS$)",
         ),
@@ -291,7 +296,7 @@ def make_brief_portfolio_figure(
             "Codelco aggregate\n(multiple or prior permits)",
             "No filing: in study",
             "Undetermined",
-            "Withdrawn or rejected",
+            "Withdrawn, rejected or not qualified",
             "Applicability ruling",
             "Investment (US$m)",
         ),
@@ -306,10 +311,17 @@ def make_brief_portfolio_figure(
         ),
         (labels[3], "estado_sin_expediente_en_estudio_inversion", "#C66B3D"),
         (labels[4], "estado_no_determinado_inversion", "#9CA3AA"),
-        (labels[5], "estado_desistido_o_rechazado_inversion", "#B8BDC2"),
+        (
+            labels[5],
+            "estado_desistido_rechazado_o_no_calificado_inversion",
+            "#B8BDC2",
+        ),
         (labels[6], "estado_pertinencia_inversion", "#D3D6D8"),
     )
-    ordered = sorted(states, key=lambda item: values[item[1]])
+    ordered = sorted(
+        (item for item in states if values[item[1]] > 0),
+        key=lambda item: values[item[1]],
+    )
     fig, ax = plt.subplots(figsize=(6.2, 4.2))
     bars = ax.barh(
         [item[0] for item in ordered],
@@ -506,7 +518,6 @@ def _draw_page(metrics: pd.DataFrame, lang: str):  # noqa: ANN202
     right_ax = fig.add_axes((0.515, 0.455, 0.43, 0.225))
     right_ax.imshow(right_image)
     right_ax.axis("off")
-    fig.text(0.52, 0.452, str(copy["gap"]), fontsize=6.5, color=accent)
 
     fig.text(0.075, 0.415, str(copy["implications"]), fontsize=10.5, fontweight="bold", color=ink)
     y = 0.387
@@ -568,7 +579,6 @@ def _searchable_text(copy: dict[str, object]) -> list[str]:
             "approved_body",
             "portfolio_title",
             "incidence_title",
-            "gap",
             "implications",
             "method_title",
         )
@@ -576,10 +586,134 @@ def _searchable_text(copy: dict[str, object]) -> list[str]:
     lines.extend(str(value) for value in copy["bullets"])
     lines.extend(str(value) for value in copy["method_lines"])
     lines.append(AUTHOR_LINE)
+    lines.append("github.com/munozmartinezja/chile-mining-investment-pipeline")
     return [line.replace("\n", " ") for line in lines]
 
 
-def _render_reportlab(metrics: pd.DataFrame, lang: str, path: Path) -> None:
+def _claim_support(copy: dict[str, object]) -> list[tuple[str, str, str, str]]:
+    """Map each semantic brief line to claims or a cited non-numeric source."""
+    blocks = [
+        ("titular", "headline", "estado_sin_expediente_en_estudio_pct"),
+        (
+            "subtitulo",
+            "subtitle",
+            "estado_sin_expediente_en_estudio_inversion;estado_sin_expediente_en_estudio_n;"
+            "sea_fecha_datos_dia;sea_fecha_datos_mes;sea_fecha_datos_anio",
+        ),
+        ("kpi_1", "km_title", ""),
+        (
+            "kpi_1",
+            "km_body",
+            "aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;"
+            "aj_EIA_mes_50pct;aj_threshold_pct",
+        ),
+        ("kpi_2", "bootstrap_title", ""),
+        (
+            "kpi_2",
+            "bootstrap_body",
+            "eia_100m_aj_aprobado_24m_estimacion;eia_100m_aj_aprobado_24m_ic95_inf;"
+            "eia_100m_aj_aprobado_24m_ic95_sup;eia_100m_n;confidence_level_pct",
+        ),
+        ("kpi_3", "evaluation_title", ""),
+        ("kpi_3", "evaluation_body", "estado_en_evaluacion_inversion;estado_en_evaluacion_n"),
+        ("kpi_4", "approved_title", ""),
+        ("kpi_4", "approved_body", "estado_aprobado_inversion;estado_aprobado_pct"),
+        ("figura_cartera", "portfolio_title", "estado_sin_expediente_en_estudio_pct"),
+        ("figura_incidencia", "incidence_title", ""),
+        ("seccion", "implications", ""),
+        ("seccion", "method_title", ""),
+    ]
+    entries = [
+        (
+            block,
+            str(copy[key]).replace("\n", " "),
+            claim_ids,
+            "" if claim_ids else "src/cmip/brief.py:TEXTS",
+        )
+        for block, key, claim_ids in blocks
+    ]
+    bullet_claims = (
+        "headline_amount_round_mmusd;aj_EIA_aprobado_24m",
+        "eia_100m_aj_aprobado_24m_estimacion;eia_100m_aj_aprobado_24m_ic95_inf;"
+        "eia_100m_aj_aprobado_24m_ic95_sup;confidence_level_pct",
+        "estado_agregado_no_asignable_n;estado_agregado_no_asignable_inversion",
+    )
+    entries.extend(
+        ("bullet", str(text), claim_ids, "")
+        for text, claim_ids in zip(copy["bullets"], bullet_claims, strict=True)
+    )
+    method_claims = (
+        "sea_fecha_datos_dia;sea_fecha_datos_mes;sea_fecha_datos_anio",
+        "sea_poblacion_admitida_n;poblacion_periodo_inicio;poblacion_periodo_fin",
+        "",
+        "cruces_revision_manual_n;cartera_proyectos_n;headline_piso_pct;headline_techo_pct",
+        "",
+    )
+    method_evidence = (
+        "data/SOURCES.md",
+        "docs/survival_definitions.md",
+        "docs/survival_definitions.md",
+        "docs/validation_checklist.csv",
+        "src/cmip/validation.py:build_claims_register",
+    )
+    entries.extend(
+        ("metodo", str(text), claim_ids, evidence)
+        for text, claim_ids, evidence in zip(
+            copy["method_lines"], method_claims, method_evidence, strict=True
+        )
+    )
+    entries.extend(
+        [
+            ("autor", AUTHOR_LINE, "", "src/cmip/config.py:AUTHOR_LINE"),
+            (
+                "pie",
+                "github.com/munozmartinezja/chile-mining-investment-pipeline",
+                "",
+                "README.md",
+            ),
+            ("marca", "BORRADOR / DRAFT", "", "src/cmip/brief.py:--draft"),
+        ]
+    )
+    return entries
+
+
+def write_claims_map(outputs: dict[str, Path], metrics: pd.DataFrame) -> Path:
+    """Write one support row for every line extracted from each generated PDF."""
+    from pypdf import PdfReader
+
+    records: list[dict[str, str]] = []
+    for lang, path in outputs.items():
+        copy = _brief_copy(metrics, lang)
+        support = _claim_support(copy)
+        text = "\n".join(page.extract_text() or "" for page in PdfReader(path).pages)
+        for raw_line in text.splitlines():
+            line = raw_line.strip().lstrip("\x7f•").strip()
+            if not line:
+                continue
+            candidates = [entry for entry in support if line in entry[1] or entry[1] in line]
+            if not candidates:
+                raise ValueError(f"Unmapped extracted PDF line ({lang}): {line!r}")
+            block, _full_text, claim_ids, evidence = candidates[0]
+            records.append(
+                {
+                    "lang": lang,
+                    "bloque": block,
+                    "texto_renderizado": line,
+                    "claim_ids": claim_ids,
+                    "evidencia": evidence,
+                }
+            )
+    result = pd.DataFrame(
+        records, columns=["lang", "bloque", "texto_renderizado", "claim_ids", "evidencia"]
+    )
+    CLAIMS_MAP_PATH.parent.mkdir(parents=True, exist_ok=True)
+    result.to_csv(CLAIMS_MAP_PATH, index=False)
+    return CLAIMS_MAP_PATH
+
+
+def _render_reportlab(
+    metrics: pd.DataFrame, lang: str, path: Path, *, draft: bool = False
+) -> None:
     """Draw native PDF text blocks so reading order and copy/paste are preserved."""
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_LEFT, TA_RIGHT
@@ -599,6 +733,14 @@ def _render_reportlab(metrics: pd.DataFrame, lang: str, path: Path) -> None:
     muted = colors.HexColor("#617078")
     accent = colors.HexColor("#B65C32")
     pale = colors.HexColor("#EEF1F2")
+    if draft:
+        document.saveState()
+        document.setFillColor(colors.Color(0.55, 0.55, 0.55, alpha=0.16))
+        document.setFont("Helvetica-Bold", 42)
+        document.translate(page_width / 2, page_height / 2)
+        document.rotate(35)
+        document.drawCentredString(0, 0, "BORRADOR / DRAFT")
+        document.restoreState()
 
     def style(
         name: str,
@@ -714,15 +856,6 @@ def _render_reportlab(metrics: pd.DataFrame, lang: str, path: Path) -> None:
             anchor="c",
             mask="auto",
         )
-    paragraph(
-        copy["gap"],
-        right_x,
-        figure_bottom - 3,
-        figure_width,
-        style("gap", 6.5, 8, accent),
-        16,
-    )
-
     paragraph(
         copy["implications"],
         left,
@@ -869,22 +1002,13 @@ def render_brief(
     lang: str,
     path: Path,
     portfolio_names: list[str] | None = None,
+    draft: bool = False,
 ) -> Path:
-    """Render exactly one A4 page, preferring ReportLab with an offline fallback."""
+    """Render exactly one A4 page using the mandatory ReportLab dependency."""
     del portfolio_names  # Names are intentionally never part of the rendering data flow.
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        import reportlab  # noqa: F401
-    except ModuleNotFoundError:
-        import matplotlib.pyplot as plt
-
-        plt.close("all")
-        fig, copy = _draw_page(metrics, lang)
-        _write_accessible_raster_pdf(fig, copy, path)
-        plt.close("all")
-    else:
-        _render_reportlab(metrics, lang, path)
+    _render_reportlab(metrics, lang, path, draft=draft)
     return path
 
 
@@ -892,16 +1016,28 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--lang", choices=["es", "en", "all"], default="all")
     parser.add_argument("--output-dir", type=Path, default=BRIEF_DIR)
+    parser.add_argument("--draft", action="store_true")
     args = parser.parse_args()
+    checklist = pd.read_csv(
+        PROJECT_ROOT / "docs" / "validation_checklist.csv", keep_default_na=False
+    )
+    pending = checklist["respuesta_J"].astype(str).str.strip().eq("")
+    if pending.any() and not args.draft:
+        raise SystemExit(
+            f"GATE: {int(pending.sum())} checklist rows have no respuesta_J; "
+            "use --draft for watermarked review PDFs"
+        )
     metrics = compute_brief_metrics()
     languages = ("es", "en") if args.lang == "all" else (args.lang,)
-    outputs = []
+    outputs: dict[str, Path] = {}
     for language in languages:
         output = args.output_dir / f"brief_c1_{language}.pdf"
-        outputs.append(render_brief(metrics, language, output))
+        outputs[language] = render_brief(metrics, language, output, draft=args.draft)
+    claims_map = write_claims_map(outputs, metrics)
     print(metrics[["claim_id", "valor", "unidad", "estado"]].to_string(index=False))
-    for output in outputs:
+    for output in outputs.values():
         print(f"Wrote {output}")
+    print(f"Wrote {claims_map}")
 
 
 if __name__ == "__main__":

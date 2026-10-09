@@ -120,6 +120,32 @@ def test_reentry_rule_selects_newest_same_name_and_records_history() -> None:
     assert selected["historial"] == "2162201555"
 
 
+def test_reentry_rule_selects_viable_ciclon_exploradora_principal() -> None:
+    """Catch choosing the older no-calificado filing over the approved re-entry."""
+    review = pd.DataFrame(
+        {
+            "cochilco_id": ["eco-earth-elements-spa-ciclon-exploradora"] * 2,
+            "exp_id": [2155609426, 2160317349],
+            "sea_nombre": [
+                "Proyecto Ciclón Exploradora",
+                "Proyecto Minero Ciclón Exploradora",
+            ],
+            "sea_empresa": ["Eco Earth Elements SpA"] * 2,
+            "sea_estado": ["No calificado", "Aprobado"],
+            "sea_fecha_ingreso": ["2022-04-19", "2023-08-07"],
+            "score": [100.0, 100.0],
+            "empresa_no_coincide": [False, False],
+        }
+    )
+
+    result = apply_automatic_match_rules(review)
+    selected = result.loc[result["match_confirmado"].ne("")].iloc[0]
+
+    assert selected["match_confirmado"] == "2160317349"
+    assert selected["criterio"] == "regla_reingreso"
+    assert selected["historial"] == "2155609426"
+
+
 def test_reentry_rule_ignores_repeated_names_from_wrong_company() -> None:
     review = pd.DataFrame(
         {
@@ -299,6 +325,27 @@ def test_checklist_affirmative_responses_set_validated_principal(response: str) 
 
     assert result.loc[0, "exp_id_confirmado"] == 101
     assert result.loc[0, "criterio"] == "decision_J_checklist"
+
+
+def test_checklist_confirmado_keeps_automatic_principal_without_source_override() -> None:
+    """Catch clearing the suggested automatic filing after J confirms it."""
+    confirmed, checklist, sea = _checklist_sources("confirmado")
+    sea = pd.DataFrame({"exp_id": [999]})
+
+    result = apply_checklist_decisions(confirmed, checklist, sea)
+
+    assert result.loc[0, "exp_id_confirmado"] == 999
+    assert result.loc[0, "criterio"] == "decision_J_checklist"
+
+
+def test_checklist_confirmado_explicit_principal_overrides_automatic_assignment() -> None:
+    """Catch ignoring J's replacement exp_id on an automatic-review row."""
+    confirmed, checklist, sea = _checklist_sources("confirmado", "principal: 101")
+
+    result = apply_checklist_decisions(confirmed, checklist, sea)
+
+    assert result.loc[0, "exp_id_confirmado"] == 101
+    assert result.loc[0, "criterio"] == "decision_J_checklist"
     assert result.loc[0, "estado_ambiental_override"] == ""
 
 
@@ -473,9 +520,19 @@ def test_checklist_principal_displaces_conflicting_automatic_assignment() -> Non
     [
         ("aprobado", 1, "Ejecución", "aprobado"),
         ("en_tramite", 2, "Ejecución", "en_evaluacion"),
-        ("desistido_o_abandonado", 3, "Factibilidad", "desistido_o_rechazado"),
-        ("rechazado", 4, "Factibilidad", "desistido_o_rechazado"),
-        ("termino_anticipado", 5, "Factibilidad", "desistido_o_rechazado"),
+        (
+            "desistido_o_abandonado",
+            3,
+            "Factibilidad",
+            "desistido_rechazado_o_no_calificado",
+        ),
+        ("rechazado", 4, "Factibilidad", "desistido_rechazado_o_no_calificado"),
+        (
+            "termino_anticipado",
+            5,
+            "Factibilidad",
+            "desistido_rechazado_o_no_calificado",
+        ),
         ("no_admitido", 6, "Prefactibilidad", "otro"),
         (pd.NA, pd.NA, "Ejecución", "sin_expediente_en_ejecucion"),
         (pd.NA, pd.NA, "Prefactibilidad", "sin_expediente_en_estudio"),

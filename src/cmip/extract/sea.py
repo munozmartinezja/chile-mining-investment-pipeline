@@ -13,11 +13,11 @@ from zipfile import ZipFile
 import duckdb
 import pandas as pd
 
-from cmip.config import INTERIM_DIR, PROCESSED_DIR, PROJECT_ROOT
+from cmip.config import INTERIM_DIR, PROCESSED_DIR, PROJECT_ROOT, SEA_DATA_CURRENCY_DATE
 
 SEA_RAW_DIR = PROJECT_ROOT / "data" / "raw" / "sea"
 SEA_DATABASE_PATH = PROCESSED_DIR / "cmip.duckdb"
-CUTOFF_DATE = date(2026, 9, 30)
+CUTOFF_DATE = SEA_DATA_CURRENCY_DATE
 PRIVATE_COLUMNS = frozenset({"encargado_nombre", "encargado_rut", "titular_rut"})
 PLAZOS_COLUMNS = (
     "exp_id",
@@ -227,6 +227,10 @@ def build_sea_frames(
         )
 
     effective_end = projects["fecha_cierre"].fillna(pd.Timestamp(cutoff))
+    open_after_currency = projects["fecha_cierre"].isna() & projects["fecha_ingreso"].gt(
+        pd.Timestamp(cutoff)
+    )
+    effective_end = effective_end.where(~open_after_currency, projects["fecha_ingreso"])
     projects["duracion_dias"] = (effective_end - projects["fecha_ingreso"]).dt.days.astype(
         "Int64"
     )

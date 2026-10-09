@@ -9,7 +9,12 @@ from statistics import NormalDist
 import numpy as np
 import pandas as pd
 
-from cmip.config import PROCESSED_DIR, PROJECT_ROOT
+from cmip.config import (
+    PROCESSED_DIR,
+    PROJECT_ROOT,
+    SEA_DATA_CURRENCY_DATE,
+    SEA_DOWNLOAD_DATE,
+)
 
 COMPETING_EVENT_CODES = {
     "aprobado": 1,
@@ -38,12 +43,15 @@ AJ_SUMMARY_PATH = PROCESSED_DIR / "survival_competing_risks_summary.parquet"
 TREND_PATH = PROCESSED_DIR / "survival_trend.parquet"
 COX_PATH = PROCESSED_DIR / "survival_cox.parquet"
 RESULTS_PATH = PROJECT_ROOT / "docs" / "survival_results.md"
+EXCLUDED_MAIN_POPULATION_TIPOLOGIAS = frozenset({"i5", "i5.1", "i5.2"})
 
 
 def build_survival_population(sea_mining: pd.DataFrame) -> pd.DataFrame:
     """Return admitted, date-consistent records with estimator event encodings."""
     population = sea_mining.loc[
-        sea_mining["admitido"].eq(True) & sea_mining["fecha_inconsistente"].eq(False)
+        sea_mining["admitido"].eq(True)
+        & sea_mining["fecha_inconsistente"].eq(False)
+        & ~sea_mining["tipologia"].isin(EXCLUDED_MAIN_POPULATION_TIPOLOGIAS)
     ].copy()
     if population["duracion_dias"].isna().any():
         raise ValueError("Filtered survival population contains missing durations")
@@ -445,8 +453,10 @@ def write_results_markdown(
         "# Resultados de supervivencia SEA",
         "",
         (
-            "Corte: **30-09-2026**. Población: proyectos mineros admitidos a "
-            "tramitación y sin inconsistencia de fechas."
+            f"Censura: **{SEA_DATA_CURRENCY_DATE:%d-%m-%Y}** (último registro; "
+            f"descarga {SEA_DOWNLOAD_DATE:%d-%m-%Y}). Población: proyectos mineros "
+            "admitidos a tramitación, sin inconsistencia de fechas y excluyendo "
+            "tipologías i5, i5.1 e i5.2."
         ),
         "",
         "## Kaplan–Meier",
@@ -522,7 +532,7 @@ def write_results_markdown(
                     ],
                 ),
                 "",
-                f"N={cox_metadata['n']}; aprobaciones={cox_metadata['eventos']}. ",
+                f"N={cox_metadata['n']}; aprobaciones={cox_metadata['eventos']}.",
                 "El test de Schoenfeld "
                 + (
                     (
@@ -544,7 +554,7 @@ def write_results_markdown(
             "",
             (
                 "- Las duraciones son días calendario desde ingreso hasta cierre; "
-                "expedientes abiertos se censuran al 30-09-2026."
+                "expedientes abiertos se censuran al 25-08-2026."
             ),
             (
                 "- KM estima el tiempo hasta aprobación condicionado a seguir en juego; "
@@ -560,7 +570,10 @@ def write_results_markdown(
                 "selección, especialmente en 2025–2026."
             ),
             "",
-            "Fuente: Cochilco (dic-2025), SEA (corte 30-09-2026). Elaboración propia.",
+            (
+                "Fuente: Cochilco (dic-2025), SEA (descarga 30-09-2026; "
+                "vigencia de datos 25-08-2026). Elaboración propia."
+            ),
             "",
         ]
     )

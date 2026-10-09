@@ -3,7 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+import pypdf
 import pytest
+import reportlab
 
 from cmip.brief import _brief_copy, compute_brief_metrics, format_number, render_brief
 
@@ -13,7 +15,6 @@ def _synthetic_register() -> pd.DataFrame:
         "cartera_inversion_total": (100_000.0, "MMUS$"),
         "cartera_proyectos_n": (59, "proyectos"),
         "sea_poblacion_admitida_n": (1_645, "expedientes"),
-        "clasificacion_ingenua_sin_permiso_pct": (64.4, "%"),
         "estado_sin_expediente_en_estudio_inversion": (21_000.0, "MMUS$"),
         "estado_sin_expediente_en_estudio_n": (8, "proyectos"),
         "estado_sin_expediente_en_estudio_pct": (21.0, "%"),
@@ -21,8 +22,9 @@ def _synthetic_register() -> pd.DataFrame:
         "estado_aprobado_pct": (32.0, "%"),
         "estado_en_evaluacion_inversion": (24_000.0, "MMUS$"),
         "estado_en_evaluacion_n": (15, "proyectos"),
-        "estado_desistido_o_rechazado_inversion": (100.0, "MMUS$"),
+        "estado_desistido_rechazado_o_no_calificado_inversion": (0.0, "MMUS$"),
         "estado_agregado_no_asignable_inversion": (22_000.0, "MMUS$"),
+        "estado_agregado_no_asignable_n": (4, "proyectos"),
         "estado_pertinencia_inversion": (50.0, "MMUS$"),
         "estado_no_determinado_inversion": (800.0, "MMUS$"),
         "km_DIA_mediana": (7.7, "meses"),
@@ -35,9 +37,24 @@ def _synthetic_register() -> pd.DataFrame:
         "km_EIA_aprobado_24m": (41.2, "%"),
         "aj_DIA_aprobado_24m": (66.5, "%"),
         "aj_EIA_aprobado_24m": (31.1, "%"),
+        "aj_EIA_aprobado_36m": (51.7, "%"),
+        "aj_EIA_mes_50pct": (33.4, "meses"),
         "eia_100m_aj_aprobado_24m_estimacion": (38.4, "%"),
         "eia_100m_aj_aprobado_24m_ic95_inf": (26.4, "%"),
         "eia_100m_aj_aprobado_24m_ic95_sup": (49.8, "%"),
+        "eia_100m_n": (81, "expedientes"),
+        "poblacion_periodo_inicio": (2011, "año"),
+        "poblacion_periodo_fin": (2026, "año"),
+        "cruces_revision_manual_n": (38, "proyectos"),
+        "cruces_regla_auto_n": (21, "proyectos"),
+        "headline_piso_pct": (8.6, "%"),
+        "headline_techo_pct": (44.9, "%"),
+        "sea_fecha_datos_dia": (25, "día"),
+        "sea_fecha_datos_mes": (8, "mes"),
+        "sea_fecha_datos_anio": (2026, "año"),
+        "headline_amount_round_mmusd": (21_000, "MMUS$"),
+        "confidence_level_pct": (95, "%"),
+        "aj_threshold_pct": (50, "%"),
     }
     return pd.DataFrame(
         [
@@ -61,10 +78,10 @@ def _synthetic_register() -> pd.DataFrame:
 def test_compute_brief_metrics_rejects_any_unverified_used_claim() -> None:
     register = _synthetic_register()
     register.loc[
-        register["claim_id"].eq("km_EIA_mediana"), "estado"
+        register["claim_id"].eq("aj_EIA_aprobado_24m"), "estado"
     ] = "pendiente_J"
 
-    with pytest.raises(ValueError, match="km_EIA_mediana.*pendiente_J"):
+    with pytest.raises(ValueError, match="aj_EIA_aprobado_24m.*pendiente_J"):
         compute_brief_metrics(register)
 
 
@@ -99,8 +116,8 @@ def test_format_number_uses_language_specific_separators(
 @pytest.mark.parametrize(
     ("lang", "expected"),
     [
-        ("es", "21.000 MMUS$ en 8 proyectos (21,0% de la inversión total)"),
-        ("en", "US$21,000m across 8 projects (21.0% of total investment)"),
+        ("es", "21.000 MMUS$ en 8 proyectos, todos en etapa de estudio · corte SEA 25-08-2026"),
+        ("en", "US$21,000m across 8 projects, all at study stage · SEA data to 25-08-2026"),
     ],
 )
 def test_subtitle_uses_whole_mmusd_and_one_decimal_percentages(
@@ -112,8 +129,8 @@ def test_subtitle_uses_whole_mmusd_and_one_decimal_percentages(
 @pytest.mark.parametrize(
     ("lang", "expected"),
     [
-        ("es", "26,4-49,8% IC bootstrap\nestimación central 38,4%"),
-        ("en", "26.4-49.8% bootstrap CI\ncentral estimate 38.4%"),
+        ("es", "38,4% (IC95% 26,4–49,8) · n=81"),
+        ("en", "38.4% (95% CI 26.4–49.8) · n=81"),
     ],
 )
 def test_bootstrap_percentages_use_one_decimal(lang: str, expected: str) -> None:
@@ -123,8 +140,6 @@ def test_bootstrap_percentages_use_one_decimal(lang: str, expected: str) -> None
 
 
 def test_rendered_brief_is_one_page_and_contains_no_portfolio_names(tmp_path: Path) -> None:
-    reportlab = pytest.importorskip("reportlab")
-    pypdf = pytest.importorskip("pypdf")
     assert reportlab and pypdf
 
     output = tmp_path / "brief.pdf"
@@ -142,20 +157,19 @@ def test_rendered_brief_is_one_page_and_contains_no_portfolio_names(tmp_path: Pa
     [
         (
             "es",
-            "Un quinto de la cartera minera 2025-2034 aún no ingresa al SEIA",
-            "la cifra es 21%",
+            "21,0% de la inversión minera 2025–2034 no tiene expediente SEIA identificado",
+            "Cifras recalculadas por un script independiente",
         ),
         (
             "en",
-            "One fifth of the 2025-2034 mining portfolio has yet to enter SEIA",
-            "the figure is 21%",
+            "21.0% of 2025–2034 mining investment has no identified SEIA filing",
+            "Figures recalculated by an independent script",
         ),
     ],
 )
 def test_pdf_text_extraction_preserves_headline_and_footer_sentence(
     tmp_path: Path, lang: str, headline: str, footer_sentence: str
 ) -> None:
-    pypdf = pytest.importorskip("pypdf")
     output = tmp_path / f"brief_{lang}.pdf"
 
     render_brief(compute_brief_metrics(_synthetic_register()), lang, output)
@@ -163,8 +177,7 @@ def test_pdf_text_extraction_preserves_headline_and_footer_sentence(
     text = "\n".join(page.extract_text() or "" for page in pypdf.PdfReader(output).pages)
     assert headline in text
     assert footer_sentence in text
-    expected_word = "clasificación" if lang == "es" else "classification"
-    assert expected_word in text
+    assert footer_sentence in text
 
 
 def test_render_brief_writes_a_pdf_without_optional_pdf_reader(tmp_path: Path) -> None:
