@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import unicodedata
 import warnings
 from collections.abc import Iterable, Mapping
@@ -19,7 +18,7 @@ from cmip.match import reentry_family_key
 from cmip.survival import (
     COMPETING_EVENT_CODES,
     DAYS_PER_MONTH,
-    EXCLUDED_MAIN_POPULATION_TIPOLOGIAS,
+    main_population_exclusion_reasons,
 )
 
 PORTFOLIO_PATH = PROCESSED_DIR / "cochilco_seia.parquet"
@@ -69,9 +68,15 @@ ENVIRONMENTAL_SEMANTICS = {
         "Sin expediente confirmado y etapa distinta de Ejecución."
     ),
 }
-# Applied to an accent-stripped, case-folded expediente name. Word boundaries avoid
-# unrelated substrings while singular/plural alternatives capture árido(s)/cantera(s).
-QUARRY_NAME_REGEX = re.compile(r"\b(?:aridos?|canteras?)\b")
+MAIN_POPULATION_SQL_EXCLUSION = r"""
+(
+  CAST(tipologia AS VARCHAR) LIKE 'i5%'
+  OR regexp_matches(
+    lower(strip_accents(coalesce(exp_nombre, ''))),
+    '(aridos?|pozo[[:space:]]+lastrero|emprestitos?|ripios?|extraccion[[:space:]]+de[[:space:]]+material(es)?)'
+  )
+)
+"""
 
 
 def _validated_event_arrays(
@@ -213,7 +218,7 @@ def _manual_population(
 ) -> pd.DataFrame:
     mask = sea["admitido"].eq(True) & sea["fecha_inconsistente"].eq(False)
     if not include_excluded_tipologias:
-        mask &= ~sea["tipologia"].isin(EXCLUDED_MAIN_POPULATION_TIPOLOGIAS)
+        mask &= main_population_exclusion_reasons(sea).eq("")
     population = sea.loc[mask].copy()
     if population["duracion_dias"].isna().any():
         raise ValueError("Validation population contains missing durations")
@@ -397,11 +402,11 @@ def build_claims_register(
     admitted_n = int(len(population))
     admitted_n_sql = int(
         _duckdb_frame(
-            """
+            f"""
             SELECT COUNT(*) AS value
             FROM read_parquet(?)
             WHERE admitido = TRUE AND fecha_inconsistente = FALSE
-              AND tipologia NOT IN ('i5', 'i5.1', 'i5.2')
+              AND NOT {MAIN_POPULATION_SQL_EXCLUSION}
             """,
             sea_path,
         ).loc[0, "value"]
@@ -715,10 +720,10 @@ def build_claims_register(
                 "Conteo de EIA con inversion_musd >=100.",
                 int(
                     _duckdb_frame(
-                        """
+                        f"""
                         SELECT COUNT(*) AS value FROM read_parquet(?)
                         WHERE admitido = TRUE AND fecha_inconsistente = FALSE
-                          AND tipologia NOT IN ('i5', 'i5.1', 'i5.2')
+                          AND NOT {MAIN_POPULATION_SQL_EXCLUSION}
                           AND instrumento = 'EIA' AND inversion_musd >= 100
                         """,
                         sea_path,
@@ -1041,7 +1046,7 @@ def build_sensitivity_table(
         .drop(columns="_family_id")
     )
     segments = {
-        "Principal sin i5*": population,
+        "Principal sin áridos": population,
         "Con áridos y no mineros i5*": with_i5,
         "Sin desistimientos <=60 días": without_early_withdrawals,
         "Reingresos deduplicados": deduplicated,

@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from cmip.survival import (
+    build_population_exclusions,
     build_survival_population,
     build_trend_table,
     extract_competing_risk_tables,
@@ -18,6 +19,13 @@ def _sea_sample() -> pd.DataFrame:
     return pd.DataFrame(
         {
             "exp_id": [1, 2, 3, 4, 5],
+            "exp_nombre": [
+                "Proyecto Uno",
+                "Proyecto i5",
+                "Proyecto Tres",
+                "Proyecto Cuatro",
+                "Proyecto Cinco",
+            ],
             "instrumento": ["DIA", "DIA", "EIA", "EIA", "DIA"],
             "evento": [
                 "aprobado",
@@ -71,6 +79,50 @@ def test_survival_population_excludes_i5_family_by_tipologia_not_name() -> None:
     )
 
     assert build_survival_population(source)["exp_id"].tolist() == [1, 5]
+
+
+def test_survival_population_excludes_explicit_aggregate_name_terms_but_not_quarry() -> None:
+    """Catch every approved name term without excluding non-metallic quarries."""
+    names = [
+        "Extracción de Áridos Pozo Domeyko",
+        "Extraccion de aridos para una ruta",
+        "Pozo Lastrero Ruta O-50",
+        "Explotación de Empréstito Los Lingues",
+        "Planta de selección de ripio",
+        "Extracción de material para obras viales",
+        "Cantera de yeso Santa Rosa",
+        "Cantera de caliza El Melón",
+        "Proyecto minero válido",
+    ]
+    source = pd.DataFrame(
+        {
+            "exp_id": range(1, len(names) + 1),
+            "exp_nombre": names,
+            "tipologia": ["i1"] * len(names),
+            "instrumento": ["DIA"] * len(names),
+            "evento": ["aprobado"] * len(names),
+            "duracion_dias": [30] * len(names),
+            "fecha_ingreso": pd.to_datetime(["2020-01-01"] * len(names)),
+            "admitido": [True] * len(names),
+            "fecha_inconsistente": [False] * len(names),
+            "inversion_musd": [1.0] * len(names),
+            "region": ["II"] * len(names),
+        }
+    )
+
+    population = build_survival_population(source)
+    exclusions = build_population_exclusions(source)
+
+    assert population["exp_id"].tolist() == [7, 8, 9]
+    assert exclusions.columns.tolist() == [
+        "exp_id",
+        "exp_nombre",
+        "tipologia",
+        "instrumento",
+        "motivo",
+    ]
+    assert exclusions["exp_id"].tolist() == [1, 2, 3, 4, 5, 6]
+    assert "cantera" not in " ".join(exclusions["motivo"]).casefold()
 
 
 class _RecordingKM:
@@ -167,3 +219,12 @@ def test_failed_cox_removes_stale_output_and_reports_reason(tmp_path, monkeypatc
 
     assert not stale_cox.exists()
     assert "singular design matrix" in results_path.read_text(encoding="utf-8")
+    exclusions = pd.read_csv(tmp_path / "population_exclusions.csv")
+    assert exclusions.columns.tolist() == [
+        "exp_id",
+        "exp_nombre",
+        "tipologia",
+        "instrumento",
+        "motivo",
+    ]
+    assert exclusions["exp_id"].tolist() == [2]

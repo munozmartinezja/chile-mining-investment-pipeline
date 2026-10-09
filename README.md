@@ -32,10 +32,10 @@ Sensibilidades fuera del PDF (DIA / EIA, respectivamente):
 
 | Población | n | Aprobación AJ a 24 meses |
 |---|---:|---:|
-| Principal, sin tipologías `i5*` | 1.002 / 124 | 70,2% / 31,7% |
+| Principal, sin expedientes de áridos | 851 / 124 | 71,7% / 31,7% |
 | Con áridos y registros no mineros `i5*` | 1.515 / 130 | 66,5% / 31,3% |
-| Sin desistimientos a 60 días o menos | 878 / 112 | 80,2% / 35,2% |
-| Reingresos deduplicados | 882 / 107 | 76,6% / 32,8% |
+| Sin desistimientos a 60 días o menos | 746 / 112 | 81,8% / 35,2% |
+| Reingresos deduplicados | 747 / 107 | 78,6% / 32,8% |
 
 Briefs ejecutivos: [español](docs/brief/brief_c1_es.pdf) ·
 [English](docs/brief/brief_c1_en.pdf).
@@ -214,10 +214,10 @@ Sensitivity results excluded from the PDF (DIA / EIA, respectively):
 
 | Population | n | 24-month AJ approval |
 |---|---:|---:|
-| Main population, excluding `i5*` types | 1,002 / 124 | 70.2% / 31.7% |
+| Main population, excluding sand-and-gravel filings | 851 / 124 | 71.7% / 31.7% |
 | Including aggregates and non-mining `i5*` records | 1,515 / 130 | 66.5% / 31.3% |
-| Excluding withdrawals at 60 days or earlier | 878 / 112 | 80.2% / 35.2% |
-| Deduplicated re-entries | 882 / 107 | 76.6% / 32.8% |
+| Excluding withdrawals at 60 days or earlier | 746 / 112 | 81.8% / 35.2% |
+| Deduplicated re-entries | 747 / 107 | 78.6% / 32.8% |
 
 Executive briefs: [Español](docs/brief/brief_c1_es.pdf) ·
 [English](docs/brief/brief_c1_en.pdf).

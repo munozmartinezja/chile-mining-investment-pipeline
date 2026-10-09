@@ -158,12 +158,14 @@ def test_rendered_brief_is_one_page_and_contains_no_portfolio_names(tmp_path: Pa
         (
             "es",
             "21,0% de la inversión minera 2025–2034 no tiene expediente SEIA identificado",
-            "Cifras recalculadas por un script independiente",
+            "Cada cifra se recalcula por una segunda vía (SQL y estimadores propios) "
+            "y se verifica con tests automáticos; código y datos en el repositorio.",
         ),
         (
             "en",
             "21.0% of 2025–2034 mining investment has no identified SEIA filing",
-            "Figures recalculated by an independent script",
+            "Each figure is recomputed by a second route (SQL and hand-written "
+            "estimators) and checked by automated tests; code and data in the repository.",
         ),
     ],
 )
@@ -175,9 +177,12 @@ def test_pdf_text_extraction_preserves_headline_and_footer_sentence(
     render_brief(compute_brief_metrics(_synthetic_register()), lang, output)
 
     text = "\n".join(page.extract_text() or "" for page in pypdf.PdfReader(output).pages)
-    assert headline in text
+    assert text.count(headline) == 1
     assert footer_sentence in text
-    assert footer_sentence in text
+
+    reader = pypdf.PdfReader(output)
+    content = b"\n".join(page.get_contents().get_data() for page in reader.pages)
+    assert b"3 Tr" not in content
 
 
 def test_render_brief_writes_a_pdf_without_optional_pdf_reader(tmp_path: Path) -> None:

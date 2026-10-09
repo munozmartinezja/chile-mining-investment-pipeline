@@ -36,10 +36,13 @@ inconsistency also fails validation when its event is `aprobado`, `rechazado`,
 `en_tramite`, or `termino_anticipado`, because those events enter time analyses. The
 source regression check requires exactly 53 marked inconsistencies.
 
-The principal population excludes `tipologia` `i5` (505 admitted records), `i5.1`
-(10), and `i5.2` (4). This explicit 519-record rule removes aggregate-extraction and
-non-mining records even when their names contain no aggregate keyword. It is based on
-`tipologia`, never on project names. The resulting population has 1,126 expedientes.
+The principal population excludes every `tipologia` beginning with `i5` (519 admitted,
+date-consistent records) and names matching the explicit, accent-insensitive terms
+`árido`, `aridos`, `pozo lastrero`, `empréstito`, `ripio`, or
+`extracción de material`. The name rule removes 151 additional DIA records. `Cantera`
+is deliberately not a criterion, so non-metallic gypsum and limestone quarries remain.
+The resulting population has 975 expedientes (851 DIA and 124 EIA). Every exclusion is
+listed with its reason in `docs/population_exclusions.csv`.
 Every conversion from days to months uses `days / 30.4375` (`365.25 / 12`).
 
 ## Unidad de análisis: expediente principal

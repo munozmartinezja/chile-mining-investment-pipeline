@@ -1,6 +1,6 @@
 # Resultados de supervivencia SEA
 
-Censura: **25-08-2026** (último registro; descarga 30-09-2026). Población: proyectos mineros admitidos a tramitación, sin inconsistencia de fechas y excluyendo tipologías i5, i5.1 e i5.2.
+Censura: **25-08-2026** (último registro; descarga 30-09-2026). Población: proyectos mineros admitidos a tramitación, sin inconsistencia de fechas y excluyendo tipologías i5* y nombres de áridos según la lista explícita.
 
 ## Kaplan–Meier
 
@@ -8,7 +8,7 @@ Censura: **25-08-2026** (último registro; descarga 30-09-2026). Población: pro
 
 | Instrumento | Mediana KM (meses) | IC 95% | 6 meses | 12 meses | 24 meses | 36 meses |
 | --- | --- | --- | --- | --- | --- | --- |
-| DIA | 8.0 | 7.6–8.3 | 33.2% | 78.3% | 96.9% | 99.1% |
+| DIA | 7.9 | 7.4–8.3 | 34.6% | 79.3% | 97.2% | 99.5% |
 | EIA | 27.3 | 23.4–32.2 | 1.1% | 4.4% | 41.6% | 70.4% |
 
 ## Riesgos competitivos (cifra principal)
@@ -17,10 +17,10 @@ La incidencia acumulada de Aalen–Johansen conserva desistimientos, rechazos y 
 
 | Instrumento | Desenlace | Incidencia a 24 meses |
 | --- | --- | --- |
-| DIA | Aprobado | 70.2% |
-| DIA | Desistido o abandonado | 19.7% |
-| DIA | Rechazado | 1.8% |
-| DIA | Término anticipado | 6.8% |
+| DIA | Aprobado | 71.7% |
+| DIA | Desistido o abandonado | 18.7% |
+| DIA | Rechazado | 1.1% |
+| DIA | Término anticipado | 7.2% |
 | EIA | Aprobado | 31.7% |
 | EIA | Desistido o abandonado | 17.9% |
 | EIA | Rechazado | 1.0% |
@@ -36,22 +36,22 @@ Filas de tendencia: 32 (2011–2026 por instrumento).
 
 | Variable | HR | IC 95% | p |
 | --- | --- | --- | --- |
-| log_inversion | 1.04 | 1.00–1.08 | 0.029 |
-| anio_ingreso | 0.97 | 0.95–0.98 | 0.000 |
-| macro_zona_Norte Chico | 0.65 | 0.54–0.77 | 0.000 |
-| macro_zona_Norte Grande | 0.81 | 0.67–0.98 | 0.034 |
+| log_inversion | 1.04 | 1.00–1.08 | 0.031 |
+| anio_ingreso | 0.95 | 0.93–0.97 | 0.000 |
+| macro_zona_Norte Chico | 0.54 | 0.45–0.65 | 0.000 |
+| macro_zona_Norte Grande | 0.66 | 0.54–0.81 | 0.000 |
 
 Test de proporcionalidad de Schoenfeld (modelo inicial):
 
 | Variable | p |
 | --- | --- |
 | anio_ingreso | 0.000 |
-| instrumento_EIA | 0.005 |
-| log_inversion | 0.535 |
+| instrumento_EIA | 0.003 |
+| log_inversion | 0.922 |
 | macro_zona_Norte Chico | 0.000 |
 | macro_zona_Norte Grande | 0.000 |
 
-N=1108; aprobaciones=745.
+N=958; aprobaciones=650.
 El test de Schoenfeld detectó una violación; el modelo se estratificó por instrumento, pero persistieron violaciones en otras covariables.
 
 ## Supuestos y límites

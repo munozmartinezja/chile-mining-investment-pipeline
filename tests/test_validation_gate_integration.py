@@ -87,7 +87,7 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
         "headline_techo_pct",
     }.issubset(claim_ids)
     indexed = register.set_index("claim_id")
-    assert indexed.loc["sea_poblacion_admitida_n", "valor"] == 1126
+    assert indexed.loc["sea_poblacion_admitida_n", "valor"] == 975
     assert indexed.loc["eia_100m_n", "valor"] == 81
     assert indexed.loc["poblacion_periodo_inicio", "valor"] == 2011
     assert indexed.loc["poblacion_periodo_fin", "valor"] == 2026
@@ -105,13 +105,13 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
 def test_sensitivity_reports_requested_population_variants() -> None:
     table = build_sensitivity_table().set_index(["segmento", "instrumento"])
     assert set(table.index.get_level_values("segmento")) == {
-        "Principal sin i5*",
+        "Principal sin áridos",
         "Con áridos y no mineros i5*",
         "Sin desistimientos <=60 días",
         "Reingresos deduplicados",
     }
-    assert table.loc[("Principal sin i5*", "DIA"), "n"] == 1002
-    assert table.loc[("Principal sin i5*", "EIA"), "n"] == 124
+    assert table.loc[("Principal sin áridos", "DIA"), "n"] == 851
+    assert table.loc[("Principal sin áridos", "EIA"), "n"] == 124
     assert table.loc[("Con áridos y no mineros i5*", "DIA"), "n"] == 1515
     assert table.loc[("Con áridos y no mineros i5*", "EIA"), "n"] == 130
 

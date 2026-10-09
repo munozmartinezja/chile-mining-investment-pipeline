@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from collections.abc import Callable
 from pathlib import Path
 from statistics import NormalDist
@@ -43,15 +45,72 @@ AJ_SUMMARY_PATH = PROCESSED_DIR / "survival_competing_risks_summary.parquet"
 TREND_PATH = PROCESSED_DIR / "survival_trend.parquet"
 COX_PATH = PROCESSED_DIR / "survival_cox.parquet"
 RESULTS_PATH = PROJECT_ROOT / "docs" / "survival_results.md"
+POPULATION_EXCLUSIONS_PATH = PROJECT_ROOT / "docs" / "population_exclusions.csv"
 EXCLUDED_MAIN_POPULATION_TIPOLOGIAS = frozenset({"i5", "i5.1", "i5.2"})
+EXCLUDED_MAIN_POPULATION_NAME_PATTERNS = (
+    ("árido", re.compile(r"aridos?")),
+    ("pozo lastrero", re.compile(r"pozo\s+lastrero")),
+    ("empréstito", re.compile(r"emprestitos?")),
+    ("ripio", re.compile(r"ripios?")),
+    (
+        "extracción de material",
+        re.compile(r"extraccion\s+de\s+material(?:es)?"),
+    ),
+)
+
+
+def _normalized_expediente_name(value: object) -> str:
+    normalized = unicodedata.normalize("NFKD", str(value).casefold())
+    return " ".join(
+        "".join(
+            character
+            for character in normalized
+            if not unicodedata.combining(character)
+        ).split()
+    )
+
+
+def main_population_exclusion_reasons(sea_mining: pd.DataFrame) -> pd.Series:
+    """Return an auditable reason for every record excluded by the main rule."""
+    names = sea_mining.get(
+        "exp_nombre", pd.Series("", index=sea_mining.index, dtype="string")
+    ).fillna("")
+    reasons: list[str] = []
+    for tipologia, name in zip(
+        sea_mining["tipologia"].fillna("").astype(str), names, strict=True
+    ):
+        matches = []
+        if tipologia.casefold().startswith("i5"):
+            matches.append("tipología i5*")
+        normalized_name = _normalized_expediente_name(name)
+        matches.extend(
+            f"nombre: {label}"
+            for label, pattern in EXCLUDED_MAIN_POPULATION_NAME_PATTERNS
+            if pattern.search(normalized_name)
+        )
+        reasons.append("; ".join(matches))
+    return pd.Series(reasons, index=sea_mining.index, dtype="string")
+
+
+def build_population_exclusions(sea_mining: pd.DataFrame) -> pd.DataFrame:
+    """Return otherwise eligible records removed from the main population."""
+    reasons = main_population_exclusion_reasons(sea_mining)
+    eligible = sea_mining["admitido"].eq(True) & sea_mining[
+        "fecha_inconsistente"
+    ].eq(False)
+    columns = ["exp_id", "exp_nombre", "tipologia", "instrumento"]
+    exclusions = sea_mining.loc[eligible & reasons.ne(""), columns].copy()
+    exclusions["motivo"] = reasons.loc[exclusions.index]
+    return exclusions.sort_values(["instrumento", "exp_id"]).reset_index(drop=True)
 
 
 def build_survival_population(sea_mining: pd.DataFrame) -> pd.DataFrame:
     """Return admitted, date-consistent records with estimator event encodings."""
+    excluded = main_population_exclusion_reasons(sea_mining).ne("")
     population = sea_mining.loc[
         sea_mining["admitido"].eq(True)
         & sea_mining["fecha_inconsistente"].eq(False)
-        & ~sea_mining["tipologia"].isin(EXCLUDED_MAIN_POPULATION_TIPOLOGIAS)
+        & ~excluded
     ].copy()
     if population["duracion_dias"].isna().any():
         raise ValueError("Filtered survival population contains missing durations")
@@ -456,7 +515,7 @@ def write_results_markdown(
             f"Censura: **{SEA_DATA_CURRENCY_DATE:%d-%m-%Y}** (último registro; "
             f"descarga {SEA_DOWNLOAD_DATE:%d-%m-%Y}). Población: proyectos mineros "
             "admitidos a tramitación, sin inconsistencia de fechas y excluyendo "
-            "tipologías i5, i5.1 e i5.2."
+            "tipologías i5* y nombres de áridos según la lista explícita."
         ),
         "",
         "## Kaplan–Meier",
@@ -598,10 +657,15 @@ def _cox_failure_types() -> tuple[type[BaseException], ...]:
 
 
 def run_survival_analysis(
-    sea_path: Path = SEA_PATH, output_dir: Path = PROCESSED_DIR, results_path: Path = RESULTS_PATH
+    sea_path: Path = SEA_PATH,
+    output_dir: Path = PROCESSED_DIR,
+    results_path: Path = RESULTS_PATH,
+    exclusions_path: Path | None = None,
 ) -> dict[str, pd.DataFrame]:
     """Run every survival analysis and persist tidy data contracts."""
-    population = build_survival_population(pd.read_parquet(sea_path))
+    sea_mining = pd.read_parquet(sea_path)
+    population = build_survival_population(sea_mining)
+    exclusions = build_population_exclusions(sea_mining)
     km_curve, km_summary = extract_km_tables(fit_kaplan_meier(population))
     aj_curve, aj_summary = extract_competing_risk_tables(fit_competing_risks(population))
     trend = build_trend_table(population)
@@ -613,6 +677,10 @@ def run_survival_analysis(
         cox_error = str(error)
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    if exclusions_path is None:
+        exclusions_path = results_path.parent / POPULATION_EXCLUSIONS_PATH.name
+    exclusions_path.parent.mkdir(parents=True, exist_ok=True)
+    exclusions.to_csv(exclusions_path, index=False)
     outputs = {
         "population": population,
         "km": km_curve,

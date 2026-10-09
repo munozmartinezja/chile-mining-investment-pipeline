@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import argparse
-import io
 import textwrap
 from pathlib import Path
 from xml.sax.saxutils import escape
@@ -35,7 +34,7 @@ TEXTS = {
         "headline": "{share}% de la inversión minera 2025–2034 no tiene expediente SEIA identificado",
         "subtitle": "{amount} MMUS$ en {n} proyectos, todos en etapa de estudio · corte SEA {fecha_datos}",
         "km_title": "Aprobación acumulada de EIA",
-        "km_body": "{aj24}% a 24 meses · {aj36}% a 36 meses{m50}",
+        "km_body": "{aj24}% a 24 meses\n{aj36}% a 36 meses{m50}",
         "bootstrap_title": "EIA ≥100 MMUS$ aprobados a 24 meses",
         "bootstrap_body": "{center}% (IC95% {lo}–{hi}) · n={n}",
         "evaluation_title": "En calificación al corte SEA",
@@ -60,14 +59,14 @@ TEXTS = {
             "Población: {population} expedientes mineros admitidos, ingresados entre {p_ini} y {p_fin}; excluye áridos. Kaplan–Meier y Aalen–Johansen; meses = días/30,44.",
             "Cartera: expediente principal por proyecto; las modificaciones no cuentan como cruce. Tiempos: cada expediente, incluidos reingresos.",
             "{n_manual} de {n_total} cruces revisados ficha por ficha. Sensibilidad del titular: {piso}%–{techo}% según 2 clasificaciones y las filas agregadas.",
-            "Cifras recalculadas por un script independiente; código y datos en el repositorio.",
+            "Cada cifra se recalcula por una segunda vía (SQL y estimadores propios) y se verifica con tests automáticos; código y datos en el repositorio.",
         ),
     },
     "en": {
         "headline": "{share}% of 2025–2034 mining investment has no identified SEIA filing",
         "subtitle": "US${amount}m across {n} projects, all at study stage · SEA data to {fecha_datos}",
         "km_title": "Cumulative EIA approval",
-        "km_body": "{aj24}% at 24 months · {aj36}% at 36 months{m50}",
+        "km_body": "{aj24}% at 24 months\n{aj36}% at 36 months{m50}",
         "bootstrap_title": "EIAs ≥US$100m approved at 24 months",
         "bootstrap_body": "{center}% (95% CI {lo}–{hi}) · n={n}",
         "evaluation_title": "Under review at SEA cut-off",
@@ -89,10 +88,10 @@ TEXTS = {
         "method_title": "Method and scope",
         "method_lines": (
             "Sources: Cochilco, 2025–2034 Mining Investment Project Portfolio (Annex C, Dec-2025). SEA: downloaded 30-09-2026; latest record {fecha_datos}.",
-            "Population: {population} admitted mining filings entered between {p_ini} and {p_fin}; excludes aggregates. Kaplan–Meier and Aalen–Johansen; months = days/30.44.",
+            "Population: {population} admitted mining filings entered between {p_ini} and {p_fin}; excludes sand-and-gravel (áridos) filings. Kaplan–Meier and Aalen–Johansen; months = days/30.44.",
             "Portfolio: one principal filing per project; modifications do not count as a match. Times: each filing, including re-entries.",
             "{n_manual} of {n_total} matches reviewed filing by filing. Headline sensitivity: {piso}%–{techo}% under 2 classifications and aggregate rows.",
-            "Figures recalculated by an independent script; code and data in the repository.",
+            "Each figure is recomputed by a second route (SQL and hand-written estimators) and checked by automated tests; code and data in the repository.",
         ),
     },
 }
@@ -198,9 +197,9 @@ def _brief_copy(metrics: pd.DataFrame, lang: str) -> dict[str, object]:
     if pd.isna(month_50):
         m50 = ""
     elif lang == "es":
-        m50 = f" · 50% a ~{number('aj_EIA_mes_50pct', 0)} meses"
+        m50 = f"\n50% a ~{number('aj_EIA_mes_50pct', 0)} meses"
     else:
-        m50 = f" · 50% at ~{number('aj_EIA_mes_50pct', 0)} months"
+        m50 = f"\n50% at ~{number('aj_EIA_mes_50pct', 0)} months"
 
     copy: dict[str, object] = {
         "headline": text["headline"].format(
@@ -563,33 +562,6 @@ def _draw_page(metrics: pd.DataFrame, lang: str):  # noqa: ANN202
     return fig, copy
 
 
-def _searchable_text(copy: dict[str, object]) -> list[str]:
-    lines = [
-        str(copy[key])
-        for key in (
-            "headline",
-            "subtitle",
-            "km_title",
-            "km_body",
-            "bootstrap_title",
-            "bootstrap_body",
-            "evaluation_title",
-            "evaluation_body",
-            "approved_title",
-            "approved_body",
-            "portfolio_title",
-            "incidence_title",
-            "implications",
-            "method_title",
-        )
-    ]
-    lines.extend(str(value) for value in copy["bullets"])
-    lines.extend(str(value) for value in copy["method_lines"])
-    lines.append(AUTHOR_LINE)
-    lines.append("github.com/munozmartinezja/chile-mining-investment-pipeline")
-    return [line.replace("\n", " ") for line in lines]
-
-
 def _claim_support(copy: dict[str, object]) -> list[tuple[str, str, str, str]]:
     """Map each semantic brief line to claims or a cited non-numeric source."""
     blocks = [
@@ -733,6 +705,8 @@ def _render_reportlab(
     muted = colors.HexColor("#617078")
     accent = colors.HexColor("#B65C32")
     pale = colors.HexColor("#EEF1F2")
+    document.setFillColor(colors.white)
+    document.rect(0, 0, page_width, page_height, fill=1, stroke=0)
     if draft:
         document.saveState()
         document.setFillColor(colors.Color(0.55, 0.55, 0.55, alpha=0.16))
@@ -785,7 +759,7 @@ def _render_reportlab(
         left,
         page_height - 50,
         content_width,
-        style("headline", 16, 17, bold=True),
+        style("headline", 14, 16, bold=True),
     )
     paragraph(
         copy["subtitle"],
@@ -826,7 +800,7 @@ def _render_reportlab(
         )
 
     figure_width = 250
-    figure_height = 168
+    figure_height = 200
     right_x = page_width - left - figure_width
     paragraph(
         copy["portfolio_title"],
@@ -844,7 +818,7 @@ def _render_reportlab(
         style("incidence-title", 8.7, 10, bold=True),
         30,
     )
-    figure_bottom = page_height - 418
+    figure_bottom = page_height - 450
     for image_path, x in ((portfolio_path, left), (incidence_path, right_x)):
         document.drawImage(
             str(image_path),
@@ -880,7 +854,7 @@ def _render_reportlab(
         bullet_top -= used_height + 4
 
     method_bottom = 80
-    method_height = 112
+    method_height = 180
     document.setFillColor(colors.HexColor("#F5F6F6"))
     document.rect(left, method_bottom, content_width, method_height, fill=1, stroke=0)
     paragraph(
@@ -906,95 +880,8 @@ def _render_reportlab(
         12,
     )
 
-    # One complete text object per semantic line guarantees literal extraction,
-    # while the visible Paragraphs above provide the accessible reading layout.
-    searchable = document.beginText(1, 1)
-    searchable.setTextRenderMode(3)
-    searchable.setFont("Helvetica", 1)
-    for line in _searchable_text(copy):
-        searchable.textLine(line)
-    document.drawText(searchable)
     document.showPage()
     document.save()
-
-
-def _pdf_string(value: str) -> bytes:
-    """Encode one WinAnsi PDF string without splitting it into positioned words."""
-    escaped = bytearray()
-    for byte in value.encode("cp1252", errors="replace"):
-        if byte in (ord("("), ord(")"), ord("\\")):
-            escaped.extend(b"\\" + bytes([byte]))
-        elif 32 <= byte <= 126:
-            escaped.append(byte)
-        else:
-            escaped.extend(f"\\{byte:03o}".encode("ascii"))
-    return b"(" + bytes(escaped) + b")"
-
-
-def _write_accessible_raster_pdf(fig, copy: dict[str, object], path: Path) -> None:  # noqa: ANN001
-    """Write a one-page fallback PDF with a raster page and extractable text lines."""
-    from PIL import Image
-
-    png = io.BytesIO()
-    fig.savefig(png, format="png", dpi=180, facecolor="white")
-    png.seek(0)
-    with Image.open(png) as source:
-        rgb = source.convert("RGB")
-        width, height = rgb.size
-        jpeg = io.BytesIO()
-        rgb.save(jpeg, format="JPEG", quality=94, optimize=True)
-    image_data = jpeg.getvalue()
-    page_width, page_height = 595.276, 841.89
-    content = bytearray(
-        f"q {page_width:.3f} 0 0 {page_height:.3f} 0 0 cm /Im0 Do Q\n"
-        "BT /F1 1 Tf 3 Tr\n".encode("ascii")
-    )
-    for line in _searchable_text(copy):
-        content.extend(b"1 0 0 1 1 1 Tm ")
-        content.extend(_pdf_string(line))
-        content.extend(b" Tj\n")
-    content.extend(b"ET\n")
-
-    objects = [
-        b"<< /Type /Catalog /Pages 2 0 R >>",
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        (
-            f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {page_width:.3f} "
-            f"{page_height:.3f}] /Resources << /XObject << /Im0 5 0 R >> "
-            "/Font << /F1 6 0 R >> >> /Contents 4 0 R >>"
-        ).encode("ascii"),
-        b"<< /Length " + str(len(content)).encode("ascii") + b" >>\nstream\n"
-        + bytes(content)
-        + b"endstream",
-        (
-            f"<< /Type /XObject /Subtype /Image /Width {width} /Height {height} "
-            "/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length "
-        ).encode("ascii")
-        + str(len(image_data)).encode("ascii")
-        + b" >>\nstream\n"
-        + image_data
-        + b"\nendstream",
-        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
-    ]
-    document = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
-    offsets = [0]
-    for number, body in enumerate(objects, start=1):
-        offsets.append(len(document))
-        document.extend(f"{number} 0 obj\n".encode("ascii"))
-        document.extend(body)
-        document.extend(b"\nendobj\n")
-    xref_offset = len(document)
-    document.extend(f"xref\n0 {len(objects) + 1}\n".encode("ascii"))
-    document.extend(b"0000000000 65535 f \n")
-    for offset in offsets[1:]:
-        document.extend(f"{offset:010d} 00000 n \n".encode("ascii"))
-    document.extend(
-        (
-            f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n"
-            f"startxref\n{xref_offset}\n%%EOF\n"
-        ).encode("ascii")
-    )
-    path.write_bytes(document)
 
 
 def render_brief(

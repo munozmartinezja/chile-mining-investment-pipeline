@@ -193,7 +193,7 @@ def test_real_powerbi_exports_meet_acceptance_contract(tmp_path: Path) -> None:
     assert pa.compute.sum(tables["fact_cartera"]["inversion_musd"]).as_py() == pytest.approx(
         104_549.2
     )
-    assert tables["fact_expedientes"].num_rows == 1_126
+    assert tables["fact_expedientes"].num_rows == 975
     assert set(tables["kpi_validados"]["estado"].to_pylist()) == {"verificada"}
     assert tables["fact_cartera"].schema.field("fecha_ingreso").type == pa.date32()
     assert tables["fact_expedientes"].schema.field("fecha_ingreso").type == pa.date32()

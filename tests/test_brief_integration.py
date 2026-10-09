@@ -118,6 +118,35 @@ def test_pdf_copy_contains_no_forbidden_adversarial_phrases() -> None:
         assert not [phrase for phrase in forbidden if phrase.casefold() in lowered]
 
 
+def test_versioned_pdfs_have_one_visible_text_layer_and_one_headline() -> None:
+    headlines = (
+        "20,9% de la inversión minera 2025–2034 no tiene expediente SEIA identificado",
+        "20.9% of 2025–2034 mining investment has no identified SEIA filing",
+    )
+    for path, headline in zip(PDF_PATHS, headlines, strict=True):
+        reader = pypdf.PdfReader(path)
+        text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        content = b"\n".join(page.get_contents().get_data() for page in reader.pages)
+        assert content.count(b"3 Tr") == 0
+        assert text.count(headline) == 1
+
+
+@requires_brief_data
+def test_survival_population_contains_no_aggregate_name_regressions() -> None:
+    population = pd.read_parquet(
+        ROOT / "data/processed/survival_population.parquet"
+    )
+    normalized = (
+        population["exp_nombre"]
+        .str.normalize("NFKD")
+        .str.encode("ascii", errors="ignore")
+        .str.decode("ascii")
+        .str.casefold()
+    )
+    assert not normalized.str.contains("arido", regex=False).any()
+    assert not normalized.str.contains(r"pozo\s+lastrero", regex=True).any()
+
+
 def test_claims_map_covers_every_extracted_pdf_line() -> None:
     claims_map = pd.read_csv(ROOT / "docs/brief/claims_map.csv", keep_default_na=False)
     register = compute_brief_metrics().set_index("claim_id")
