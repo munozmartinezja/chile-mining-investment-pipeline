@@ -71,9 +71,12 @@ ENVIRONMENTAL_SEMANTICS = {
 MAIN_POPULATION_SQL_EXCLUSION = r"""
 (
   CAST(tipologia AS VARCHAR) LIKE 'i5%'
-  OR regexp_matches(
-    lower(strip_accents(coalesce(exp_nombre, ''))),
-    '(aridos?|pozo[[:space:]]+lastrero|emprestitos?|ripios?|extraccion[[:space:]]+de[[:space:]]+material(es)?)'
+  OR (
+    coalesce(CAST(tipologia AS VARCHAR), '') NOT IN ('i3', 'i4')
+    AND regexp_matches(
+      lower(strip_accents(coalesce(exp_nombre, ''))),
+      '(aridos?|pozo[[:space:]]+lastrero|emprestitos?|extraccion[[:space:]]+de[[:space:]]+material(es)?)'
+    )
   )
 )
 """

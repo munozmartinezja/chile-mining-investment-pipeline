@@ -321,7 +321,7 @@ def make_brief_portfolio_figure(
         (item for item in states if values[item[1]] > 0),
         key=lambda item: values[item[1]],
     )
-    fig, ax = plt.subplots(figsize=(6.2, 4.2))
+    fig, ax = plt.subplots(figsize=(6.2, 4.8))
     bars = ax.barh(
         [item[0] for item in ordered],
         [values[item[1]] for item in ordered],
@@ -361,7 +361,7 @@ def make_brief_incidence_figure(lang: str, path: Path) -> Path:
     aj = pd.read_parquet(AJ_PATH)
     aj = aj.loc[aj["outcome"].eq("aprobado")]
     colors = {"DIA": "#176B87", "EIA": "#D97706"}
-    fig, ax = plt.subplots(figsize=(6.2, 4.2))
+    fig, ax = plt.subplots(figsize=(6.2, 4.8))
     for instrument in ("DIA", "EIA"):
         km_group = km.loc[km["instrumento"].eq(instrument)].sort_values("time_days")
         aj_group = aj.loc[aj["instrumento"].eq(instrument)].sort_values("time_days")
@@ -750,6 +750,16 @@ def _render_reportlab(
         block.drawOn(document, x, top - used_height)
         return used_height
 
+    def paragraph_height(
+        value: object,
+        width: float,
+        paragraph_style: ParagraphStyle,
+        height: float = 100,
+    ) -> float:
+        markup = escape(str(value)).replace("\n", "<br/>")
+        block = Paragraph(markup, paragraph_style)
+        return float(block.wrap(width, height)[1])
+
     left = 33
     content_width = page_width - 2 * left
     document.setFillColor(accent)
@@ -833,39 +843,46 @@ def _render_reportlab(
     paragraph(
         copy["implications"],
         left,
-        figure_bottom - 28,
+        figure_bottom - 34,
         content_width,
         style("implications", 10.5, 12, bold=True),
     )
     bullet_style = style(
         "bullet",
         8.4,
-        10.3,
+        12,
         leftIndent=13,
         firstLineIndent=-10,
         bulletIndent=0,
         spaceAfter=4,
     )
-    bullet_top = figure_bottom - 49
+    bullet_top = figure_bottom - 59
     for bullet in copy["bullets"]:
         block = Paragraph(f"<bullet>&bull;</bullet>{escape(str(bullet))}", bullet_style)
         _, used_height = block.wrap(content_width - 7, 60)
         block.drawOn(document, left + 4, bullet_top - used_height)
-        bullet_top -= used_height + 4
+        bullet_top -= used_height + 12
 
-    method_bottom = 80
-    method_height = 180
+    method_box_top = 220
+    method_style = style("method", 7.1, 10, muted)
+    method_line_heights = [
+        paragraph_height(line, content_width - 18, method_style, 24)
+        for line in copy["method_lines"]
+    ]
+    method_content_height = sum(method_line_heights) + len(method_line_heights) - 1
+    method_body_top = method_box_top - 27
+    method_bottom = method_body_top - method_content_height - 9
+    method_height = method_box_top - method_bottom
     document.setFillColor(colors.HexColor("#F5F6F6"))
     document.rect(left, method_bottom, content_width, method_height, fill=1, stroke=0)
     paragraph(
         copy["method_title"],
         left + 9,
-        method_bottom + method_height - 10,
+        method_box_top - 10,
         content_width - 18,
         style("method-title", 9, 11, bold=True),
     )
-    method_style = style("method", 7.1, 10, muted)
-    method_top = method_bottom + method_height - 27
+    method_top = method_body_top
     for line in copy["method_lines"]:
         used_height = paragraph(line, left + 9, method_top, content_width - 18, method_style, 24)
         method_top -= used_height + 1

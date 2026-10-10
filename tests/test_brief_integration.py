@@ -143,8 +143,30 @@ def test_survival_population_contains_no_aggregate_name_regressions() -> None:
         .str.decode("ascii")
         .str.casefold()
     )
-    assert not normalized.str.contains("arido", regex=False).any()
-    assert not normalized.str.contains(r"pozo\s+lastrero", regex=True).any()
+    automatic = ~population["tipologia"].isin(["i3", "i4"])
+    assert not normalized.loc[automatic].str.contains("arido", regex=False).any()
+    assert not normalized.loc[automatic].str.contains(
+        r"pozo\s+lastrero", regex=True
+    ).any()
+
+
+@requires_brief_data
+def test_leach_residue_ripios_remain_in_population_and_not_name_exclusions() -> None:
+    population = pd.read_parquet(
+        ROOT / "data/processed/survival_population.parquet"
+    )
+    assert {2163763372, 2143645596}.issubset(set(population["exp_id"]))
+
+    exclusions = pd.read_csv(ROOT / "docs/population_exclusions.csv")
+    normalized = (
+        exclusions["exp_nombre"]
+        .str.normalize("NFKD")
+        .str.encode("ascii", errors="ignore")
+        .str.decode("ascii")
+        .str.casefold()
+    )
+    ripios = exclusions.loc[normalized.str.contains("ripio", regex=False)]
+    assert ripios["tipologia"].str.startswith("i5").all()
 
 
 def test_claims_map_covers_every_extracted_pdf_line() -> None:

@@ -43,7 +43,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 5698417,Construcción de Línea de Flujo Pozo Munición Oeste 2,i5,DIA,tipología i5*
 5727832,Desarrollo del Pozo Guanaco 5,i5,DIA,tipología i5*
 5729018,Perforación de Pozo Exploratorio Quirquincho A,i5,DIA,tipología i5*
-5753677,Disposición y Lixiviación Secundaria de Ripios Frescos,i4,DIA,nombre: ripio
 5767381,Extracción de Áridos - Arenera del Pacífico Ltda. Extracción de Áridos - Arenera del Pacífico Ltda.,i2,DIA,nombre: árido
 5772381,PERFORACIÓN DE POZOS EXPLORATORIOS LAS TRUCHAS A y B,i5,DIA,tipología i5*
 5817103,Alternativa para Construcción Línea de Flujo Pozo Teno A,i5,DIA,tipología i5*
@@ -71,7 +70,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 6085541,"Extracción de Aridos del Río Itata, sector Canchillas y La Balsa, Cerro Negro, Comuna de Quillón, VIII Región Aridos rìo Itata Canchilla - La Balsa",i2,DIA,nombre: árido
 6092873,Extracción de Áridos Empréstito E-63,i1,DIA,nombre: árido; nombre: empréstito
 6098296,PERFORACIÓN DE POZO EXPLORATORIO LAS TRUCHAS C,i5,DIA,tipología i5*
-6099551,Ampliación Lixiviación Secundaria de Ripios,i4,DIA,nombre: ripio
 6132952,"DECLARACIÓN DE IMPACTO AMBIENTAL EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS, CANTERA EL LITRE, PARA LA MATERIALIZACIÓN DE LA RUTA CONCESIONADA AUTOPISTA CONCEPCIÓN-CABRERO Cantera el Litre",i1,DIA,nombre: árido
 6134049,"Extracción y Procesamiento de Áridos Pozo Cruz de Piedra Para la Materialización  de la Ruta  Concesionada, Autopista Concepción - Cabrero Pozo Cruz de Piedra",i1,DIA,nombre: árido
 6134528,Perforación de Pozo Exploratorio Colina Sur A,i5,DIA,tipología i5*
@@ -139,7 +137,7 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 6941000,MODIFICACIÓN DEL PROYECTO EXTRACCIÓN DE ÁRIDOS Y RECUPERACIÓN DE SUELOS POZO LA SANCHINA,i1,DIA,nombre: árido
 6951569,Genérica Sub-Bloque Manantiales,i5,DIA,tipología i5*
 6956701,Construcción de Línea de Flujo Pozo Kiuaku x-1,i5,DIA,tipología i5*
-6991437,Botadero de Ripios N° 2 Cerro Negro,i5,DIA,tipología i5*; nombre: ripio
+6991437,Botadero de Ripios N° 2 Cerro Negro,i5,DIA,tipología i5*
 6992804,"Aumento de producción empréstito 1039.200. Comuna de Puerto Montt, Región de Los Lagos",i1,DIA,nombre: empréstito
 6998617,DECLARACIÓN DE IMPACTO AMBIENTAL PROYECTO EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS - CANTERA LAS CORRIENTES,i1,DIA,nombre: árido
 7032702,Perforación de Pozos Hidrocarburíferos en Área Faja Kimiri Aike,i5,DIA,tipología i5*
@@ -159,7 +157,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 7167711,Construcción de Líneas de Flujo para los Pozos Lircay A y Lircay B,i5,DIA,tipología i5*
 7168318,"Aumento de Producción Empréstito Avellanal. Comuna de Maullín, Región de Los Lagos",i1,DIA,nombre: empréstito
 7180083,Extracción de Áridos Gemita,i1,DIA,nombre: árido
-7187194,Restitución del chancado e incremento de la capacidad de embalse de ripios de lixiviación en Planta Falda Verde,i4,DIA,nombre: ripio
 7188020,Optimización Capacidad de Beneficio - División El Teniente .,i5,DIA,tipología i5*
 7193410,NUEVA ZONA DE EXTRACCIÓN MVC,i5,DIA,tipología i5*
 7203199,"ACTIVIDADES DE PERFORACIÓN DE POZOS EN ÁREA SUR-ESTE BLOQUE CAUPOLICÁN, TIERRA DEL FUEGO.",i5,DIA,tipología i5*
@@ -233,7 +230,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 8064423,Regularización Extracción de Áridos Pozo Márquez,i1,DIA,nombre: árido
 8069962,Perforación de Pozo Exploratorio Caracol B,i5,DIA,tipología i5*
 8071961,PERFORACIÓN DE POZOS EXPLORATORIOS ALMEJA J2 y K,i5,DIA,tipología i5*
-8078726,Ampliación Depósito de Ripios Planta Biocobre,i4,DIA,nombre: ripio
 8105675,Perforación y Construcción de Línea de Flujo para Pozo Exploratorio Teno C,i5,DIA,tipología i5*
 8160379,PERFORACIÓN DE POZO EXPLORATORIO DORADO SUR W,i5,DIA,tipología i5*
 8181617,Desarrollo del pozo Chercán x-1,i5,DIA,tipología i5*
@@ -326,7 +322,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2129370353,"EXTRACCIÓN MECANIZADA DE ÁRIDOS DEL RÍO CACHAPOAL, KM -1,5 AL -2,5, SECTOR GULTRO.",i5,DIA,tipología i5*; nombre: árido
 2129393364,Extracción de Aridos e Instalaciones Asociadas Pozo El Manzano,i5,DIA,tipología i5*; nombre: árido
 2129473960,Sector de Emplazamiento Proyecto Aumento de Extracción de Áridos en Empréstito Aldo Opazo Región del Maule,i5,DIA,tipología i5*; nombre: árido; nombre: empréstito
-2129513159,CONTINUIDAD OPERACIONAL PTMP: LIXIVIACIÓN DE RIPIOS Y PROCESAMIENTO DE NUEVOS RECURSOS,i1,DIA,nombre: ripio
 2129545951,Proyecto Extracción de Aridos e Instalaciones Asociadas: Pozo el Manzano,i5,DIA,tipología i5*; nombre: árido
 2129570336,PROYECTO DE EXTRACCIÓN DE ARIDOS POZO SILVA,i5,DIA,tipología i5*; nombre: árido
 2129622455,AMPLIACION AREA DE EXTRACCION MECANIZADA DE ARIDOS RIO CACHAPOAL,i5,DIA,tipología i5*; nombre: árido
@@ -377,7 +372,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2131214743,"Regularización de Extracción y Procesamiento de Áridos, Cantera San José",i5,DIA,tipología i5*; nombre: árido
 2131244869,"Regularización de Extracción y Procesamiento de Áridos, Cantera San José",i5,DIA,tipología i5*; nombre: árido
 2131245434,EXTRACCIÓN DE ÁRIDOS LAGUNA AMARGA,i5,DIA,tipología i5*; nombre: árido
-2131304369,Lixiviación de Ripios y Recursos Artificiales,i1,DIA,nombre: ripio
 2131448840,Modificación RCA N°26/2014 Extracción de Áridos en Río Cachapoal,i5,DIA,tipología i5*; nombre: árido
 2131492828,EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS LA ISLA,i5,DIA,tipología i5*; nombre: árido
 2131528734,"EXTRACCIÓN DE ÁRIDOS RÍO ELQUI,  SECTOR ALTOVALSOL QUILACÁN",i5,DIA,tipología i5*; nombre: árido
@@ -387,7 +381,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2131684033,"Extracción de Áridos Santa Elisa, Río Aconcagua, Comuna Quillota",i5,DIA,tipología i5*; nombre: árido
 2131750477,EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS LA ISLA,i5,DIA,tipología i5*; nombre: árido
 2131818330,"Extracción de áridos desde el río Biobío, sector La Suerte",i5,DIA,tipología i5*; nombre: árido
-2131886959,Nuevo Depósito de Ripios Planta Matta,i3,DIA,nombre: ripio
 2132002930,"Regularización Extracción De Áridos, Sector Champulli- Esmeralda, Lote N°3 y N°4",i5,DIA,tipología i5*; nombre: árido
 2132012103,MODIFICACÓN CANTERA II - RÍO SECO,i5,DIA,tipología i5*
 2132067266,"Extracción Mecanizada Río Maipo, kilómetro 108.300 al 110.000",i5,DIA,tipología i5*
@@ -398,7 +391,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2132259288,"Ampliación de Extracción de Áridos Pozo Patagónico 1, Sierra Gorda",i5,DIA,tipología i5*; nombre: árido
 2132273213,"Extracción Mecanizada Río Maipo, kilómetro 72,1 al 74,1",i5,DIA,tipología i5*
 2132281579,Explotación Mecanizada de Áridos Gallardo,i5,DIA,tipología i5*; nombre: árido
-2132330254,Ampliación Botadero de Ripios Quiborax S.A.,i3,DIA,nombre: ripio
 2132331933,"AMPLIACIÓN DE LA ZONA EXTRACTIVA, SECTOR PEDREGAL II",i5,DIA,tipología i5*
 2132441687,"Explotación de la Concesión D.E. Nº 1.137. Rio Maipo, Sector: Tramo 43-34 y Banco Decantador 40-37.",i5,DIA,tipología i5*
 2132442633,EXTRACCIÓN Y PROCESAMIENTO                                                 DE ÁRIDOS PRODUCTORA Y COMERCIALIZADORA LnullISOLA LTDA.,i5,DIA,tipología i5*; nombre: árido
@@ -447,7 +439,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2142169319,"Extracción Mecanizada de Áridos, km 72,1 al 74,1 Río Maipo",i5,DIA,tipología i5*; nombre: árido
 2142240273,"Extracción de áridos en río Cachapoal, Sector Sifón El Gringo",i5,DIA,tipología i5*; nombre: árido
 2142335522,"Ampliación de Extracción y Procesamiento de A&#769ridos, sector Quinchamalí",i5,DIA,tipología i5*
-2142335989,Aprovechamiento de ripios para mejoramiento de caminos de MTV,i1,DIA,nombre: ripio
 2142430234,EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS SANTA GEMITA,i5,DIA,tipología i5*; nombre: árido
 2142436210,Extracción de Áridos en Sector Tranque de Relaves de Minera Escondida para periodo 2020-2030,i5,DIA,tipología i5*; nombre: árido
 2142447120,Extracción de áridos en río Itata,i5,DIA,tipología i5*; nombre: árido
@@ -456,7 +447,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2142537328,"Aumento de Extracción de Áridos, Cantera Patagual",i5,DIA,tipología i5*; nombre: árido
 2142605535,"AMPLIACIÓN DE LA ZONA EXTRACTIVA, SECTOR LAS GARZAS ÁRIDOS ACONCAGUA",i5,DIA,tipología i5*; nombre: árido
 2142623912,"AMPLIACIÓN DE LA ZONA EXTRACTIVA, SECTOR LAS GARZAS. ÁRIDOS ACONCAGUA QUILLOTA",i5,DIA,tipología i5*; nombre: árido
-2142643974,Aprovechamiento de ripios para mejoramiento de caminos de MTV,i3,DIA,nombre: ripio
 2142694143,Extracción y Procesamiento de Áridos Aguas Arriba del Puente Ruta 5 Sur en Río Maule,i5,DIA,tipología i5*; nombre: árido
 2142783097,"Extracción mecanizada de áridos en el río Mapocho, Km 1.650 al 3.450, sector aguas abajo del Puente San Francisco",i5,DIA,tipología i5*; nombre: árido
 2142875609,Prueba clave unica,i5,DIA,tipología i5*
@@ -467,8 +457,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2143309610,IMPLEMENTACIÓN DE MEDIDAS Y RECUPERACIÓN DE SUELO EN FUNDO LAS PALMAS,i5,DIA,tipología i5*
 2143391937,Regularización Extracción de Aridos Pozo El Bosque,i5,DIA,tipología i5*; nombre: árido
 2143527472,Mejoramiento Parcelación Mía Luisa,i5,DIA,tipología i5*
-2143645596,Actualización de Manejo de Ripios de Lixiviación - Spence,i3,DIA,nombre: ripio
-2143663525,Actualización de Manejo de Ripios de Lixiviación - Spence,i3,DIA,nombre: ripio
 2143668688,Extracción y Procesamiento de Áridos Río Maule,i5,DIA,tipología i5*; nombre: árido
 2143697524,Extracción y procesamiento de áridos río Lontué,i5,DIA,tipología i5*; nombre: árido
 2143939256,Quimal,i5,DIA,tipología i5*
@@ -494,7 +482,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2145328035,Extracción de Áridos Pozo E5 (km 27),i5,DIA,tipología i5*; nombre: árido
 2145347109,Extracción de Áridos Pozo E10 (km 100),i5,DIA,tipología i5*; nombre: árido
 2145403744,Ampliación Extracción de Áridos Pozo L12 (km 2),i5,DIA,tipología i5*; nombre: árido
-2145619502,Plan de Adecuación Operacional en Depósito de Ripios Antucoya,i3,DIA,nombre: ripio
 2145700005,Ampliación Extracción de Áridos Pozo E4 (km 13,i5,DIA,tipología i5*; nombre: árido
 2145708119,Extracción de Áridos Rio Aconcagua,i5,DIA,tipología i5*; nombre: árido
 2145719707,RUBIA N°1,i5,DIA,tipología i5*
@@ -516,7 +503,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2147916954,"Extracción Mecanizada de Áridos Río Maipo, Kilómetro 112,7 al 115,7",i5,DIA,tipología i5*; nombre: árido
 2147921981,Extracción y Procesamiento de Áridos San José de Cancura,i5,DIA,tipología i5*; nombre: árido
 2147991491,Extracción de roca para defensas fluviales,i5,DIA,tipología i5*
-2148047567,"Extensión de la vida útil del proyecto Optimización de disposición de ripios de lixiviación, Planta Taltal",i3,DIA,nombre: ripio
 2148231091,Extracción de áridos Pozo Gallegos,i5,DIA,tipología i5*; nombre: árido
 2148382204,"Ampliación Extracción de Áridos Río Sin Nombre, Sector Laguna Verde",i5,DIA,tipología i5*; nombre: árido
 2148468963,DIA Extracción de Áridos Sector El Labrador,i5,DIA,tipología i5*; nombre: árido
@@ -531,7 +517,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2149562248,"Modificación Extracción de arena desde el río Biobío, sector Costanera Norte",i5,DIA,tipología i5*
 2149636084,Empréstito Las Arañas,i5,DIA,tipología i5*; nombre: empréstito
 2149753151,Extracción de áridos desde pozo lastrero Coronel,i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
-2150660822,"Depósito de ripios y cobertura superficial del tranque de relaves, Planta José Antonio Moreno, ENAMI - Taltal",i3,DIA,nombre: ripio
 2150779497,Extracción de Áridos Alexis,i5,DIA,tipología i5*; nombre: árido
 2150781129,Pozo Lastrero Coyanco,i5,DIA,tipología i5*; nombre: pozo lastrero
 2150832485,Extracción de Arena desde Cauce del Río Biobío - Arenera Price,i5,DIA,tipología i5*
@@ -540,7 +525,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2151097193,Áridos San Vicente,i5,DIA,tipología i5*; nombre: árido
 2151210315,"Aumento de extracción y procesamiento, Pozo Vega Tercera",i5,DIA,tipología i5*
 2151260840,Ampliación extracción y procesamiento de áridos La Isla,i5,DIA,tipología i5*; nombre: árido
-2151338214,"Relixiviación de Ripios Pila 4, Modificación Mina Guanaco",i1,DIA,nombre: ripio
 2151359731,"Extracción de Áridos, Rinconada Los Maitenes",i5,DIA,tipología i5*; nombre: árido
 2151576006,Extracción de Material de Empréstito Faena Refugio,i5,DIA,tipología i5*; nombre: empréstito; nombre: extracción de material
 2151709292,Extracción de áridos Pozo Gallegos,i5,DIA,tipología i5*; nombre: árido
@@ -551,7 +535,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2152192283,Ampliación Extracción y procesamiento de áridos sector Huepil,i5,DIA,tipología i5*; nombre: árido
 2152264935,Regularizacion Emprestito de Extraccion de Aridos Pozo Columo,i5,DIA,tipología i5*; nombre: árido; nombre: empréstito
 2152380652,Extracción de Áridos Camino viejo Pitrufquén km 2,i5,DIA,tipología i5*; nombre: árido
-2152409354,Depósito de Ripios N°4,i3,DIA,nombre: ripio
 2152437263,Extracción de Áridos desde el Río Biobío en San Pedro de la Paz,i5,DIA,tipología i5*; nombre: árido
 2152532447,"Extracción mecanizada en ribera sur Río Maipo km. 3.750 al km. 4.500 y km. 5.500 al km. 6.500 aguas abajo Puente Maipo, comuna de Buin",i5,DIA,tipología i5*
 2152951438,"Extracción y Procesamiento de Áridos, Río Achibueno, Sector Los Maitenes",i5,DIA,tipología i5*; nombre: árido
@@ -561,7 +544,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2153366471,Extracción de Áridos para Mejoramiento de Ruta 9,i5,DIA,tipología i5*; nombre: árido
 2153480258,"Extracción de áridos río Maipo, sector San Juan",i5,DIA,tipología i5*; nombre: árido
 2153516841,Proyecto Extracción de Áridos Justo Gutiérrez Schweitzer,i5,DIA,tipología i5*; nombre: árido
-2153819463,Extensión del Botadero de Ripios y Modificaciones Operacionales en el Área de la Pila Dinámica de Lixiviación,i3,DIA,nombre: ripio
 2153935003,"Proyecto Extracción de Áridos Sector El Manque, Comuna de Quillón",i5,DIA,tipología i5*; nombre: árido
 2154153327,"Extracción de Áridos Km 4,5 a 5,5 ribera sur río Maipo",i5,DIA,tipología i5*; nombre: árido
 2154243372,Extracción Mecanizada de Áridos en Río Maipo Km 3+550 a Km 5+600 Aguas Abajo del Puente San Ramón,i5,DIA,tipología i5*; nombre: árido
@@ -610,7 +592,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2159746156,Extracción de Áridos Peu Peu,i5,DIA,tipología i5*; nombre: árido
 2159756862,Obras Eléctricas y Área para Extracción de Áridos al Interior de Minera Escondida,i5,DIA,tipología i5*; nombre: árido
 2159756977,"Extracción mecanizada en ribera sur río Maipo km 3.750 al km 4500 y km 5500 al km 6500 aguas abajo puente Maipo, comuna de Buin",i5,DIA,tipología i5*
-2159850695,"Proyecto de ampliación del depósito de ripios y continuidad operacional de Planta Taltal, ENAMI",i1,DIA,nombre: ripio
 2159934652,Extracción de Áridos Peu Peu,i5,DIA,tipología i5*; nombre: árido
 2160047465,"Ampliación, extracción y procesamiento de áridos Pafal",i5,DIA,tipología i5*; nombre: árido
 2160220530,Extraccion y Procesamiento de Aridos Galvarino,i5,DIA,tipología i5*; nombre: árido
@@ -633,7 +614,6 @@ exp_id,exp_nombre,tipologia,instrumento,motivo
 2162861252,Ampliación del volumen de extracción y procesamiento de áridos Planta el Carmen,i5,DIA,tipología i5*; nombre: árido
 2162895536,Extraccion y Procesamiento de Aridos Socos,i5,DIA,tipología i5*; nombre: árido
 2162981201,Extracción y Procesamiento de Áridos Lo Valdivia,i5,DIA,tipología i5*; nombre: árido
-2163763372,Proyecto Modificación y continuidad operacional Rajo Mirador y El Llano con aumento de capacidad Depósito Ripios Tesoro. Minera Centinela,i1,DIA,nombre: ripio
 2163859477,Modificación Pila de Lixiviación Sulfolix El Abra,i5,DIA,tipología i5*
 2163884488,Extracción y Procesamiento de Áridos Georogu,i5,DIA,tipología i5*; nombre: árido
 2164258166,Extracción de Áridos Rio Teno Sector Los Guindos,i5,DIA,tipología i5*; nombre: árido

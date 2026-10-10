@@ -38,11 +38,13 @@ source regression check requires exactly 53 marked inconsistencies.
 
 The principal population excludes every `tipologia` beginning with `i5` (519 admitted,
 date-consistent records) and names matching the explicit, accent-insensitive terms
-`árido`, `aridos`, `pozo lastrero`, `empréstito`, `ripio`, or
-`extracción de material`. The name rule removes 151 additional DIA records. `Cantera`
-is deliberately not a criterion, so non-metallic gypsum and limestone quarries remain.
-The resulting population has 975 expedientes (851 DIA and 124 EIA). Every exclusion is
-listed with its reason in `docs/population_exclusions.csv`.
+`árido`, `aridos`, `pozo lastrero`, `empréstito`, or `extracción de material`.
+The name rule removes 131 additional DIA records. It does not apply automatically to
+`i3` or `i4`: matching records of those types remain in the population and are written
+to `docs/population_exclusions_review.csv` for J. `Ripio` and `cantera` are deliberately
+not criteria, so copper-leaching residues and non-metallic gypsum or limestone quarries
+remain. The resulting population has 995 expedientes (871 DIA and 124 EIA). Every
+exclusion is listed with its reason in `docs/population_exclusions.csv`.
 Every conversion from days to months uses `days / 30.4375` (`365.25 / 12`).
 
 ## Unidad de análisis: expediente principal

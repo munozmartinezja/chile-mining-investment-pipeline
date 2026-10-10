@@ -5,6 +5,7 @@ import pytest
 
 from cmip.survival import (
     build_population_exclusions,
+    build_population_exclusions_review,
     build_survival_population,
     build_trend_table,
     extract_competing_risk_tables,
@@ -93,12 +94,14 @@ def test_survival_population_excludes_explicit_aggregate_name_terms_but_not_quar
         "Cantera de yeso Santa Rosa",
         "Cantera de caliza El Melón",
         "Proyecto minero válido",
+        "Actualización i3 con extracción de áridos",
+        "Proyecto i4 Pozo Lastrero",
     ]
     source = pd.DataFrame(
         {
             "exp_id": range(1, len(names) + 1),
             "exp_nombre": names,
-            "tipologia": ["i1"] * len(names),
+            "tipologia": ["i1"] * 9 + ["i3", "i4"],
             "instrumento": ["DIA"] * len(names),
             "evento": ["aprobado"] * len(names),
             "duracion_dias": [30] * len(names),
@@ -112,8 +115,9 @@ def test_survival_population_excludes_explicit_aggregate_name_terms_but_not_quar
 
     population = build_survival_population(source)
     exclusions = build_population_exclusions(source)
+    review = build_population_exclusions_review(source)
 
-    assert population["exp_id"].tolist() == [7, 8, 9]
+    assert population["exp_id"].tolist() == [5, 7, 8, 9, 10, 11]
     assert exclusions.columns.tolist() == [
         "exp_id",
         "exp_nombre",
@@ -121,8 +125,11 @@ def test_survival_population_excludes_explicit_aggregate_name_terms_but_not_quar
         "instrumento",
         "motivo",
     ]
-    assert exclusions["exp_id"].tolist() == [1, 2, 3, 4, 5, 6]
+    assert exclusions["exp_id"].tolist() == [1, 2, 3, 4, 6]
     assert "cantera" not in " ".join(exclusions["motivo"]).casefold()
+    assert "ripio" not in " ".join(exclusions["motivo"]).casefold()
+    assert review["exp_id"].tolist() == [10, 11]
+    assert review["motivo"].str.startswith("revisión i3/i4: nombre:").all()
 
 
 class _RecordingKM:
@@ -228,3 +235,6 @@ def test_failed_cox_removes_stale_output_and_reports_reason(tmp_path, monkeypatc
         "motivo",
     ]
     assert exclusions["exp_id"].tolist() == [2]
+    review = pd.read_csv(tmp_path / "population_exclusions_review.csv")
+    assert review.columns.tolist() == exclusions.columns.tolist()
+    assert review.empty

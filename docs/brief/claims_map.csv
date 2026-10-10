@@ -27,7 +27,7 @@ es,bullet,las fechas de puesta en marcha de Cochilco.,eia_100m_aj_aprobado_24m_e
 es,bullet,La cifra puede ser mayor: 4 filas agregadas de Codelco (23.754 MMUS$) no permiten asignar un expediente único.,estado_agregado_no_asignable_n;estado_agregado_no_asignable_inversion,
 es,seccion,Método y alcance,,src/cmip/brief.py:TEXTS
 es,metodo,"Fuentes: Cochilco, Cartera de Proyectos de Inversión Minera 2025–2034 (Anexo C, dic-2025). SEA: descarga 30-09-2026, último registro 25-08-2026.",sea_fecha_datos_dia;sea_fecha_datos_mes;sea_fecha_datos_anio,data/SOURCES.md
-es,metodo,"Población: 975 expedientes mineros admitidos, ingresados entre 2011 y 2026; excluye áridos. Kaplan–Meier y Aalen–Johansen; meses = días/30,44.",sea_poblacion_admitida_n;poblacion_periodo_inicio;poblacion_periodo_fin,docs/survival_definitions.md
+es,metodo,"Población: 995 expedientes mineros admitidos, ingresados entre 2011 y 2026; excluye áridos. Kaplan–Meier y Aalen–Johansen; meses = días/30,44.",sea_poblacion_admitida_n;poblacion_periodo_inicio;poblacion_periodo_fin,docs/survival_definitions.md
 es,metodo,"Cartera: expediente principal por proyecto; las modificaciones no cuentan como cruce. Tiempos: cada expediente, incluidos reingresos.",,docs/survival_definitions.md
 es,metodo,"38 de 59 cruces revisados ficha por ficha. Sensibilidad del titular: 8,6%–44,9% según 2 clasificaciones y las filas agregadas.",cruces_revision_manual_n;cartera_proyectos_n;headline_piso_pct;headline_techo_pct,docs/validation_checklist.csv
 es,metodo,Cada cifra se recalcula por una segunda vía (SQL y estimadores propios) y se verifica con tests automáticos; código y datos en el repositorio.,,src/cmip/validation.py:build_claims_register
@@ -60,7 +60,7 @@ en,bullet,beyond Cochilco's commissioning dates.,eia_100m_aj_aprobado_24m_estima
 en,bullet,"The figure may be higher: 4 aggregate Codelco rows (US$23,754m) cannot be assigned a unique filing.",estado_agregado_no_asignable_n;estado_agregado_no_asignable_inversion,
 en,seccion,Method and scope,,src/cmip/brief.py:TEXTS
 en,metodo,"Sources: Cochilco, 2025–2034 Mining Investment Project Portfolio (Annex C, Dec-2025). SEA: downloaded 30-09-2026; latest record 25-08-2026.",sea_fecha_datos_dia;sea_fecha_datos_mes;sea_fecha_datos_anio,data/SOURCES.md
-en,metodo,Population: 975 admitted mining filings entered between 2011 and 2026; excludes sand-and-gravel (áridos) filings. Kaplan–Meier and Aalen–Johansen; months =,sea_poblacion_admitida_n;poblacion_periodo_inicio;poblacion_periodo_fin,docs/survival_definitions.md
+en,metodo,Population: 995 admitted mining filings entered between 2011 and 2026; excludes sand-and-gravel (áridos) filings. Kaplan–Meier and Aalen–Johansen; months =,sea_poblacion_admitida_n;poblacion_periodo_inicio;poblacion_periodo_fin,docs/survival_definitions.md
 en,metodo,days/30.44.,sea_poblacion_admitida_n;poblacion_periodo_inicio;poblacion_periodo_fin,docs/survival_definitions.md
 en,metodo,"Portfolio: one principal filing per project; modifications do not count as a match. Times: each filing, including re-entries.",,docs/survival_definitions.md
 en,metodo,38 of 59 matches reviewed filing by filing. Headline sensitivity: 8.6%–44.9% under 2 classifications and aggregate rows.,cruces_revision_manual_n;cartera_proyectos_n;headline_piso_pct;headline_techo_pct,docs/validation_checklist.csv
