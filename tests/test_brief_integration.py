@@ -120,8 +120,8 @@ def test_pdf_copy_contains_no_forbidden_adversarial_phrases() -> None:
 
 def test_versioned_pdfs_have_one_visible_text_layer_and_one_headline() -> None:
     headlines = (
-        "20,9% de la inversión minera 2025–2034 no tiene expediente SEIA identificado",
-        "20.9% of 2025–2034 mining investment has no identified SEIA filing",
+        "16,3% de la inversión minera 2025–2034 no tiene expediente SEIA identificado",
+        "16.3% of 2025–2034 mining investment has no identified SEIA filing",
     )
     for path, headline in zip(PDF_PATHS, headlines, strict=True):
         reader = pypdf.PdfReader(path)
@@ -194,3 +194,15 @@ def test_claims_map_covers_every_extracted_pdf_line() -> None:
             if line.strip().lstrip("\x7f•").strip()
         }
         assert extracted <= mapped
+
+
+def test_claims_map_supports_favourable_rca_update_copy_with_count() -> None:
+    claims_map = pd.read_csv(ROOT / "docs/brief/claims_map.csv", keep_default_na=False)
+    update_copy = claims_map["texto_renderizado"].str.contains(
+        "actualización está en calificación|update is under review", regex=True
+    )
+
+    assert update_copy.sum() == 2
+    assert claims_map.loc[update_copy, "claim_ids"].eq(
+        "aprobado_con_actualizacion_en_calificacion_n"
+    ).all()

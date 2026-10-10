@@ -85,20 +85,22 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
         "cruces_regla_auto_n",
         "headline_piso_pct",
         "headline_techo_pct",
+        "aprobado_con_actualizacion_en_calificacion_n",
     }.issubset(claim_ids)
     indexed = register.set_index("claim_id")
     assert indexed.loc["sea_poblacion_admitida_n", "valor"] == 995
     assert indexed.loc["eia_100m_n", "valor"] == 81
     assert indexed.loc["poblacion_periodo_inicio", "valor"] == 2011
     assert indexed.loc["poblacion_periodo_fin", "valor"] == 2026
-    assert indexed.loc["cruces_revision_manual_n", "valor"] == 38
-    assert indexed.loc["cruces_regla_auto_n", "valor"] == 21
+    assert indexed.loc["cruces_revision_manual_n", "valor"] == 59
+    assert indexed.loc["cruces_regla_auto_n", "valor"] == 0
     assert indexed.loc["headline_piso_pct", "valor"] == pytest.approx(
-        100 * (21_893.9 - 8_000 - 4_850.9) / 104_549.2
+        100 * (17_043.0 - 8_000) / 104_549.2
     )
     assert indexed.loc["headline_techo_pct", "valor"] == pytest.approx(
-        100 * (21_893.9 + 23_753.9 + 1_300) / 104_549.2
+        100 * (17_043.0 + 23_753.9 + 1_300) / 104_549.2
     )
+    assert indexed.loc["aprobado_con_actualizacion_en_calificacion_n", "valor"] == 1
 
 
 @requires_local_data
@@ -162,15 +164,11 @@ def test_validation_checklist_preserves_40_answers_and_adds_21_pending_automatic
         )
     ]
     assert len(automatic) == 21
-    assert automatic["respuesta_J"].eq("").all()
+    assert automatic["respuesta_J"].eq("confirmado").all()
     assert automatic["candidato_sugerido"].str.contains("otros_familia=").all()
     assert automatic["url_expediente"].str.contains(r"id_expediente=\d+&").all()
 
 
-@pytest.mark.xfail(
-    reason="21 automatic matches await J; remove xfail after respuesta_J is complete",
-    strict=True,
-)
 def test_versioned_validation_checklist_gate_is_complete() -> None:
     path = ROOT / "docs/validation_checklist.csv"
     if not all(source.exists() for source in REQUIRED_DATA):
@@ -195,6 +193,15 @@ def test_final_environmental_status_totals_portfolio_investment() -> None:
         "pertinencia",
         "no_determinado",
     }.issubset(totals.index)
+
+    rt = portfolio.loc[
+        portfolio["project_id"].eq("codelco-sulfuros-rt-fase-ii-3")
+    ].iloc[0]
+    assert rt["exp_id_confirmado"] == 8210090
+    assert rt["estado_ambiental"] == "aprobado"
+    assert portfolio.loc[
+        portfolio["exp_id_confirmado"].eq(8210090), "project_id"
+    ].tolist() == ["codelco-sulfuros-rt-fase-ii-3"]
 
 
 @requires_local_data

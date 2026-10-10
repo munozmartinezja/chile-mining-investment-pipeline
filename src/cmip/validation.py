@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import unicodedata
 import warnings
 from collections.abc import Iterable, Mapping
@@ -282,6 +283,25 @@ def _reentry_family_ids(frame: pd.DataFrame) -> pd.Series:
     )
 
 
+def _checklist_modification_ids(checklist: pd.DataFrame) -> pd.DataFrame:
+    """Return modification expediente IDs explicitly curated for each project."""
+    required = {"cochilco_id", "fuente_J"}
+    missing = required - set(checklist.columns)
+    if missing:
+        raise ValueError(f"Checklist missing modification evidence columns: {sorted(missing)}")
+    records: list[dict[str, object]] = []
+    for row in checklist.itertuples(index=False):
+        source = str(row.fuente_J)
+        match = re.search(r"(?:^|\s+\|\s+)modificaciones:\s*([^|]+)", source)
+        if match is None:
+            continue
+        for exp_id in re.findall(r"\b\d{7,10}\b", match.group(1)):
+            records.append(
+                {"project_id": str(row.cochilco_id), "modification_exp_id": int(exp_id)}
+            )
+    return pd.DataFrame(records, columns=["project_id", "modification_exp_id"])
+
+
 def _cluster_bootstrap_cif(
     group: pd.DataFrame,
     replicas: int,
@@ -336,9 +356,16 @@ def build_claims_register(
     sea_path: Path = SEA_PATH,
     km_summary_path: Path = KM_SUMMARY_PATH,
     aj_summary_path: Path = AJ_SUMMARY_PATH,
+    checklist_path: Path = CHECKLIST_PATH,
 ) -> pd.DataFrame:
     """Build and independently recalculate every candidate numeric brief claim."""
-    for path in (portfolio_path, sea_path, km_summary_path, aj_summary_path):
+    for path in (
+        portfolio_path,
+        sea_path,
+        km_summary_path,
+        aj_summary_path,
+        checklist_path,
+    ):
         if not path.exists():
             raise FileNotFoundError(f"Required validation source is missing: {path}")
 
@@ -346,6 +373,7 @@ def build_claims_register(
     sea = pd.read_parquet(sea_path)
     km_summary_frame = pd.read_parquet(km_summary_path)
     aj_summary = pd.read_parquet(aj_summary_path)
+    checklist = pd.read_csv(checklist_path, keep_default_na=False)
     sources = {
         "portfolio": (portfolio, portfolio_path),
         "SEA": (sea, sea_path),
@@ -840,9 +868,56 @@ def build_claims_register(
             ),
         ]
     )
+    modification_ids = _checklist_modification_ids(checklist)
+    approved_ids = set(
+        portfolio.loc[portfolio["estado_ambiental"].eq("aprobado"), "project_id"].astype(str)
+    )
+    pending_modification_ids = set(
+        pd.to_numeric(
+            sea.loc[sea["evento"].eq("en_tramite"), "exp_id"], errors="raise"
+        ).astype(int)
+    )
+    approved_with_pending_update = set(
+        modification_ids.loc[
+            modification_ids["project_id"].isin(approved_ids)
+            & modification_ids["modification_exp_id"].isin(pending_modification_ids),
+            "project_id",
+        ]
+    )
+    sea_event_by_id = dict(
+        zip(pd.to_numeric(sea["exp_id"]).astype(int), sea["evento"], strict=True)
+    )
+    independently_counted_projects: set[str] = set()
+    for row in checklist.itertuples(index=False):
+        project_id = str(row.cochilco_id)
+        if project_id not in approved_ids:
+            continue
+        source = str(row.fuente_J)
+        segment = re.search(r"(?:^|\s+\|\s+)modificaciones:\s*([^|]+)", source)
+        if segment is None:
+            continue
+        modification_events = {
+            sea_event_by_id.get(int(exp_id))
+            for exp_id in re.findall(r"\b\d{7,10}\b", segment.group(1))
+        }
+        if "en_tramite" in modification_events:
+            independently_counted_projects.add(project_id)
+    rows.append(
+        _claim(
+            "aprobado_con_actualizacion_en_calificacion_n",
+            "Proyectos con RCA favorable y actualización en calificación",
+            len(approved_with_pending_update),
+            "proyectos",
+            str(checklist_path.relative_to(PROJECT_ROOT)),
+            "Proyectos aprobados con una modificación curada cuya ficha SEA está en calificación.",
+            len(independently_counted_projects),
+            0,
+            "La RCA principal sigue vigente; la actualización de la misma familia "
+            "está en calificación.",
+        )
+    )
     excluded_floor_ids = {
         "compania-minera-dona-ines-de-collahuasi-scm-proyecto-4a-linea-nueva-conentradora-en-rosario",
-        "codelco-sulfuros-rt-fase-ii-3",
     }
     study_mask = portfolio["estado_ambiental"].eq("sin_expediente_en_estudio")
     floor_amount = float(
@@ -916,10 +991,10 @@ def build_claims_register(
                 100 * floor_amount / total,
                 "%",
                 str(portfolio_path.relative_to(PROJECT_ROOT)),
-                "Sin expediente en estudio, excluyendo dos clasificaciones disputables.",
+                "Sin expediente en estudio, excluyendo una clasificación disputable.",
                 100 * floor_amount / total_sql,
                 0.05,
-                "Excluye los dos project_id documentados por la auditoría.",
+                "Excluye el project_id documentado por la auditoría.",
             ),
             _claim(
                 "headline_techo_pct",

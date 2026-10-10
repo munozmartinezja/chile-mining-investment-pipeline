@@ -58,7 +58,8 @@ TEXTS = {
             "Fuentes: Cochilco, Cartera de Proyectos de Inversión Minera 2025–2034 (Anexo C, dic-2025). SEA: descarga 30-09-2026, último registro {fecha_datos}.",
             "Población: {population} expedientes mineros admitidos, ingresados entre {p_ini} y {p_fin}; excluye áridos. Kaplan–Meier y Aalen–Johansen; meses = días/30,44.",
             "Cartera: expediente principal por proyecto; las modificaciones no cuentan como cruce. Tiempos: cada expediente, incluidos reingresos.",
-            "{n_manual} de {n_total} cruces revisados ficha por ficha. Sensibilidad del titular: {piso}%–{techo}% según 2 clasificaciones y las filas agregadas.",
+            "{n_manual} de {n_total} cruces revisados ficha por ficha. Sensibilidad del titular: {piso}%–{techo}% según 1 clasificación y las filas agregadas.",
+            "Con RCA favorable incluye RCA vigentes cuya actualización está en calificación.",
             "Cada cifra se recalcula por una segunda vía (SQL y estimadores propios) y se verifica con tests automáticos; código y datos en el repositorio.",
         ),
     },
@@ -90,7 +91,8 @@ TEXTS = {
             "Sources: Cochilco, 2025–2034 Mining Investment Project Portfolio (Annex C, Dec-2025). SEA: downloaded 30-09-2026; latest record {fecha_datos}.",
             "Population: {population} admitted mining filings entered between {p_ini} and {p_fin}; excludes sand-and-gravel (áridos) filings. Kaplan–Meier and Aalen–Johansen; months = days/30.44.",
             "Portfolio: one principal filing per project; modifications do not count as a match. Times: each filing, including re-entries.",
-            "{n_manual} of {n_total} matches reviewed filing by filing. Headline sensitivity: {piso}%–{techo}% under 2 classifications and aggregate rows.",
+            "{n_manual} of {n_total} matches reviewed filing by filing. Headline sensitivity: {piso}%–{techo}% under 1 classification and aggregate rows.",
+            "Favourable RCA includes valid RCAs whose update is under review.",
             "Each figure is recomputed by a second route (SQL and hand-written estimators) and checked by automated tests; code and data in the repository.",
         ),
     },
@@ -128,6 +130,7 @@ BRIEF_CLAIM_IDS = (
     "cruces_regla_auto_n",
     "headline_piso_pct",
     "headline_techo_pct",
+    "aprobado_con_actualizacion_en_calificacion_n",
     "sea_fecha_datos_dia",
     "sea_fecha_datos_mes",
     "sea_fecha_datos_anio",
@@ -619,6 +622,7 @@ def _claim_support(copy: dict[str, object]) -> list[tuple[str, str, str, str]]:
         "sea_poblacion_admitida_n;poblacion_periodo_inicio;poblacion_periodo_fin",
         "",
         "cruces_revision_manual_n;cartera_proyectos_n;headline_piso_pct;headline_techo_pct",
+        "aprobado_con_actualizacion_en_calificacion_n",
         "",
     )
     method_evidence = (
@@ -626,6 +630,7 @@ def _claim_support(copy: dict[str, object]) -> list[tuple[str, str, str, str]]:
         "docs/survival_definitions.md",
         "docs/survival_definitions.md",
         "docs/validation_checklist.csv",
+        "docs/validation_checklist.csv;data/interim/sea_mining.parquet",
         "src/cmip/validation.py:build_claims_register",
     )
     entries.extend(
@@ -662,7 +667,10 @@ def write_claims_map(outputs: dict[str, Path], metrics: pd.DataFrame) -> Path:
             line = raw_line.strip().lstrip("\x7f•").strip()
             if not line:
                 continue
-            candidates = [entry for entry in support if line in entry[1] or entry[1] in line]
+            exact = [entry for entry in support if line == entry[1]]
+            candidates = exact or [
+                entry for entry in support if line in entry[1] or entry[1] in line
+            ]
             if not candidates:
                 raise ValueError(f"Unmapped extracted PDF line ({lang}): {line!r}")
             block, _full_text, claim_ids, evidence = candidates[0]

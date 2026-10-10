@@ -324,6 +324,9 @@ def _english_claim_text(claim_id: str) -> str:
         "cruces_regla_auto_n": "Portfolio matches pending filing-by-filing confirmation",
         "headline_piso_pct": "Lower headline sensitivity bound",
         "headline_techo_pct": "Upper headline sensitivity bound",
+        "aprobado_con_actualizacion_en_calificacion_n": (
+            "Projects with a favourable RCA and an update under review"
+        ),
         "sea_fecha_datos_dia": "Day of the SEA data currency date",
         "sea_fecha_datos_mes": "Month of the SEA data currency date",
         "sea_fecha_datos_anio": "Year of the SEA data currency date",

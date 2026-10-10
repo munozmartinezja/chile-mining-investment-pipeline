@@ -129,6 +129,34 @@ def test_build_powerbi_tables_uses_exact_explicit_schemas(tmp_path: Path) -> Non
     ]
 
 
+def test_powerbi_translates_favourable_rca_pending_update_claim(tmp_path: Path) -> None:
+    claims = pd.concat(
+        [
+            _claims(),
+            pd.DataFrame(
+                {
+                    "claim_id": ["aprobado_con_actualizacion_en_calificacion_n"],
+                    "texto_es": [
+                        "Proyectos con RCA favorable y actualización en calificación"
+                    ],
+                    "valor": [1.0],
+                    "unidad": ["proyectos"],
+                    "estado": ["verificada"],
+                }
+            ),
+        ],
+        ignore_index=True,
+    )
+
+    table = build_powerbi_tables(
+        **_write_sources(tmp_path), claims=claims
+    )["kpi_validados"].to_pandas().set_index("claim_id")
+
+    assert table.loc[
+        "aprobado_con_actualizacion_en_calificacion_n", "texto_en"
+    ] == "Projects with a favourable RCA and an update under review"
+
+
 def test_monthly_curves_are_right_continuous_steps_from_zero_to_72(tmp_path: Path) -> None:
     tables = build_powerbi_tables(**_write_sources(tmp_path), claims=_claims())
 

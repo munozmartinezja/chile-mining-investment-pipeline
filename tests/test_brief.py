@@ -49,6 +49,7 @@ def _synthetic_register() -> pd.DataFrame:
         "cruces_regla_auto_n": (21, "proyectos"),
         "headline_piso_pct": (8.6, "%"),
         "headline_techo_pct": (44.9, "%"),
+        "aprobado_con_actualizacion_en_calificacion_n": (1, "proyectos"),
         "sea_fecha_datos_dia": (25, "día"),
         "sea_fecha_datos_mes": (8, "mes"),
         "sea_fecha_datos_anio": (2026, "año"),
@@ -137,6 +138,34 @@ def test_bootstrap_percentages_use_one_decimal(lang: str, expected: str) -> None
     assert _brief_copy(compute_brief_metrics(_synthetic_register()), lang)[
         "bootstrap_body"
     ] == expected
+
+
+@pytest.mark.parametrize(
+    ("lang", "review_line", "favourable_line"),
+    [
+        (
+            "es",
+            "38 de 59 cruces revisados ficha por ficha. Sensibilidad del titular: "
+            "8,6%–44,9% según 1 clasificación y las filas agregadas.",
+            "Con RCA favorable incluye RCA vigentes cuya actualización está en calificación.",
+        ),
+        (
+            "en",
+            "38 of 59 matches reviewed filing by filing. Headline sensitivity: "
+            "8.6%–44.9% under 1 classification and aggregate rows.",
+            "Favourable RCA includes valid RCAs whose update is under review.",
+        ),
+    ],
+)
+def test_method_discloses_one_disputed_classification_and_pending_updates(
+    lang: str, review_line: str, favourable_line: str
+) -> None:
+    method_lines = _brief_copy(compute_brief_metrics(_synthetic_register()), lang)[
+        "method_lines"
+    ]
+
+    assert review_line in method_lines
+    assert favourable_line in method_lines
 
 
 def test_rendered_brief_is_one_page_and_contains_no_portfolio_names(tmp_path: Path) -> None:
