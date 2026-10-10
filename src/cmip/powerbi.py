@@ -300,6 +300,7 @@ def _english_claim_text(claim_id: str) -> str:
         "cartera_inversion_total": "Total portfolio investment",
         "cartera_proyectos_n": "Projects in the Cochilco portfolio",
         "sea_poblacion_admitida_n": "Admitted mining filings in the survival population",
+        "sea_poblacion_eia_n": "Admitted EIAs in the survival population",
         "eia_100m_aj_aprobado_24m_estimacion": (
             "Central estimate: 24-month AJ approval for EIAs ≥US$100m"
         ),
@@ -326,6 +327,9 @@ def _english_claim_text(claim_id: str) -> str:
         "headline_techo_pct": "Upper headline sensitivity bound",
         "aprobado_con_actualizacion_en_calificacion_n": (
             "Projects with a favourable RCA and an update under review"
+        ),
+        "aprobado_con_actualizacion_en_calificacion_inversion": (
+            "Investment with a favourable RCA and an update under review"
         ),
         "sea_fecha_datos_dia": "Day of the SEA data currency date",
         "sea_fecha_datos_mes": "Month of the SEA data currency date",

@@ -1,46 +1,50 @@
 lang,bloque,texto_renderizado,claim_ids,evidencia
-es,titular,"16,3% de la inversión minera 2025–2034 no tiene expediente SEIA identificado",estado_sin_expediente_en_estudio_pct,
+es,titular,"16,3% de la inversión minera 2025–2034 está en proyectos en estudio sin",estado_sin_expediente_en_estudio_pct,
+es,titular,expediente SEIA identificado,estado_sin_expediente_en_estudio_pct,
 es,subtitulo,"17.043 MMUS$ en 7 proyectos, todos en etapa de estudio · corte SEA 25-08-2026",estado_sin_expediente_en_estudio_inversion;estado_sin_expediente_en_estudio_n;sea_fecha_datos_dia;sea_fecha_datos_mes;sea_fecha_datos_anio,
 es,kpi_1,Aprobación acumulada de EIA,,src/cmip/brief.py:TEXTS
-es,kpi_1,"31,7% a 24 meses",aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct,
-es,kpi_1,"51,7% a 36 meses",aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct,
-es,kpi_1,50% a ~33 meses,aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct,
+es,kpi_1,"31,7% a 24 meses · n=124",aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct;sea_poblacion_eia_n,
+es,kpi_1,"51,7% a 36 meses",aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct;sea_poblacion_eia_n,
+es,kpi_1,50% a ~33 meses,aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct;sea_poblacion_eia_n,
 es,kpi_2,EIA ≥100 MMUS$ aprobados a 24,,src/cmip/brief.py:TEXTS
-es,kpi_1,meses,aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct,
+es,kpi_1,meses,aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct;sea_poblacion_eia_n,
 es,kpi_2,"39,6% (IC95% 27,6–52,0) ·",eia_100m_aj_aprobado_24m_estimacion;eia_100m_aj_aprobado_24m_ic95_inf;eia_100m_aj_aprobado_24m_ic95_sup;eia_100m_n;confidence_level_pct,
 es,kpi_2,n=81,eia_100m_aj_aprobado_24m_estimacion;eia_100m_aj_aprobado_24m_ic95_inf;eia_100m_aj_aprobado_24m_ic95_sup;eia_100m_n;confidence_level_pct,
 es,kpi_3,En calificación al corte SEA,,src/cmip/brief.py:TEXTS
 es,kpi_3,24.780 MMUS$ · 15,estado_en_evaluacion_inversion;estado_en_evaluacion_n,
-es,subtitulo,proyectos,estado_sin_expediente_en_estudio_inversion;estado_sin_expediente_en_estudio_n;sea_fecha_datos_dia;sea_fecha_datos_mes;sea_fecha_datos_anio,
+es,titular,proyectos,estado_sin_expediente_en_estudio_pct,
 es,kpi_4,Con RCA favorable,,src/cmip/brief.py:TEXTS
 es,kpi_4,"37.597 MMUS$ · 36,0% de la",estado_aprobado_inversion;estado_aprobado_pct,
 es,kpi_4,cartera,estado_aprobado_inversion;estado_aprobado_pct,
-es,figura_cartera,"Proyectos en estudio sin expediente identificado: 16,3% de",estado_sin_expediente_en_estudio_pct,
-es,titular,la inversión,estado_sin_expediente_en_estudio_pct,
-es,figura_incidencia,Ignorar desistimientos y rechazos (Kaplan–Meier),,src/cmip/brief.py:TEXTS
-es,figura_incidencia,sobrestima la aprobación,,src/cmip/brief.py:TEXTS
+es,figura_cartera,Cartera 2025–2034 por estado SEIA (MMUS$),,src/cmip/brief.py:TEXTS
+es,figura_incidencia,"Ignorar desistimientos, rechazos y términos anticipados",,src/cmip/brief.py:TEXTS
+es,figura_incidencia,(Kaplan–Meier) sobrestima la aprobación,,src/cmip/brief.py:TEXTS
 es,seccion,Implicancias para contratistas,,src/cmip/brief.py:TEXTS
-es,bullet,"Estos ~17.000 MMUS$ aún deben ingresar al SEIA antes de construir. A 24 meses de su ingreso, 31,7% de los EIA está aprobado.",headline_amount_round_mmusd;aj_EIA_aprobado_24m,
+es,bullet,"Al corte, estos ~17.000 MMUS$ no registran ingreso al SEIA. Si requieren EIA, a 24 meses de su ingreso solo 31,7% de los EIA mineros",headline_amount_round_mmusd;aj_EIA_aprobado_24m,
+es,bullet,está aprobado.,headline_amount_round_mmusd;aj_EIA_aprobado_24m,
 es,bullet,"Para EIA ≥100 MMUS$ estimamos 39,6% aprobado a 24 meses (IC95% 27,6–52,0%): conviene planificar con holgura de permisos sobre",eia_100m_aj_aprobado_24m_estimacion;eia_100m_aj_aprobado_24m_ic95_inf;eia_100m_aj_aprobado_24m_ic95_sup;confidence_level_pct,
 es,bullet,las fechas de puesta en marcha de Cochilco.,eia_100m_aj_aprobado_24m_estimacion;eia_100m_aj_aprobado_24m_ic95_inf;eia_100m_aj_aprobado_24m_ic95_sup;confidence_level_pct,
-es,bullet,La cifra puede ser mayor: 4 filas agregadas de Codelco (23.754 MMUS$) no permiten asignar un expediente único.,estado_agregado_no_asignable_n;estado_agregado_no_asignable_inversion,
+es,bullet,"Aparte, 4 filas agregadas en ejecución (23.754 MMUS$) agrupan varios proyectos con permisos múltiples o previos; no se asignan a un",estado_agregado_no_asignable_n;estado_agregado_no_asignable_inversion,
+es,bullet,expediente único ni se incluyen en la cifra principal.,estado_agregado_no_asignable_n;estado_agregado_no_asignable_inversion,
 es,seccion,Método y alcance,,src/cmip/brief.py:TEXTS
 es,metodo,"Fuentes: Cochilco, Cartera de Proyectos de Inversión Minera 2025–2034 (Anexo C, dic-2025). SEA: descarga 30-09-2026, último registro 25-08-2026.",sea_fecha_datos_dia;sea_fecha_datos_mes;sea_fecha_datos_anio,data/SOURCES.md
 es,metodo,"Población: 995 expedientes mineros admitidos, ingresados entre 2011 y 2026; excluye áridos. Kaplan–Meier y Aalen–Johansen; meses = días/30,44.",sea_poblacion_admitida_n;poblacion_periodo_inicio;poblacion_periodo_fin,docs/survival_definitions.md
 es,metodo,"Cartera: expediente principal por proyecto; las modificaciones no cuentan como cruce. Tiempos: cada expediente, incluidos reingresos.",,docs/survival_definitions.md
-es,metodo,"59 de 59 cruces revisados ficha por ficha. Sensibilidad del titular: 8,6%–40,3% según 1 clasificación y las filas agregadas.",cruces_revision_manual_n;cartera_proyectos_n;headline_piso_pct;headline_techo_pct,docs/validation_checklist.csv
-es,metodo,Con RCA favorable incluye RCA vigentes cuya actualización está en calificación.,aprobado_con_actualizacion_en_calificacion_n,docs/validation_checklist.csv;data/interim/sea_mining.parquet
-es,metodo,Cada cifra se recalcula por una segunda vía (SQL y estimadores propios) y se verifica con tests automáticos; código y datos en el repositorio.,,src/cmip/validation.py:build_claims_register
+es,metodo,"Los 59 proyectos se revisaron uno a uno contra el SEA. Sensibilidad del titular: 8,6% si se excluye el proyecto dudoso de mayor monto; 40,3% si se suman las",cruces_revision_manual_n;cartera_proyectos_n;headline_piso_pct;headline_techo_pct,docs/validation_checklist.csv
+es,metodo,filas agregadas y el caso no determinado.,cruces_revision_manual_n;cartera_proyectos_n;headline_piso_pct;headline_techo_pct,docs/validation_checklist.csv
+es,metodo,Con RCA favorable incluye 1 proyecto (4.851 MMUS$) cuya RCA vigente tiene una actualización en calificación.,aprobado_con_actualizacion_en_calificacion_n;aprobado_con_actualizacion_en_calificacion_inversion,docs/validation_checklist.csv;data/interim/sea_mining.parquet
+es,metodo,"Las cifras se reproducen con el código y los datos del repositorio, y se verifican con tests automáticos.",,src/cmip/validation.py:build_claims_register
 es,autor,J. A. Muñoz Martínez · github.com/munozmartinezja,,src/cmip/config.py:AUTHOR_LINE
 es,pie,github.com/munozmartinezja/chile-mining-investment-pipeline,,README.md
-en,titular,16.3% of 2025–2034 mining investment has no identified SEIA filing,estado_sin_expediente_en_estudio_pct,
+en,titular,16.3% of 2025–2034 mining investment is in study-stage projects with no,estado_sin_expediente_en_estudio_pct,
+en,titular,identified SEIA filing,estado_sin_expediente_en_estudio_pct,
 en,subtitulo,"US$17,043m across 7 projects, all at study stage · SEA data to 25-08-2026",estado_sin_expediente_en_estudio_inversion;estado_sin_expediente_en_estudio_n;sea_fecha_datos_dia;sea_fecha_datos_mes;sea_fecha_datos_anio,
 en,kpi_1,Cumulative EIA approval,,src/cmip/brief.py:TEXTS
-en,kpi_1,31.7% at 24 months,aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct,
-en,kpi_1,51.7% at 36 months,aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct,
-en,kpi_1,50% at ~33 months,aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct,
+en,kpi_1,31.7% at 24 months · n=124,aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct;sea_poblacion_eia_n,
+en,kpi_1,51.7% at 36 months,aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct;sea_poblacion_eia_n,
+en,kpi_1,50% at ~33 months,aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct;sea_poblacion_eia_n,
 en,kpi_2,EIAs ≥US$100m approved at 24,,src/cmip/brief.py:TEXTS
-en,kpi_1,months,aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct,
+en,kpi_1,months,aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;aj_EIA_mes_50pct;aj_threshold_pct;sea_poblacion_eia_n,
 en,kpi_2,39.6% (95% CI 27.6–52.0) ·,eia_100m_aj_aprobado_24m_estimacion;eia_100m_aj_aprobado_24m_ic95_inf;eia_100m_aj_aprobado_24m_ic95_sup;eia_100m_n;confidence_level_pct,
 en,kpi_2,n=81,eia_100m_aj_aprobado_24m_estimacion;eia_100m_aj_aprobado_24m_ic95_inf;eia_100m_aj_aprobado_24m_ic95_sup;eia_100m_n;confidence_level_pct,
 en,kpi_3,Under review at SEA cut-off,,src/cmip/brief.py:TEXTS
@@ -48,22 +52,24 @@ en,kpi_3,"US$24,780m · 15 projects",estado_en_evaluacion_inversion;estado_en_ev
 en,kpi_4,Favourable RCA,,src/cmip/brief.py:TEXTS
 en,kpi_4,"US$37,597m · 36.0% of",estado_aprobado_inversion;estado_aprobado_pct,
 en,kpi_4,portfolio,estado_aprobado_inversion;estado_aprobado_pct,
-en,figura_cartera,Study-stage projects with no identified filing: 16.3% of,estado_sin_expediente_en_estudio_pct,
-en,titular,investment,estado_sin_expediente_en_estudio_pct,
-en,figura_incidencia,Ignoring withdrawals and rejections (Kaplan–Meier),,src/cmip/brief.py:TEXTS
-en,figura_incidencia,overstates approval,,src/cmip/brief.py:TEXTS
+en,figura_cartera,2025–2034 portfolio by SEIA status (US$m),,src/cmip/brief.py:TEXTS
+en,figura_incidencia,"Ignoring withdrawals, rejections and early terminations",,src/cmip/brief.py:TEXTS
+en,figura_incidencia,(Kaplan–Meier) overstates approval,,src/cmip/brief.py:TEXTS
 en,seccion,Implications for contractors,,src/cmip/brief.py:TEXTS
-en,bullet,"These ~US$17,000m still need to enter SEIA before construction. At 24 months after filing, 31.7% of EIAs are approved.",headline_amount_round_mmusd;aj_EIA_aprobado_24m,
+en,bullet,"As of the cut-off, these ~US$17,000m have no SEIA filing on record. If they require an EIA, only 31.7% of mining EIAs are approved 24",headline_amount_round_mmusd;aj_EIA_aprobado_24m,
+en,bullet,months after filing.,headline_amount_round_mmusd;aj_EIA_aprobado_24m,
 en,bullet,"For EIAs ≥US$100m, we estimate 39.6% approved at 24 months (95% CI 27.6–52.0%): permit schedules should include contingency",eia_100m_aj_aprobado_24m_estimacion;eia_100m_aj_aprobado_24m_ic95_inf;eia_100m_aj_aprobado_24m_ic95_sup;confidence_level_pct,
 en,bullet,beyond Cochilco's commissioning dates.,eia_100m_aj_aprobado_24m_estimacion;eia_100m_aj_aprobado_24m_ic95_inf;eia_100m_aj_aprobado_24m_ic95_sup;confidence_level_pct,
-en,bullet,"The figure may be higher: 4 aggregate Codelco rows (US$23,754m) cannot be assigned a unique filing.",estado_agregado_no_asignable_n;estado_agregado_no_asignable_inversion,
+en,bullet,"Separately, 4 aggregate rows in execution (US$23,754m) bundle several projects with multiple or prior permits; they are not assigned a",estado_agregado_no_asignable_n;estado_agregado_no_asignable_inversion,
+en,bullet,unique filing and are excluded from the headline.,estado_agregado_no_asignable_n;estado_agregado_no_asignable_inversion,
 en,seccion,Method and scope,,src/cmip/brief.py:TEXTS
 en,metodo,"Sources: Cochilco, 2025–2034 Mining Investment Project Portfolio (Annex C, Dec-2025). SEA: downloaded 30-09-2026; latest record 25-08-2026.",sea_fecha_datos_dia;sea_fecha_datos_mes;sea_fecha_datos_anio,data/SOURCES.md
 en,metodo,Population: 995 admitted mining filings entered between 2011 and 2026; excludes sand-and-gravel (áridos) filings. Kaplan–Meier and Aalen–Johansen; months =,sea_poblacion_admitida_n;poblacion_periodo_inicio;poblacion_periodo_fin,docs/survival_definitions.md
 en,metodo,days/30.44.,sea_poblacion_admitida_n;poblacion_periodo_inicio;poblacion_periodo_fin,docs/survival_definitions.md
 en,metodo,"Portfolio: one principal filing per project; modifications do not count as a match. Times: each filing, including re-entries.",,docs/survival_definitions.md
-en,metodo,59 of 59 matches reviewed filing by filing. Headline sensitivity: 8.6%–40.3% under 1 classification and aggregate rows.,cruces_revision_manual_n;cartera_proyectos_n;headline_piso_pct;headline_techo_pct,docs/validation_checklist.csv
-en,metodo,Favourable RCA includes valid RCAs whose update is under review.,aprobado_con_actualizacion_en_calificacion_n,docs/validation_checklist.csv;data/interim/sea_mining.parquet
-en,metodo,Each figure is recomputed by a second route (SQL and hand-written estimators) and checked by automated tests; code and data in the repository.,,src/cmip/validation.py:build_claims_register
+en,metodo,All 59 projects were reviewed one by one against SEA. Headline sensitivity: 8.6% excluding the largest judgment-call project; 40.3% adding aggregate rows and,cruces_revision_manual_n;cartera_proyectos_n;headline_piso_pct;headline_techo_pct,docs/validation_checklist.csv
+en,metodo,the undetermined case.,cruces_revision_manual_n;cartera_proyectos_n;headline_piso_pct;headline_techo_pct,docs/validation_checklist.csv
+en,metodo,"Favourable RCA includes 1 project (US$4,851m) whose valid RCA has an update under review.",aprobado_con_actualizacion_en_calificacion_n;aprobado_con_actualizacion_en_calificacion_inversion,docs/validation_checklist.csv;data/interim/sea_mining.parquet
+en,metodo,Figures are reproducible from the repository's code and data and checked by automated tests.,,src/cmip/validation.py:build_claims_register
 en,autor,J. A. Muñoz Martínez · github.com/munozmartinezja,,src/cmip/config.py:AUTHOR_LINE
 en,pie,github.com/munozmartinezja/chile-mining-investment-pipeline,,README.md

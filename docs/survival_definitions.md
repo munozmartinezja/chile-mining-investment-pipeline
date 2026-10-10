@@ -47,6 +47,15 @@ remain. The resulting population has 995 expedientes (871 DIA and 124 EIA). Ever
 exclusion is listed with its reason in `docs/population_exclusions.csv`.
 Every conversion from days to months uses `days / 30.4375` (`365.25 / 12`).
 
+The main population contains two zero-day records: SEA expedientes `2138623795`
+and `2149214233`, both DIA withdrawals whose submission and closing dates are the
+same day. They enter the KM and Aalen–Johansen estimators at 0.5 days because
+lifelines otherwise resets cumulative incidence at time zero; their stored
+`duration_days` remains 0. No record has a negative duration in the population.
+
+The high-investment EIA cluster bootstrap uses 2,000 replicas and the fixed seed
+`20261002`. Re-entry family is the resampling unit.
+
 ## Unidad de análisis: expediente principal
 
 El cruce de la cartera Cochilco usa como principal el expediente que autoriza el

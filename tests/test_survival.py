@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from cmip.survival import (
+    _confidence_frame,
     build_population_exclusions,
     build_population_exclusions_review,
     build_survival_population,
@@ -14,6 +15,38 @@ from cmip.survival import (
     fit_kaplan_meier,
     run_survival_analysis,
 )
+
+
+def test_confidence_frame_orders_lifelines_inverted_aj_labels() -> None:
+    confidence = pd.DataFrame(
+        {
+            "EIA: aprobado_upper_0.95": [0.23],
+            "EIA: aprobado_lower_0.95": [0.41],
+        },
+        index=pd.Index([730.5], name="event_at"),
+    )
+
+    result = _confidence_frame(confidence, "ci_lower", "ci_upper")
+
+    assert result.loc[0, "ci_lower"] == pytest.approx(0.23)
+    assert result.loc[0, "ci_upper"] == pytest.approx(0.41)
+
+
+def test_competing_risk_extraction_rejects_interval_not_containing_estimate() -> None:
+    class MalformedFitter:
+        cumulative_density_ = pd.DataFrame(
+            {"DIA: aprobado": [0.5]}, index=pd.Index([10.0], name="event_at")
+        )
+        confidence_interval_ = pd.DataFrame(
+            {
+                "DIA: aprobado_upper_0.95": [0.1],
+                "DIA: aprobado_lower_0.95": [0.2],
+            },
+            index=pd.Index([10.0], name="event_at"),
+        )
+
+    with pytest.raises(ValueError, match="does not contain cumulative incidence"):
+        extract_competing_risk_tables({("DIA", "aprobado"): MalformedFitter()})
 
 
 def _sea_sample() -> pd.DataFrame:

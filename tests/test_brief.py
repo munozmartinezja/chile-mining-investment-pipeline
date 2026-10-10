@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -15,6 +16,7 @@ def _synthetic_register() -> pd.DataFrame:
         "cartera_inversion_total": (100_000.0, "MMUS$"),
         "cartera_proyectos_n": (59, "proyectos"),
         "sea_poblacion_admitida_n": (1_645, "expedientes"),
+        "sea_poblacion_eia_n": (124, "expedientes"),
         "estado_sin_expediente_en_estudio_inversion": (21_000.0, "MMUS$"),
         "estado_sin_expediente_en_estudio_n": (8, "proyectos"),
         "estado_sin_expediente_en_estudio_pct": (21.0, "%"),
@@ -50,6 +52,7 @@ def _synthetic_register() -> pd.DataFrame:
         "headline_piso_pct": (8.6, "%"),
         "headline_techo_pct": (44.9, "%"),
         "aprobado_con_actualizacion_en_calificacion_n": (1, "proyectos"),
+        "aprobado_con_actualizacion_en_calificacion_inversion": (4_850.9, "MMUS$"),
         "sea_fecha_datos_dia": (25, "día"),
         "sea_fecha_datos_mes": (8, "mes"),
         "sea_fecha_datos_anio": (2026, "año"),
@@ -141,19 +144,36 @@ def test_bootstrap_percentages_use_one_decimal(lang: str, expected: str) -> None
 
 
 @pytest.mark.parametrize(
+    ("lang", "expected"),
+    [
+        ("es", "31,1% a 24 meses · n=124\n51,7% a 36 meses\n50% a ~33 meses"),
+        ("en", "31.1% at 24 months · n=124\n51.7% at 36 months\n50% at ~33 months"),
+    ],
+)
+def test_kpi_one_reports_the_eia_population_denominator(lang: str, expected: str) -> None:
+    copy = _brief_copy(compute_brief_metrics(_synthetic_register()), lang)
+
+    assert copy["km_body"] == expected
+
+
+@pytest.mark.parametrize(
     ("lang", "review_line", "favourable_line"),
     [
         (
             "es",
-            "38 de 59 cruces revisados ficha por ficha. Sensibilidad del titular: "
-            "8,6%–44,9% según 1 clasificación y las filas agregadas.",
-            "Con RCA favorable incluye RCA vigentes cuya actualización está en calificación.",
+            "Los 59 proyectos se revisaron uno a uno contra el SEA. Sensibilidad del "
+            "titular: 8,6% si se excluye el proyecto dudoso de mayor monto; 44,9% si "
+            "se suman las filas agregadas y el caso no determinado.",
+            "Con RCA favorable incluye 1 proyecto (4.851 MMUS$) cuya RCA vigente "
+            "tiene una actualización en calificación.",
         ),
         (
             "en",
-            "38 of 59 matches reviewed filing by filing. Headline sensitivity: "
-            "8.6%–44.9% under 1 classification and aggregate rows.",
-            "Favourable RCA includes valid RCAs whose update is under review.",
+            "All 59 projects were reviewed one by one against SEA. Headline sensitivity: "
+            "8.6% excluding the largest judgment-call project; 44.9% adding aggregate "
+            "rows and the undetermined case.",
+            "Favourable RCA includes 1 project (US$4,851m) whose valid RCA has an "
+            "update under review.",
         ),
     ],
 )
@@ -166,6 +186,33 @@ def test_method_discloses_one_disputed_classification_and_pending_updates(
 
     assert review_line in method_lines
     assert favourable_line in method_lines
+
+
+@pytest.mark.parametrize(
+    ("lang", "expected"),
+    [
+        (
+            "es",
+            "Con RCA favorable incluye 2 proyectos (4.851 MMUS$) cuya RCA vigente "
+            "tiene una actualización en calificación.",
+        ),
+        (
+            "en",
+            "Favourable RCA includes 2 projects (US$4,851m) whose valid RCA has an "
+            "update under review.",
+        ),
+    ],
+)
+def test_favourable_rca_update_copy_pluralizes_project_count(
+    lang: str, expected: str
+) -> None:
+    register = _synthetic_register()
+    register.loc[
+        register["claim_id"].eq("aprobado_con_actualizacion_en_calificacion_n"),
+        ["valor", "valor_recalculado"],
+    ] = 2
+
+    assert expected in _brief_copy(compute_brief_metrics(register), lang)["method_lines"]
 
 
 def test_rendered_brief_is_one_page_and_contains_no_portfolio_names(tmp_path: Path) -> None:
@@ -186,15 +233,17 @@ def test_rendered_brief_is_one_page_and_contains_no_portfolio_names(tmp_path: Pa
     [
         (
             "es",
-            "21,0% de la inversión minera 2025–2034 no tiene expediente SEIA identificado",
-            "Cada cifra se recalcula por una segunda vía (SQL y estimadores propios) "
-            "y se verifica con tests automáticos; código y datos en el repositorio.",
+            "21,0% de la inversión minera 2025–2034 está en proyectos en estudio sin "
+            "expediente SEIA identificado",
+            "Las cifras se reproducen con el código y los datos del repositorio, y se "
+            "verifican con tests automáticos.",
         ),
         (
             "en",
-            "21.0% of 2025–2034 mining investment has no identified SEIA filing",
-            "Each figure is recomputed by a second route (SQL and hand-written "
-            "estimators) and checked by automated tests; code and data in the repository.",
+            "21.0% of 2025–2034 mining investment is in study-stage projects with no "
+            "identified SEIA filing",
+            "Figures are reproducible from the repository's code and data and checked "
+            "by automated tests.",
         ),
     ],
 )
@@ -206,8 +255,9 @@ def test_pdf_text_extraction_preserves_headline_and_footer_sentence(
     render_brief(compute_brief_metrics(_synthetic_register()), lang, output)
 
     text = "\n".join(page.extract_text() or "" for page in pypdf.PdfReader(output).pages)
-    assert text.count(headline) == 1
-    assert footer_sentence in text
+    normalized_text = re.sub(r"\s+", " ", text)
+    assert normalized_text.count(headline) == 1
+    assert footer_sentence in normalized_text
 
     reader = pypdf.PdfReader(output)
     content = b"\n".join(page.get_contents().get_data() for page in reader.pages)

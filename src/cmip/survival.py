@@ -300,6 +300,9 @@ def _confidence_frame(frame: pd.DataFrame, lower_name: str, upper_name: str) -> 
     else:
         result = frame.iloc[:, :2].reset_index()
     result.columns = ["time_days", lower_name, upper_name]
+    bounds = result[[lower_name, upper_name]]
+    result[lower_name] = bounds.min(axis=1)
+    result[upper_name] = bounds.max(axis=1)
     return result
 
 
@@ -369,6 +372,15 @@ def extract_competing_risk_tables(
         else:
             curve["ci_lower"] = np.nan
             curve["ci_upper"] = np.nan
+        bounded = curve.dropna(subset=["ci_lower", "ci_upper"])
+        if not (
+            bounded["ci_lower"].le(bounded["cumulative_incidence"]).all()
+            and bounded["cumulative_incidence"].le(bounded["ci_upper"]).all()
+        ):
+            raise ValueError(
+                f"{instrument}/{outcome} confidence interval does not contain "
+                "cumulative incidence"
+            )
         curves.append(curve)
         for months in HORIZON_MONTHS:
             summaries.append(

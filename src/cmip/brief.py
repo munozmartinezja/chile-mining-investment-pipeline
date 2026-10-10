@@ -31,69 +31,69 @@ CLAIMS_MAP_PATH = BRIEF_DIR / "claims_map.csv"
 
 TEXTS = {
     "es": {
-        "headline": "{share}% de la inversión minera 2025–2034 no tiene expediente SEIA identificado",
+        "headline": "{share}% de la inversión minera 2025–2034 está en proyectos en estudio sin expediente SEIA identificado",
         "subtitle": "{amount} MMUS$ en {n} proyectos, todos en etapa de estudio · corte SEA {fecha_datos}",
         "km_title": "Aprobación acumulada de EIA",
-        "km_body": "{aj24}% a 24 meses\n{aj36}% a 36 meses{m50}",
+        "km_body": "{aj24}% a 24 meses · n={n_eia}\n{aj36}% a 36 meses{m50}",
         "bootstrap_title": "EIA ≥100 MMUS$ aprobados a 24 meses",
         "bootstrap_body": "{center}% (IC95% {lo}–{hi}) · n={n}",
         "evaluation_title": "En calificación al corte SEA",
         "evaluation_body": "{amount} MMUS$ · {n} proyectos",
         "approved_title": "Con RCA favorable",
         "approved_body": "{amount} MMUS$ · {share}% de la cartera",
-        "portfolio_title": "Proyectos en estudio sin expediente identificado: {share}% de la inversión",
-        "incidence_title": "Ignorar desistimientos y rechazos (Kaplan–Meier) sobrestima la aprobación",
+        "portfolio_title": "Cartera 2025–2034 por estado SEIA (MMUS$)",
+        "incidence_title": "Ignorar desistimientos, rechazos y términos anticipados (Kaplan–Meier) sobrestima la aprobación",
         "months_axis": "Meses desde el ingreso",
         "approval_axis": "Probabilidad de aprobación",
         "km_legend": "Kaplan-Meier",
         "aj_legend": "Aalen-Johansen",
         "implications": "Implicancias para contratistas",
         "bullets": (
-            "Estos ~{amount_round} MMUS$ aún deben ingresar al SEIA antes de construir. A 24 meses de su ingreso, {aj24}% de los EIA está aprobado.",
+            "Al corte, estos ~{amount_round} MMUS$ no registran ingreso al SEIA. Si requieren EIA, a 24 meses de su ingreso solo {aj24}% de los EIA mineros está aprobado.",
             "Para EIA ≥100 MMUS$ estimamos {center}% aprobado a 24 meses (IC95% {lo}–{hi}%): conviene planificar con holgura de permisos sobre las fechas de puesta en marcha de Cochilco.",
-            "La cifra puede ser mayor: {n_agg} filas agregadas de Codelco ({amount_agg} MMUS$) no permiten asignar un expediente único.",
+            "Aparte, {n_agg} filas agregadas en ejecución ({amount_agg} MMUS$) agrupan varios proyectos con permisos múltiples o previos; no se asignan a un expediente único ni se incluyen en la cifra principal.",
         ),
         "method_title": "Método y alcance",
         "method_lines": (
             "Fuentes: Cochilco, Cartera de Proyectos de Inversión Minera 2025–2034 (Anexo C, dic-2025). SEA: descarga 30-09-2026, último registro {fecha_datos}.",
             "Población: {population} expedientes mineros admitidos, ingresados entre {p_ini} y {p_fin}; excluye áridos. Kaplan–Meier y Aalen–Johansen; meses = días/30,44.",
             "Cartera: expediente principal por proyecto; las modificaciones no cuentan como cruce. Tiempos: cada expediente, incluidos reingresos.",
-            "{n_manual} de {n_total} cruces revisados ficha por ficha. Sensibilidad del titular: {piso}%–{techo}% según 1 clasificación y las filas agregadas.",
-            "Con RCA favorable incluye RCA vigentes cuya actualización está en calificación.",
-            "Cada cifra se recalcula por una segunda vía (SQL y estimadores propios) y se verifica con tests automáticos; código y datos en el repositorio.",
+            "Los {n_total} proyectos se revisaron uno a uno contra el SEA. Sensibilidad del titular: {piso}% si se excluye el proyecto dudoso de mayor monto; {techo}% si se suman las filas agregadas y el caso no determinado.",
+            "Con RCA favorable incluye {n_upd} {project_word} ({amount_upd} MMUS$) cuya RCA vigente tiene una actualización en calificación.",
+            "Las cifras se reproducen con el código y los datos del repositorio, y se verifican con tests automáticos.",
         ),
     },
     "en": {
-        "headline": "{share}% of 2025–2034 mining investment has no identified SEIA filing",
+        "headline": "{share}% of 2025–2034 mining investment is in study-stage projects with no identified SEIA filing",
         "subtitle": "US${amount}m across {n} projects, all at study stage · SEA data to {fecha_datos}",
         "km_title": "Cumulative EIA approval",
-        "km_body": "{aj24}% at 24 months\n{aj36}% at 36 months{m50}",
+        "km_body": "{aj24}% at 24 months · n={n_eia}\n{aj36}% at 36 months{m50}",
         "bootstrap_title": "EIAs ≥US$100m approved at 24 months",
         "bootstrap_body": "{center}% (95% CI {lo}–{hi}) · n={n}",
         "evaluation_title": "Under review at SEA cut-off",
         "evaluation_body": "US${amount}m · {n} projects",
         "approved_title": "Favourable RCA",
         "approved_body": "US${amount}m · {share}% of portfolio",
-        "portfolio_title": "Study-stage projects with no identified filing: {share}% of investment",
-        "incidence_title": "Ignoring withdrawals and rejections (Kaplan–Meier) overstates approval",
+        "portfolio_title": "2025–2034 portfolio by SEIA status (US$m)",
+        "incidence_title": "Ignoring withdrawals, rejections and early terminations (Kaplan–Meier) overstates approval",
         "months_axis": "Months since filing",
         "approval_axis": "Approval probability",
         "km_legend": "Kaplan-Meier",
         "aj_legend": "Aalen-Johansen",
         "implications": "Implications for contractors",
         "bullets": (
-            "These ~US${amount_round}m still need to enter SEIA before construction. At 24 months after filing, {aj24}% of EIAs are approved.",
+            "As of the cut-off, these ~US${amount_round}m have no SEIA filing on record. If they require an EIA, only {aj24}% of mining EIAs are approved 24 months after filing.",
             "For EIAs ≥US$100m, we estimate {center}% approved at 24 months (95% CI {lo}–{hi}%): permit schedules should include contingency beyond Cochilco's commissioning dates.",
-            "The figure may be higher: {n_agg} aggregate Codelco rows (US${amount_agg}m) cannot be assigned a unique filing.",
+            "Separately, {n_agg} aggregate rows in execution (US${amount_agg}m) bundle several projects with multiple or prior permits; they are not assigned a unique filing and are excluded from the headline.",
         ),
         "method_title": "Method and scope",
         "method_lines": (
             "Sources: Cochilco, 2025–2034 Mining Investment Project Portfolio (Annex C, Dec-2025). SEA: downloaded 30-09-2026; latest record {fecha_datos}.",
             "Population: {population} admitted mining filings entered between {p_ini} and {p_fin}; excludes sand-and-gravel (áridos) filings. Kaplan–Meier and Aalen–Johansen; months = days/30.44.",
             "Portfolio: one principal filing per project; modifications do not count as a match. Times: each filing, including re-entries.",
-            "{n_manual} of {n_total} matches reviewed filing by filing. Headline sensitivity: {piso}%–{techo}% under 1 classification and aggregate rows.",
-            "Favourable RCA includes valid RCAs whose update is under review.",
-            "Each figure is recomputed by a second route (SQL and hand-written estimators) and checked by automated tests; code and data in the repository.",
+            "All {n_total} projects were reviewed one by one against SEA. Headline sensitivity: {piso}% excluding the largest judgment-call project; {techo}% adding aggregate rows and the undetermined case.",
+            "Favourable RCA includes {n_upd} {project_word} (US${amount_upd}m) whose valid RCA has an update under review.",
+            "Figures are reproducible from the repository's code and data and checked by automated tests.",
         ),
     },
 }
@@ -102,6 +102,7 @@ BRIEF_CLAIM_IDS = (
     "cartera_inversion_total",
     "cartera_proyectos_n",
     "sea_poblacion_admitida_n",
+    "sea_poblacion_eia_n",
     "estado_sin_expediente_en_estudio_inversion",
     "estado_sin_expediente_en_estudio_n",
     "estado_sin_expediente_en_estudio_pct",
@@ -131,6 +132,7 @@ BRIEF_CLAIM_IDS = (
     "headline_piso_pct",
     "headline_techo_pct",
     "aprobado_con_actualizacion_en_calificacion_n",
+    "aprobado_con_actualizacion_en_calificacion_inversion",
     "sea_fecha_datos_dia",
     "sea_fecha_datos_mes",
     "sea_fecha_datos_anio",
@@ -217,6 +219,7 @@ def _brief_copy(metrics: pd.DataFrame, lang: str) -> dict[str, object]:
         "km_body": text["km_body"].format(
             aj24=number("aj_EIA_aprobado_24m", 1),
             aj36=number("aj_EIA_aprobado_36m", 1),
+            n_eia=number("sea_poblacion_eia_n"),
             m50=m50,
         ),
         "bootstrap_title": text["bootstrap_title"],
@@ -236,9 +239,7 @@ def _brief_copy(metrics: pd.DataFrame, lang: str) -> dict[str, object]:
             amount=number("estado_aprobado_inversion"),
             share=number("estado_aprobado_pct", 1),
         ),
-        "portfolio_title": text["portfolio_title"].format(
-            share=number("estado_sin_expediente_en_estudio_pct", 1)
-        ),
+        "portfolio_title": text["portfolio_title"],
         "incidence_title": text["incidence_title"],
         "implications": text["implications"],
         "method_title": text["method_title"],
@@ -265,6 +266,18 @@ def _brief_copy(metrics: pd.DataFrame, lang: str) -> dict[str, object]:
             n_total=number("cartera_proyectos_n"),
             piso=number("headline_piso_pct", 1),
             techo=number("headline_techo_pct", 1),
+            n_upd=number("aprobado_con_actualizacion_en_calificacion_n"),
+            amount_upd=number("aprobado_con_actualizacion_en_calificacion_inversion"),
+            project_word=(
+                "proyecto"
+                if lang == "es"
+                and values["aprobado_con_actualizacion_en_calificacion_n"] == 1
+                else "proyectos"
+                if lang == "es"
+                else "project"
+                if values["aprobado_con_actualizacion_en_calificacion_n"] == 1
+                else "projects"
+            ),
         )
         for line in text["method_lines"]
     )
@@ -285,7 +298,7 @@ def make_brief_portfolio_figure(
         "es": (
             "Aprobado",
             "En evaluación",
-            "Agregado Codelco\n(permisos múltiples o previos)",
+            "Filas agregadas\n(permisos múltiples o previos)",
             "Sin expediente: en estudio",
             "No determinado",
             "Desistido, rechazado o no calificado",
@@ -295,11 +308,11 @@ def make_brief_portfolio_figure(
         "en": (
             "Approved",
             "Under review",
-            "Codelco aggregate\n(multiple or prior permits)",
+            "Aggregate rows\n(multiple or prior permits)",
             "No filing: in study",
             "Undetermined",
             "Withdrawn, rejected or not qualified",
-            "Applicability ruling",
+            "SEIA applicability inquiry (pertinencia)",
             "Investment (US$m)",
         ),
     }[lang]
@@ -580,7 +593,7 @@ def _claim_support(copy: dict[str, object]) -> list[tuple[str, str, str, str]]:
             "kpi_1",
             "km_body",
             "aj_EIA_aprobado_24m;aj_EIA_aprobado_36m;"
-            "aj_EIA_mes_50pct;aj_threshold_pct",
+            "aj_EIA_mes_50pct;aj_threshold_pct;sea_poblacion_eia_n",
         ),
         ("kpi_2", "bootstrap_title", ""),
         (
@@ -593,7 +606,7 @@ def _claim_support(copy: dict[str, object]) -> list[tuple[str, str, str, str]]:
         ("kpi_3", "evaluation_body", "estado_en_evaluacion_inversion;estado_en_evaluacion_n"),
         ("kpi_4", "approved_title", ""),
         ("kpi_4", "approved_body", "estado_aprobado_inversion;estado_aprobado_pct"),
-        ("figura_cartera", "portfolio_title", "estado_sin_expediente_en_estudio_pct"),
+        ("figura_cartera", "portfolio_title", ""),
         ("figura_incidencia", "incidence_title", ""),
         ("seccion", "implications", ""),
         ("seccion", "method_title", ""),
@@ -622,7 +635,8 @@ def _claim_support(copy: dict[str, object]) -> list[tuple[str, str, str, str]]:
         "sea_poblacion_admitida_n;poblacion_periodo_inicio;poblacion_periodo_fin",
         "",
         "cruces_revision_manual_n;cartera_proyectos_n;headline_piso_pct;headline_techo_pct",
-        "aprobado_con_actualizacion_en_calificacion_n",
+        "aprobado_con_actualizacion_en_calificacion_n;"
+        "aprobado_con_actualizacion_en_calificacion_inversion",
         "",
     )
     method_evidence = (

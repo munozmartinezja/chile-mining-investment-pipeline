@@ -212,9 +212,9 @@ def finalize_claims_register(rows: Iterable[Mapping[str, object]]) -> pd.DataFra
     return result
 
 
-def _duckdb_frame(query: str, path: Path) -> pd.DataFrame:
+def _duckdb_frame(query: str, *paths: Path) -> pd.DataFrame:
     with duckdb.connect() as connection:
-        return connection.execute(query, [str(path)]).fetchdf()
+        return connection.execute(query, [str(path) for path in paths]).fetchdf()
 
 
 def _manual_population(
@@ -302,6 +302,51 @@ def _checklist_modification_ids(checklist: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(records, columns=["project_id", "modification_exp_id"])
 
 
+def _independent_pending_update_summary(
+    checklist_path: Path,
+    portfolio_path: Path,
+    sea_path: Path,
+) -> tuple[int, float]:
+    """Recalculate pending-update projects and investment entirely in DuckDB."""
+    result = _duckdb_frame(
+        r"""
+        WITH curated AS (
+          SELECT
+            cochilco_id AS project_id,
+            regexp_extract(
+              fuente_J,
+              '(?:^|[[:space:]]+[|][[:space:]]+)modificaciones:[[:space:]]*([^|]+)',
+              1
+            ) AS modification_segment
+          FROM read_csv_auto(?, header = true, all_varchar = true)
+        ),
+        modification_ids AS (
+          SELECT
+            project_id,
+            CAST(modification_exp_id AS BIGINT) AS modification_exp_id
+          FROM curated,
+          UNNEST(
+            regexp_extract_all(modification_segment, '[0-9]{7,10}')
+          ) AS ids(modification_exp_id)
+        ),
+        eligible AS (
+          SELECT DISTINCT p.project_id, p.inversion_musd
+          FROM read_parquet(?) AS p
+          JOIN modification_ids AS m USING (project_id)
+          JOIN read_parquet(?) AS s ON s.exp_id = m.modification_exp_id
+          WHERE p.estado_ambiental = 'aprobado'
+            AND s.evento = 'en_tramite'
+        )
+        SELECT COUNT(*) AS n, COALESCE(SUM(inversion_musd), 0) AS inversion_musd
+        FROM eligible
+        """,
+        checklist_path,
+        portfolio_path,
+        sea_path,
+    ).iloc[0]
+    return int(result["n"]), float(result["inversion_musd"])
+
+
 def _cluster_bootstrap_cif(
     group: pd.DataFrame,
     replicas: int,
@@ -309,6 +354,7 @@ def _cluster_bootstrap_cif(
 ) -> np.ndarray:
     clustered = group.copy()
     clustered["_family_id"] = _reentry_family_ids(clustered)
+    clustered = clustered[["_family_id", "duration_days", "competing_event"]]
     families = clustered["_family_id"].drop_duplicates().tolist()
     family_frames = {
         family: clustered.loc[clustered["_family_id"].eq(family)] for family in families
@@ -431,12 +477,25 @@ def build_claims_register(
         ]
     )
     admitted_n = int(len(population))
+    admitted_eia_n = int(population["instrumento"].eq("EIA").sum())
     admitted_n_sql = int(
         _duckdb_frame(
             f"""
             SELECT COUNT(*) AS value
             FROM read_parquet(?)
             WHERE admitido = TRUE AND fecha_inconsistente = FALSE
+              AND NOT {MAIN_POPULATION_SQL_EXCLUSION}
+            """,
+            sea_path,
+        ).loc[0, "value"]
+    )
+    admitted_eia_n_sql = int(
+        _duckdb_frame(
+            f"""
+            SELECT COUNT(*) AS value
+            FROM read_parquet(?)
+            WHERE admitido = TRUE AND fecha_inconsistente = FALSE
+              AND instrumento = 'EIA'
               AND NOT {MAIN_POPULATION_SQL_EXCLUSION}
             """,
             sea_path,
@@ -465,6 +524,17 @@ def build_claims_register(
                 admitted_n_sql,
                 0.0,
                 "Unidad de análisis: expediente principal; modificaciones excluidas.",
+            ),
+            _claim(
+                "sea_poblacion_eia_n",
+                "EIA admitidos en la población de supervivencia",
+                admitted_eia_n,
+                "expedientes",
+                str(sea_path.relative_to(PROJECT_ROOT)),
+                "Conteo de EIA admitidos con fechas consistentes.",
+                admitted_eia_n_sql,
+                0.0,
+                "Denominador de los KPI de aprobación acumulada de EIA.",
             ),
         ]
     )
@@ -884,37 +954,47 @@ def build_claims_register(
             "project_id",
         ]
     )
-    sea_event_by_id = dict(
-        zip(pd.to_numeric(sea["exp_id"]).astype(int), sea["evento"], strict=True)
-    )
-    independently_counted_projects: set[str] = set()
-    for row in checklist.itertuples(index=False):
-        project_id = str(row.cochilco_id)
-        if project_id not in approved_ids:
-            continue
-        source = str(row.fuente_J)
-        segment = re.search(r"(?:^|\s+\|\s+)modificaciones:\s*([^|]+)", source)
-        if segment is None:
-            continue
-        modification_events = {
-            sea_event_by_id.get(int(exp_id))
-            for exp_id in re.findall(r"\b\d{7,10}\b", segment.group(1))
-        }
-        if "en_tramite" in modification_events:
-            independently_counted_projects.add(project_id)
-    rows.append(
-        _claim(
-            "aprobado_con_actualizacion_en_calificacion_n",
-            "Proyectos con RCA favorable y actualización en calificación",
-            len(approved_with_pending_update),
-            "proyectos",
-            str(checklist_path.relative_to(PROJECT_ROOT)),
-            "Proyectos aprobados con una modificación curada cuya ficha SEA está en calificación.",
-            len(independently_counted_projects),
-            0,
-            "La RCA principal sigue vigente; la actualización de la misma familia "
-            "está en calificación.",
+    independent_update_n, independently_counted_amount = (
+        _independent_pending_update_summary(
+            checklist_path,
+            portfolio_path,
+            sea_path,
         )
+    )
+    update_amount = float(
+        portfolio.loc[
+            portfolio["project_id"].astype(str).isin(approved_with_pending_update),
+            "inversion_musd",
+        ].sum()
+    )
+    rows.extend(
+        [
+            _claim(
+                "aprobado_con_actualizacion_en_calificacion_n",
+                "Proyectos con RCA favorable y actualización en calificación",
+                len(approved_with_pending_update),
+                "proyectos",
+                str(checklist_path.relative_to(PROJECT_ROOT)),
+                "Proyectos aprobados con una modificación curada cuya ficha SEA "
+                "está en calificación.",
+                independent_update_n,
+                0,
+                "La RCA principal sigue vigente; la actualización de la misma familia "
+                "está en calificación.",
+            ),
+            _claim(
+                "aprobado_con_actualizacion_en_calificacion_inversion",
+                "Inversión con RCA favorable y actualización en calificación",
+                update_amount,
+                "MMUS$",
+                str(checklist_path.relative_to(PROJECT_ROOT)),
+                "Suma de inversión de proyectos aprobados con modificación curada en calificación.",
+                independently_counted_amount,
+                0.1,
+                "La RCA principal sigue vigente; la actualización de la misma familia "
+                "está en calificación.",
+            ),
+        ]
     )
     excluded_floor_ids = {
         "compania-minera-dona-ines-de-collahuasi-scm-proyecto-4a-linea-nueva-conentradora-en-rosario",

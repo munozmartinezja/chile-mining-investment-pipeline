@@ -53,6 +53,7 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
     assert {
         "cartera_proyectos_n",
         "sea_poblacion_admitida_n",
+        "sea_poblacion_eia_n",
         "estado_sin_expediente_en_estudio_pct",
         "estado_aprobado_pct",
         "estado_sin_expediente_en_ejecucion_n",
@@ -86,9 +87,11 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
         "headline_piso_pct",
         "headline_techo_pct",
         "aprobado_con_actualizacion_en_calificacion_n",
+        "aprobado_con_actualizacion_en_calificacion_inversion",
     }.issubset(claim_ids)
     indexed = register.set_index("claim_id")
     assert indexed.loc["sea_poblacion_admitida_n", "valor"] == 995
+    assert indexed.loc["sea_poblacion_eia_n", "valor"] == 124
     assert indexed.loc["eia_100m_n", "valor"] == 81
     assert indexed.loc["poblacion_periodo_inicio", "valor"] == 2011
     assert indexed.loc["poblacion_periodo_fin", "valor"] == 2026
@@ -101,6 +104,27 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
         100 * (17_043.0 + 23_753.9 + 1_300) / 104_549.2
     )
     assert indexed.loc["aprobado_con_actualizacion_en_calificacion_n", "valor"] == 1
+    assert indexed.loc[
+        "aprobado_con_actualizacion_en_calificacion_inversion", "valor"
+    ] == pytest.approx(4_850.9)
+
+
+@requires_local_data
+def test_competing_risk_summary_confidence_interval_contains_estimate() -> None:
+    contracts = (
+        (
+            ROOT / "data/processed/survival_competing_risks.parquet",
+            "cumulative_incidence",
+        ),
+        (
+            ROOT / "data/processed/survival_competing_risks_summary.parquet",
+            "incidencia_acumulada",
+        ),
+    )
+    for path, estimate_column in contracts:
+        frame = pd.read_parquet(path).dropna(subset=["ci_lower", "ci_upper"])
+        assert frame["ci_lower"].le(frame[estimate_column]).all(), path
+        assert frame[estimate_column].le(frame["ci_upper"]).all(), path
 
 
 @requires_local_data
