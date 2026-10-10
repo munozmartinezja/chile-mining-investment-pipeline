@@ -9,6 +9,14 @@ import pytest
 import reportlab
 
 from cmip.brief import _brief_copy, compute_brief_metrics, format_number, render_brief
+from cmip.survival import AJ_PATH, KM_PATH
+
+# Rendering draws the survival figures from local analysis parquets, which are not
+# versioned (CI has no data). These tests run locally and are skipped only in CI.
+requires_figure_data = pytest.mark.skipif(
+    not (KM_PATH.exists() and AJ_PATH.exists()),
+    reason="requires local survival parquets to render brief figures",
+)
 
 
 def _synthetic_register() -> pd.DataFrame:
@@ -215,6 +223,7 @@ def test_favourable_rca_update_copy_pluralizes_project_count(
     assert expected in _brief_copy(compute_brief_metrics(register), lang)["method_lines"]
 
 
+@requires_figure_data
 def test_rendered_brief_is_one_page_and_contains_no_portfolio_names(tmp_path: Path) -> None:
     assert reportlab and pypdf
 
@@ -228,6 +237,7 @@ def test_rendered_brief_is_one_page_and_contains_no_portfolio_names(tmp_path: Pa
     assert "Empresa Prohibida" not in text
 
 
+@requires_figure_data
 @pytest.mark.parametrize(
     ("lang", "headline", "footer_sentence"),
     [
@@ -264,6 +274,7 @@ def test_pdf_text_extraction_preserves_headline_and_footer_sentence(
     assert b"3 Tr" not in content
 
 
+@requires_figure_data
 def test_render_brief_writes_a_pdf_without_optional_pdf_reader(tmp_path: Path) -> None:
     output = tmp_path / "brief.pdf"
 

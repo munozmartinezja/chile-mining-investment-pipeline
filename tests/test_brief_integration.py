@@ -196,6 +196,7 @@ def test_leach_residue_ripios_remain_in_population_and_not_name_exclusions() -> 
     assert ripios["tipologia"].str.startswith("i5").all()
 
 
+@requires_brief_data
 def test_claims_map_covers_every_extracted_pdf_line() -> None:
     claims_map = pd.read_csv(ROOT / "docs/brief/claims_map.csv", keep_default_na=False)
     register = compute_brief_metrics().set_index("claim_id")
