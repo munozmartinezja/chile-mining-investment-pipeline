@@ -31,6 +31,23 @@ mineral-level totals agree exactly, this is not treated as missing investment.
 Pre-2025 investment allocation may contribute to the control methodology, but
 the workbook does not provide enough row-level detail to prove a single cause.
 
+The raw Annex C CSV and workbook were also compared row by row with the parsed
+`condicion` field. All 59 strings and investments are identical after parsing;
+there are no misparsed rows. Therefore the published rounded shares (41%, 6%,
+13%, and 40%) use Table 4's 64-project control basis rather than the literal
+59 displayed rows in Table 1 (44.5%, 9.9%, 9.2%, and 36.5%).
+
+## Table 5 — project type
+
+The raw and parsed `Tipo de Proyecto` values also agree for every displayed
+row. Table 1 produces Reposición 50.3%, Expansión 30.2%, and Nuevo 19.5%.
+Table 5 reports 46.7%, 33.7%, and 19.5% (rounded in the publication to 47%,
+34%, and 20%). The 3,706.2 MMUSD excess in Table 1 Reposición is offset by the
+same shortfall in Expansión (rounding accounts for 0.04 MMUSD). This is the
+same magnitude as the Probable/Posible reclassification in Table 4 and is
+consistent with the control tables decomposing or reclassifying aggregate
+Codelco rows. No CMIP values are forced to the controls.
+
 ## Project count
 
 Table 1 has **59 displayed rows** while Tables 4 and 8 report **64 projects**.
@@ -51,4 +68,3 @@ both tables.
 The seven published period buckets total **104,549.1 MMUSD**, which is
 **0.1 MMUSD below** Table 1. This is a control-table rounding difference: each
 period is published to one decimal place. No project value is adjusted.
-

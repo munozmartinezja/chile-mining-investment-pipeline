@@ -1,4 +1,4 @@
-.PHONY: setup data survival portfolio analysis validation test lint
+.PHONY: setup data survival portfolio analysis validation brief brief-draft powerbi test lint
 
 PYTHON ?= .venv/bin/python
 
@@ -25,6 +25,15 @@ analysis:
 
 validation:
 	$(PYTHON) -m cmip.validation
+
+brief:
+	$(PYTHON) -m cmip.brief $(if $(DRAFT),--draft,)
+
+brief-draft:
+	$(PYTHON) -m cmip.brief --draft
+
+powerbi:
+	$(PYTHON) -m cmip.powerbi
 
 test:
 	$(PYTHON) -m pytest

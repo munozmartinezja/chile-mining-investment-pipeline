@@ -1,12 +1,14 @@
 # SEA survival definitions
 
 The unit of analysis is one SEA environmental-assessment expediente, identified by the
-unique `exp_id`. The analysis cutoff is **2026-09-30**.
+unique `exp_id`. The files were downloaded on **2026-09-30**, but the latest observed
+`fecha_ingreso`, `fecha_cierre`, or `exp_fecha_rca` is **2026-08-25**. That data-currency
+date is the analysis cutoff for open cases.
 
 - `fecha_ingreso`: submission date (`exp_fpres`).
 - `fecha_cierre`: closing date (`exp_fcierre`), when present.
 - `duracion_dias`: calendar days from `fecha_ingreso` through `fecha_cierre`; open cases
-  use 2026-09-30 as the right-censoring date. The value must be non-negative. It is null
+  use 2026-08-25 as the right-censoring date. The value must be non-negative. It is null
   when `fecha_inconsistente` is true, so source-date anomalies do not enter time analyses.
 - `fecha_inconsistente`: `true` when the original `fecha_cierre` precedes
   `fecha_ingreso`. Both source dates are preserved without correction.
@@ -32,7 +34,27 @@ unique `exp_id`. The analysis cutoff is **2026-09-30**.
 The pipeline fails if it encounters an unlisted state or duplicate `exp_id`. A date
 inconsistency also fails validation when its event is `aprobado`, `rechazado`,
 `en_tramite`, or `termino_anticipado`, because those events enter time analyses. The
-2026-09-30 regression check requires exactly 53 marked inconsistencies.
+source regression check requires exactly 53 marked inconsistencies.
+
+The principal population excludes every `tipologia` beginning with `i5` (519 admitted,
+date-consistent records) and names matching the explicit, accent-insensitive terms
+`árido`, `aridos`, `pozo lastrero`, `empréstito`, or `extracción de material`.
+The name rule removes 131 additional DIA records. It does not apply automatically to
+`i3` or `i4`: matching records of those types remain in the population and are written
+to `docs/population_exclusions_review.csv` for J. `Ripio` and `cantera` are deliberately
+not criteria, so copper-leaching residues and non-metallic gypsum or limestone quarries
+remain. The resulting population has 995 expedientes (871 DIA and 124 EIA). Every
+exclusion is listed with its reason in `docs/population_exclusions.csv`.
+Every conversion from days to months uses `days / 30.4375` (`365.25 / 12`).
+
+The main population contains two zero-day records: SEA expedientes `2138623795`
+and `2149214233`, both DIA withdrawals whose submission and closing dates are the
+same day. They enter the KM and Aalen–Johansen estimators at 0.5 days because
+lifelines otherwise resets cumulative incidence at time zero; their stored
+`duration_days` remains 0. No record has a negative duration in the population.
+
+The high-investment EIA cluster bootstrap uses 2,000 replicas and the fixed seed
+`20261002`. Re-entry family is the resampling unit.
 
 ## Unidad de análisis: expediente principal
 
@@ -41,6 +63,14 @@ alcance del proyecto. La inversión SEA/Cochilco es una señal secundaria: recib
 bono sólo cuando el nombre del proyecto o de la faena también coincide y el cociente
 está entre 0,8 y 1,25. Un monto parecido, sin esa coincidencia textual, no genera un
 match.
+
+Una familia de reingresos exige el mismo titular y un nombre equivalente después de
+retirar términos mineros genéricos. El principal es el expediente más reciente que no
+terminó en `no_admitido`, `termino_anticipado`, `desistido_o_abandonado` ni
+`rechazado`; si todos terminaron así, se usa el más reciente. La regla anterior
+comparaba el nombre normalizado completo y por eso no agrupó “Proyecto Ciclón
+Exploradora” con “Proyecto Minero Ciclón Exploradora”: asignó 2155609426, no
+calificado, en vez de 2160317349, aprobado.
 
 Dentro de una familia con la misma faena y titular, se despriorizan —sin excluirse—
 los expedientes cuyo nombre comienza con Actualización, Modificación, Adecuación,
@@ -53,7 +83,7 @@ construir la tabla confirmada.
 
 ### Categorías del estado ambiental de la cartera
 
-- `aprobado`, `en_evaluacion` y `desistido_o_rechazado` se derivan del desenlace
+- `aprobado`, `en_evaluacion` y `desistido_rechazado_o_no_calificado` se derivan del desenlace
   normalizado del expediente SEA principal. Si una RCA fue anulada y el procedimiento
   retrotraído —como C20+— el expediente abierto permanece en `en_evaluacion`.
 - `agregado_no_asignable` identifica una fila agregada de Cochilco que reúne varios

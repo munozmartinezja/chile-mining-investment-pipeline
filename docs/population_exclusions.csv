@@ -1,0 +1,651 @@
+exp_id,exp_nombre,tipologia,instrumento,motivo
+5170504,"Concesión explotación Mecanizada de Áridos tramo B-4 Río Maipo, Licitación Pública",i2,DIA,nombre: árido
+5207238,AMPLIACIÓN EXTRACCIÓN MECANIZADA DE ÁRIDOS RÍO ÑUBLE EN CONFLUENCIA CON RÍOS CHILLÁN Y CHANGARAL- ÁRIDOS EL BOLDAL S.A.,i2,DIA,nombre: árido
+5222891,EXPLORACIÓN DE HIDROCARBUROS EN SECTOR DORADO NORTE-SAUCE,i5,DIA,tipología i5*
+5223381,EXPLORACIÓN DE HIDROCARBUROS EN SECTOR FARO-PUNTA DELGADA,i5,DIA,tipología i5*
+5233312,PERFORACIÓN DE POZOS EN SECTOR M-1 BLOQUE FELL,i5,DIA,tipología i5*
+5263100,Construcción de Línea de Flujo Pozo Konawentru X-1,i5,DIA,tipología i5*
+5306830,"Extracción de Áridos, Arenas Costanera Bío Bío",i2,DIA,nombre: árido
+5313728,Extracción de Aridos para la Construcción de las Autopistas de la Región de Antofagasta Parte V,i1,DIA,nombre: árido
+5342462,Extracción de Áridos para la Construcción de las Autopistas de la Región de Antofagasta Parte VI,i1,DIA,nombre: árido
+5345493,Extracción de Áridos para la Construcción de las Autopistas de la Región de Antofagasta Parte VII,i1,DIA,nombre: árido
+5383664,Construcción Gasoducto Dicky - Batería Pampa Larga,i5,DIA,tipología i5*
+5390070," Extracción y Procesamiento de Áridos, MonteAlegre .",i1,DIA,nombre: árido
+5391429,PERFORACIÓN DE POZOS EXPLORATORIOS LLAIMA A Y ANTUCO A,i5,DIA,tipología i5*
+5399017,"Ampliación Explotación Empréstito en Sector Chupallar, Provincia de Linares",i1,DIA,nombre: empréstito
+5415326,Construcción de Línea de Flujo Pozo Guanaco 7,i5,DIA,tipología i5*
+5419703,PERFORACIÓN DE POZOS EXPLORATORIOS PALENQUE NORTE L y P,i5,DIA,tipología i5*
+5428964,PERFORACIÓN Y CONSTRUCCIÓN DE LÍNEA DE FLUJO PARA POZO PALENQUE NORTE O,i5,DIA,tipología i5*
+5441871,CONSTRUCCIÓN LINEAS DE FLUJO PARA POZOS QUIRQUINCHO ESTE C Y DORADO 1,i5,DIA,tipología i5*
+5456426,"CONSTRUCCIÓN LÍNEAS DE FLUJO PARA POZOS PALENQUE NORTE G, H, M, N, P y Q",i5,DIA,tipología i5*
+5469775,Construcción de Línea de Flujo Pozo Monte Aymond 36,i5,DIA,tipología i5*
+5472555,CONSTRUCCIÓN LINEAS DE FLUJO PARA POZOS PALENQUE NORTE J y L,i5,DIA,tipología i5*
+5474197,Reemplazo de Colector Arenal y Construcción de 2 Ductos de Complemento,i5,DIA,tipología i5*
+5516233,Perforación de Pozo Exploración Fortuna A,i5,DIA,tipología i5*
+5567469,"Explotación empréstito, en sector Chupallar 4.3 há",i1,DIA,nombre: empréstito
+5577319,PERFORACIÓN DE POZO EXPLORATORIO LAS TRUCHAS D,i5,DIA,tipología i5*
+5578424,Perforación de Pozo Exploratorio Quirquincho A,i5,DIA,tipología i5*
+5587251,"Exploración de Pozos Hidrocarburíferos en Sector M-1, Bloque Fell",i5,DIA,tipología i5*
+5604253,PERFORACIÓN DE POZO EXPLORATORIO LAS TRUCHAS D,i5,DIA,tipología i5*
+5620959,Perforación de Pozos Hidrocarburíferos en Sector Faro-Punta Delagada,i5,DIA,tipología i5*
+5626276,AMPLIACIÓN DE EXTRACCIÓN DE ÁRIDOS RÍO RAHUE SECTOR CANCURA,i2,DIA,nombre: árido
+5629379,Perforación de Pozos Hidrocarburíferos en Sector Dorado Norte-Sauce,i5,DIA,tipología i5*
+5634886,MANTENCIÓN PREVENTIVA POLIDUCTO 6 SECTOR CAMPO MINADO,i5,DIA,tipología i5*
+5640092,"Construcción de Líneas de Flujo para Pozos Las Violetas 1, Teno A y Mataquito B",i5,DIA,tipología i5*
+5645643,"Aumento de Extracción y Procesamiento de Áridos, Empréstito Las Nochas.",i1,DIA,nombre: árido; nombre: empréstito
+5647062,Construcción de Línea de Flujo Pozo Punta Delgada Norte x-4,i5,DIA,tipología i5*
+5649890,Extracción de Áridos para la Construcción de las Autopistas de la Región de Antofagasta Parte VIII,i1,DIA,nombre: árido
+5651851,Perforación de Pozos Hidrocarburíferos en Sector Fell Norte,i5,DIA,tipología i5*
+5666173,"Perforación de Pozos Exploratorios Lontué A, Rapel A, Punta Baja Oeste B y Madrugada D",i5,DIA,tipología i5*
+5684136,Construcción de Línea de Flujo para Pozo Punta Baja Sur A,i5,DIA,tipología i5*
+5686381,Construcción de Línea de Flujo para Pozo Chañarcillo Sur A,i5,DIA,tipología i5*
+5694394,Construcción de Línea de Flujo Pozo Alakaluf Este x-1,i5,DIA,tipología i5*
+5698417,Construcción de Línea de Flujo Pozo Munición Oeste 2,i5,DIA,tipología i5*
+5727832,Desarrollo del Pozo Guanaco 5,i5,DIA,tipología i5*
+5729018,Perforación de Pozo Exploratorio Quirquincho A,i5,DIA,tipología i5*
+5767381,Extracción de Áridos - Arenera del Pacífico Ltda. Extracción de Áridos - Arenera del Pacífico Ltda.,i2,DIA,nombre: árido
+5772381,PERFORACIÓN DE POZOS EXPLORATORIOS LAS TRUCHAS A y B,i5,DIA,tipología i5*
+5817103,Alternativa para Construcción Línea de Flujo Pozo Teno A,i5,DIA,tipología i5*
+5823586,CONSTRUCCIÓN DEL COLECTOR DESDE EL POZO CARNERO 1 A POZO CRUCEROS 2 Y CONSTRUCCIÓN DE UN DUCTO DE COMPLEMENTO,i5,DIA,tipología i5*
+5841187,Construcción Línea de Flujo para Pozo Puerto Sara 1T,i5,DIA,tipología i5*
+5842569,Construcción de Línea de Flujo Pozo Renoval x-1,i5,DIA,tipología i5*
+5843109,Perforación de Pozo Exploratorio Punta Baja Oeste C,i5,DIA,tipología i5*
+5848294,"AUMENTO EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS POZO EL PASTOR, REGIÓN DE LOS RÍOS-FORESTAL VALDIVIA S.A.",i1,DIA,nombre: árido
+5849320,"EXTRACCIÓN DE ÁRIDOS, POZO DOLLINCO BAJO, REGIÓN DE LOS RÍOS-FORESTAL VALDIVIA S.A.",i1,DIA,nombre: árido
+5859628,"Extracción y Procesamiento de Áridos en Pozo Lastrero, Sector Rinconada Pal-Pal, Abratec S.A.",i1,DIA,nombre: árido; nombre: pozo lastrero
+5872680,Prospección Minera Distrito Pleito,i5,DIA,tipología i5*
+5873010,Perforación Pozos en Bloque Los Cerros,i5,DIA,tipología i5*
+5902523,Construcción de Línea de Flujo Pozo Guanaco 8,i5,DIA,tipología i5*
+5909683,"Extracción Industrial de Áridos Río Mapocho, Sector El Trebal, Comuna de Padre Hurtado Exp. 100/2011",i2,DIA,nombre: árido
+5919241,Extracción de Áridos Quincanque,i1,DIA,nombre: árido
+5939834,"LÍNEAS DE FLUJO E INSTALACIONES DE PROCESO PARA LOS POZOS BAGUAL D, G y H",i5,DIA,tipología i5*
+5944469,Área de Desarrollo Yacimiento los Cerros,i5,DIA,tipología i5*
+5960355,Construcción de Línea de Flujo Pozo Guanaco 10,i5,DIA,tipología i5*
+5961693,Perforación De Pozos Exploratorios En Los Sub Bloques Mata Negra Y Springhill Pertenecientes Al Bloque Dorado,i5,DIA,tipología i5*
+5969064,"Aumento de Producción Empréstito Soto. Comuna Calbuco, Región de Los Lagos",i1,DIA,nombre: empréstito
+5976902,Construcción de Líneas de Flujo Pozos Guanaco 12 y  Guanaco 13,i5,DIA,tipología i5*
+6016258,"Aumento de Producción Empréstito Sotomayor. Comuna de Calbuco, Región de Los Lagos",i1,DIA,nombre: empréstito
+6047305,"Extracción de Aridos del Rio Itata, sector Canchillas y La Balsa, Cerro Negro, Comuna de Quillón, VIII Región",i2,DIA,nombre: árido
+6078366,Construcción de Línea de Flujo Pozo Guanaco Sur X-1,i5,DIA,tipología i5*
+6085541,"Extracción de Aridos del Río Itata, sector Canchillas y La Balsa, Cerro Negro, Comuna de Quillón, VIII Región Aridos rìo Itata Canchilla - La Balsa",i2,DIA,nombre: árido
+6092873,Extracción de Áridos Empréstito E-63,i1,DIA,nombre: árido; nombre: empréstito
+6098296,PERFORACIÓN DE POZO EXPLORATORIO LAS TRUCHAS C,i5,DIA,tipología i5*
+6132952,"DECLARACIÓN DE IMPACTO AMBIENTAL EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS, CANTERA EL LITRE, PARA LA MATERIALIZACIÓN DE LA RUTA CONCESIONADA AUTOPISTA CONCEPCIÓN-CABRERO Cantera el Litre",i1,DIA,nombre: árido
+6134049,"Extracción y Procesamiento de Áridos Pozo Cruz de Piedra Para la Materialización  de la Ruta  Concesionada, Autopista Concepción - Cabrero Pozo Cruz de Piedra",i1,DIA,nombre: árido
+6134528,Perforación de Pozo Exploratorio Colina Sur A,i5,DIA,tipología i5*
+6136682,"DECLARACIÓN DE IMPACTO AMBIENTAL EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS, CANTERA EL QUEULE, PARA LA MATERIALIZACIÓN DE LA RUTA CONCESIONADA, AUTOPISTA CONCEPCIÓN-CABRERO EXTRACCIÓN ÁRIDOS CANTERA EL QUEULE",i1,DIA,nombre: árido
+6155827,Extracción de Áridos Empréstitos E11K y E35L,i1,DIA,nombre: árido; nombre: empréstito
+6156264,Extracción de Áridos Empréstito E17L,i1,DIA,nombre: árido; nombre: empréstito
+6158523,Extraccion Mecanizada de aridos rio Cachapoal,i2,DIA,nombre: árido
+6160126,PLANTA PILOTO DE RECUPERACIÓN SECUNDARIA EN POZO ALAKALUF A-10,i5,DIA,tipología i5*
+6162465,"Extracción de Aridos del Rio Itata, sector Canchillas y La Balsa, Cerro Negro, Comuna de Quillón, VIII Región",i2,DIA,nombre: árido
+6171802,Extracción de Áridos Pozo Maldonado. Constructora La Esperanza Ltda.,i1,DIA,nombre: árido
+6173842,Extracción de Áridos Pozo Márquez. Constructora La Esperanza Ltda.,i1,DIA,nombre: árido
+6192821,"ACTIVIDADES DE PERFORACION POZOS   EN ÁREA POZO FUEGUINO, TIERRA DEL FUEGO",i5,DIA,tipología i5*
+6209221,Extracción  mecanizada de áridos el Rebenque,i1,DIA,nombre: árido
+6212178,"Aumento  de  Producción  Empréstito Los Lingues, Comuna de Maullín, Región de Los Lagos",i1,DIA,nombre: empréstito
+6221601,Extracción de Áridos - Áridos Cachapoal Ltda.,i2,DIA,nombre: árido
+6237602,Construcción de Línea de Flujo para Pozo Victoria Este V5,i5,DIA,tipología i5*
+6256944,Perforación y Construcción de Línea de Flujo para Pozo Exploratorio Mataquito A,i5,DIA,tipología i5*
+6269809,Perforación de Pozos Exploratorios en elSub Bloque Zorzal Perteneciente al Bloque Intracampo,i5,DIA,tipología i5*
+6296854,Extracción Mecanizada de Áridos desde el río Laja - Áridos del Laja S.A.,i2,DIA,nombre: árido
+6298744,Perforación de Pozos Exploratorios Manantiales Oeste C y Victoria Sur K,i5,DIA,tipología i5*
+6312515,Desarrollo del pozo Makú X-1,i5,DIA,tipología i5*
+6314022,"Aumento de Producción Empréstito Mella, Comuna de Puerto Montt, Región de Los Lagos",i1,DIA,nombre: empréstito
+6319810,"AMPLIACION EMPRESTITO URIBE. COMUNA DE PUERTO MONTT, REGION DE LOS LAGOS.",i1,DIA,nombre: empréstito
+6323651,Explotación mecanizada de áridos río Aconcagua sector kilómetro 2.1 al 6.3 aguas arriba del puente ferroviario lo Venecia,i2,DIA,nombre: árido
+6340607,Construcción de Líneas de Flujo para los Pozos Tinguiririca 1 (Ex-A) y Punta Baja Oeste C,i5,DIA,tipología i5*
+6341132,Construcción de Línea de Flujo Pozo Guanaco 21,i5,DIA,tipología i5*
+6345736,Construcción de Línea de Flujo Pozo Copihue X-2,i5,DIA,tipología i5*
+6352383,Proyecto Extracción y Procesamiento de Áridos - Bottai S.A.,i2,DIA,nombre: árido
+6358702,Extracción de ÁridosPredio Las Camelias,i1,DIA,nombre: árido
+6412761,Perforación de Pozo Exploratorio Chañarcillo J,i5,DIA,tipología i5*
+6415811,Construcción de Línea de Flujo Pozo Copihue 3,i5,DIA,tipología i5*
+6429354,Perforación de Pozos Exploratorios Cullen D-10 y Cullen D-11,i5,DIA,tipología i5*
+6431773,"Construcción de Líneas de Flujo para los pozos Las Truchas A, B, C y D",i5,DIA,tipología i5*
+6437434,Construcción de Línea de Flujo Pozo Dicky Oeste 4,i5,DIA,tipología i5*
+6480784,Aumento de Extracción de Áridos Empréstitos Buena Esperanza,i1,DIA,nombre: árido; nombre: empréstito
+6492889,Construcción de Línea de Flujo Pozo Martín 2,i5,DIA,tipología i5*
+6497006,Generica Arenal Sub Bloque Arenal Oeste - Cabaña Norte - Lircay,i5,DIA,tipología i5*
+6518454,Construcción de Línea de Flujo Pozo Konawentru 2,i5,DIA,tipología i5*
+6519322,Proyecto Extracción de áridos para Aeropuerto Araucanía,i1,DIA,nombre: árido
+6530558,Construcción de Líneas de Flujo para los Pozos Manantiales Oeste C y Victoria Sur k,i5,DIA,tipología i5*
+6559284,Construcción de Línea de Flujo Pozo Munición Oeste 3,i5,DIA,tipología i5*
+6568301,Contrucción de Linea de Flujo Pozo Guanaco 16,i5,DIA,tipología i5*
+6599257,DESARROLLO DEL POZO YAGÁN NORTE X-4,i5,DIA,tipología i5*
+6631060,"Extracción y Procesamiento de Áridos del Río Mapocho, Km 0+650 - 1+800, Comuna de Maipú",i2,DIA,nombre: árido
+6642709,"Extracción de áridos Río Cachapoal, sector Puente Peumo Aridos puente Peumo",i2,DIA,nombre: árido
+6653712,Perforación de Pozos Hidrocarburíferos en Área Meseta Norte,i5,DIA,tipología i5*
+6708509,Modificación Proyecto Planta El Águila,i5,DIA,tipología i5*
+6710523,Perforación de Pozos Hidrocarburiferos en Area Meric,i5,DIA,tipología i5*
+6714480,Perforación de Pozo Exploratorio Geike A,i5,DIA,tipología i5*
+6724287,Perforación de Pozos Hidrocarburiferos en Area Escorial Norte,i5,DIA,tipología i5*
+6735781,Construcción de Línea de Flujo Pozo Tiuque X-1,i5,DIA,tipología i5*
+6749015,"Extracción y Procesamiento de Áridos del Río Mapocho, Km 0+650 - 1+800, Comuna de Maipú",i2,DIA,nombre: árido
+6762407,CONSTRUCCIÓN DE LÍNEA DE FLUJO PARA EL POZO PUERTO SARA 2,i5,DIA,tipología i5*
+6764192,LÍNEAS DE FLUJO CULLEN D10 Y D11,i5,DIA,tipología i5*
+6767456,CONSTRUCCIÓN Y OPERACIÓN DE DOS LÍNEAS FLUJO: DESDE EL POZO PALENQUE NORTE K AL POZO PALENQUE NORTE 1 Y DESDE EL POZO PALENQUE NORTE I AL POZO PALENQUE NORTE K,i5,DIA,tipología i5*
+6768936,"CONSTRUCCIÓN DE LÍNEAS DE FLUJO PARA LOS FUTUROS POZOS CHAÑARCILLO J, COLINA SUR A y TENO B",i5,DIA,tipología i5*
+6773026,Extracción de Áridos Río Achibueno,i2,DIA,nombre: árido
+6792856,Extracción de áridos Lo Encañado EXP N° 047/2012,i1,DIA,nombre: árido
+6811777,"Modificación de Proyecto Etapa Constructiva: Instalación provisoria líneas de flujo flexibles para pozos en Yacimientos Tropilla, Palenque Norte y Corralero",i5,DIA,tipología i5*
+6832812,Genérica Sub-Bloques de Arenal Ñuble-Lautaro Oeste-Rosal-Loncomilla-Maule-Itata,i5,DIA,tipología i5*
+6888091,CONSTRUCCIÓN DE LÍNEA DE FLUJO POZO KOSTEN X-1,i5,DIA,tipología i5*
+6897473,Extracción Mecanizada de Aridos - Inmobiliaria Las Tejas Limitada,i2,DIA,nombre: árido
+6920705,"ACTIVIDADES DE PERFORACION POZOS EN ÁREA SUR BLOQUE PORVENIR, TIERRA DEL FUEGO",i5,DIA,tipología i5*
+6934969,Extracción Mecanizada de Aridos Inmobiliaria Las Tejas Limitada,i2,DIA,nombre: árido
+6941000,MODIFICACIÓN DEL PROYECTO EXTRACCIÓN DE ÁRIDOS Y RECUPERACIÓN DE SUELOS POZO LA SANCHINA,i1,DIA,nombre: árido
+6951569,Genérica Sub-Bloque Manantiales,i5,DIA,tipología i5*
+6956701,Construcción de Línea de Flujo Pozo Kiuaku x-1,i5,DIA,tipología i5*
+6991437,Botadero de Ripios N° 2 Cerro Negro,i5,DIA,tipología i5*
+6992804,"Aumento de producción empréstito 1039.200. Comuna de Puerto Montt, Región de Los Lagos",i1,DIA,nombre: empréstito
+6998617,DECLARACIÓN DE IMPACTO AMBIENTAL PROYECTO EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS - CANTERA LAS CORRIENTES,i1,DIA,nombre: árido
+7032702,Perforación de Pozos Hidrocarburíferos en Área Faja Kimiri Aike,i5,DIA,tipología i5*
+7050881,Construcción de Línea de Flujo Pozo Cerro Iturbe Oeste,i5,DIA,tipología i5*
+7053402,EXTRACCIÓN Y PLANTA DE PROCESAMIENTO DE ÁRIDOS GUERRICO ÁRIDOS GUERRICO,i2,DIA,nombre: árido
+7055429,Construcción de Líneas de Flujo para Pozos Arenal Oeste A y Cabañas Norte A,i5,DIA,tipología i5*
+7056293,"Aumento de Producción Empréstito 1029.000. Comuna de Puerto Montt, Región de Los Lagos",i1,DIA,nombre: empréstito
+7092959,Ampliación Planta Kimiri Aike,i5,DIA,tipología i5*
+7093396,Extraccion de aridos para la Construccion,i1,DIA,nombre: árido
+7096147,EXTRACCION DE ARIDOS TRANSPORTES PETROMAX S.A.,i2,DIA,nombre: árido
+7099383,"AUMENTO DE EXTRACCIÓN DE ÁRIDOS, EMPRÉSTITOS LOS DURAZNOS Y LOS CASTAÑOS.",i1,DIA,nombre: árido; nombre: empréstito
+7129616,"actividades de perforación de pozos en área sur Bloque Porvenir, Tierra del Fuego",i5,DIA,tipología i5*
+7132919,Construcción de Línea de Flujo para Pozo LC3,i5,DIA,tipología i5*
+7133117,Optimización Capacidad de Beneficio - División El Teniente,i5,DIA,tipología i5*
+7162699,"EXPLOTACIÓN PACÍFICO SUPERIOR, División El Teniente",i5,DIA,tipología i5*
+7167327,LÍNEA DE FLUJO PUNTA DEL CERRO 2,i5,DIA,tipología i5*
+7167711,Construcción de Líneas de Flujo para los Pozos Lircay A y Lircay B,i5,DIA,tipología i5*
+7168318,"Aumento de Producción Empréstito Avellanal. Comuna de Maullín, Región de Los Lagos",i1,DIA,nombre: empréstito
+7180083,Extracción de Áridos Gemita,i1,DIA,nombre: árido
+7188020,Optimización Capacidad de Beneficio - División El Teniente .,i5,DIA,tipología i5*
+7193410,NUEVA ZONA DE EXTRACCIÓN MVC,i5,DIA,tipología i5*
+7203199,"ACTIVIDADES DE PERFORACIÓN DE POZOS EN ÁREA SUR-ESTE BLOQUE CAUPOLICÁN, TIERRA DEL FUEGO.",i5,DIA,tipología i5*
+7205668,Aumento de Extracción y Procesamiento de Áridos en el Río Maule,i2,DIA,nombre: árido
+7234157,"Extracción Industrial de Aridos Río Mapocho Sector El Trebal, Comuna Padre Hurtado",i2,DIA,nombre: árido
+7244112,"Perforación de Pozos Exploratorios Cabaña ZG A, Punta Piedra ZG A y Retamos ZG A",i5,DIA,tipología i5*
+7244791,PERFORACIÓN DE POZO EXPLORATORIO TROPILLA ZG-A,i5,DIA,tipología i5*
+7290272,PERFORACIÓN DE POZO EXPLORATORIO DORADO ZG-A,i5,DIA,tipología i5*
+7306736,"CONSTRUCCIÓN DE CLUSTER EL FIERRO, GASODUCTO EL FIERRO LOS CERROS Y LÍNEA  DE FLUJO PARA  POZO EL FIERRO 1",i5,DIA,tipología i5*
+7332423,Regularización Ambiental de Extracción de Áridos Cantera José María,i1,DIA,nombre: árido
+7339885,Modificación  de la Descarga de CLR fuera de ZPL en Terminal GNL Quintero,i5,DIA,tipología i5*
+7345414,Regularización_Ambiental de Extracción de Áridos Cantera_José_María .,i1,DIA,nombre: árido
+7346387,Perforación de pozos hidrocarburíferos en área Escorial Sur,i5,DIA,tipología i5*
+7348091,Perforación de pozos Hidrocarburíferos en Área Tehuelche,i5,DIA,tipología i5*
+7360093,"Empréstito Uribe. Comuna de Puerto Montt, Región de Los Lagos",i1,DIA,nombre: empréstito
+7369759,Desarrollo del pozo Nika Oeste 4D,i5,DIA,tipología i5*
+7381115,Perforación de pozos Hidrocarburíferos en Área Monte Aymond Oeste,i5,DIA,tipología i5*
+7400034,Perforación de pozos Hidrocarburíferos en Área Monte Aymond Este,i5,DIA,tipología i5*
+7409316,Extracción de Áridos La Chimba,i1,DIA,nombre: árido
+7440965,Construcción de Línea de Flujo Pozo Yagán 2,i5,DIA,tipología i5*
+7449676,Modificación del Trazado de la Línea de Flujo para el pozo Fortuna A,i5,DIA,tipología i5*
+7470759,Regularizacion Planta de Aridos Mario Torres,i1,DIA,nombre: árido
+7489483,Extracción de Áridos Estero Zamorano Áridos Estero Zamorano,i2,DIA,nombre: árido
+7509188,"CONSTRUCCIÓN DE LÍNEAS DE FLUJO PARA LOS POZOS DORADO ZG-A, TROPILLA ZG-A Y PALENQUE OESTE ZG-A",i5,DIA,tipología i5*
+7509444,LÍNEA DE FLUJO PALENQUE NORTE R,i5,DIA,tipología i5*
+7511558,Perforación de Pozos Exploratorios Paraguaya PK A y Paraguaya PK B,i5,DIA,tipología i5*
+7512685,"Perforación de Pozos Exploratorios Chañarcillo Sur PK B, Chañarcillo Sur PK C y Las Vegas PK A",i5,DIA,tipología i5*
+7524738,Perforación Pozos en Bloque El Fierro,i5,DIA,tipología i5*
+7541565,Modificación Planta de Reprocesamiento de Relaves Planta de Beneficio La Ventolera,i5,DIA,tipología i5*
+7541862,Perforación de Pozos Hidrocarburíferos en Área Tetera,i5,DIA,tipología i5*
+7547676,Ampliación de extracción de áridos en Pozo Jauregui,i1,DIA,nombre: árido
+7551233,Construcción de Línea de Flujo Pozo Konawentru A-4,i5,DIA,tipología i5*
+7560905,Proyecto de Extracción y Procesamiento de Áridos - Indemax Limitada.,i2,DIA,nombre: árido
+7571922,Desarrollo del pozo Konawentru 3D,i5,DIA,tipología i5*
+7576599,GENÉRICA SUB-BLOQUE LYNCH,i5,DIA,tipología i5*
+7606558,"Extracción y Separación de Áridos en los faldeos de los cerros de Limón Verde, al sur del Aeropuerto de Calama",i1,DIA,nombre: árido
+7612671,PROYECTO EXTRACCIÒN DE ARIDOS POZO DOMEYKO PARA LA OBRA MEJORAMIENTO RUTA 5 NORTE LA SERENA - VALLENAR,i1,DIA,nombre: árido
+7616942,Extracciòn Industrial de Aridos Parcela Pangueco sector Chacaico,i1,DIA,nombre: árido
+7632696,Perforación de Pozos Hidrocarburíferos en Área Chulengo,i5,DIA,tipología i5*
+7639759,"Extracción de Áridos en el Río Maipo, KM. 2,50 al 6,00, aguas abajo Puente San Ramón comuna de Puente Alto, Región Metropolitana.",i2,DIA,nombre: árido
+7644779,Ampliación Extracción Mecanizada de Áridos en Predio Santa Catalina - Sector Cruz de Piedra,i1,DIA,nombre: árido
+7647026,EXTRACCIÓN DE ARIDOS POZO DOMEYKO PARA EL MEJORAMIENTO RUTA 5 NORTE TRAMO LIMITE REGIONAL-VALLENAR,i2,DIA,nombre: árido
+7659001,Perforación de Pozos Hidrocarburíferos en Área Chulengo,i5,DIA,tipología i5*
+7684369,Extracción de Aridos Pozo Domeyko para el Mejoramiento Ruta 5 Norte Tramo Límite Regional - Vallenar,i2,DIA,nombre: árido
+7703237,Desarrollo del pozo Manekenk 2,i5,DIA,tipología i5*
+7711014,Construcción de Línea de Flujo Pozo Yagán Norte 5,i5,DIA,tipología i5*
+7728168,Declaración de Impacto Ambiental Extracción Adicional de Áridos Empréstito E-63,i1,DIA,nombre: árido; nombre: empréstito
+7741964,EXTRACCIÓN DE ÁRIDOS DOMITILA,i1,DIA,nombre: árido
+7747715,"EXTRACCIÓN DE ÁRIDOS Y DISPOSICIÓN DE MATERIALES INERTES EN POZO LASTRERO, LAS PATAGUAS KM 13.000 RUTA O-50, COMUNA DE CABRERO",i1,DIA,nombre: árido; nombre: pozo lastrero
+7754796,EXTRACCIÓN Y PLANTA DE PROCESAMIENTO DE ÁRIDOS GUERRICO Aridos Guerrico,i2,DIA,nombre: árido
+7775428,"EXTRACCIÓN DE ÁRIDOS Y DISPOSICIÓN DE MATERIALES INERTES EN POZO LASTRERO KM 4.000 RUTA O-50, COMUNA DE CABRERO",i1,DIA,nombre: árido; nombre: pozo lastrero
+7821157,"EXTRACCIÓN DE ÁRIDOS Y DISPOSICIÓN DE MATERIALES INERTES EN POZO LASTRERO KM 4.000 RUTA O-50, COMUNA DE CABRERO",i1,DIA,nombre: árido; nombre: pozo lastrero
+7822224,"Extracción áridos, Río Cautín",i2,DIA,nombre: árido
+7870242,Construcción de Líneas de Flujo Pozos Palos Quemados x-1 y María Antonieta x-1,i5,DIA,tipología i5*
+7874239,Desarrollo del pozo Yagán 3,i5,DIA,tipología i5*
+7879416,Perforación de Pozo Exploratorio Lynch V-1,i5,DIA,tipología i5*
+7884894,Perforación de Pozo Exploratorio Sombrero Oeste B,i5,DIA,tipología i5*
+7906746,"Construcción de Colector Tinguiririca y Líneas de Flujo para Pozos Geike A, Grey A y  Pingo A",i5,DIA,tipología i5*
+7906825,Declaración de Impacto Ambiental Proyecto Extracción de Áridos Quebrada Honda,i2,DIA,nombre: árido
+7956761,Pozo Lastrero y Planta de Áridos - Fernández,i1,DIA,nombre: árido; nombre: pozo lastrero
+7972056,Ampliación de extracción de áridos en el río Rahue sector fundo el Almud - San Florentino,i2,DIA,nombre: árido
+7972270,Construcción de Nueve Líneas de Flujo en el Bloque Arenal,i5,DIA,tipología i5*
+7982598,"Aumento de extracción de áridos, empréstito Molino del Sol.",i1,DIA,nombre: árido; nombre: empréstito
+7987994,Desarrollo del pozo Yagán Norte 6,i5,DIA,tipología i5*
+8013455,POZOS DANIEL ESTE X5 Y ALMEJA J,i5,DIA,tipología i5*
+8019727,"EXPLOTACION MECANIZADA DE ARIDOS EN RIO MAIPO KM 1.650 AL 5.000,AGUAS ABAJO DEL PUENTE LONQUEN",i2,DIA,nombre: árido
+8021756,Construcción de línea de flujo pozo Sauce x-1,i5,DIA,tipología i5*
+8034370,Ampliación Planta de Extracción y Procesamiento de Áridos en Pozo Lastrero,i1,DIA,nombre: árido; nombre: pozo lastrero
+8048977,Proyecto Extracción de Áridos e Instalaciones Asociadas Pozo Punta Colorada,i2,DIA,nombre: árido
+8063955,Regularización Extracción de Áridos Pozo Maldonado,i1,DIA,nombre: árido
+8064423,Regularización Extracción de Áridos Pozo Márquez,i1,DIA,nombre: árido
+8069962,Perforación de Pozo Exploratorio Caracol B,i5,DIA,tipología i5*
+8071961,PERFORACIÓN DE POZOS EXPLORATORIOS ALMEJA J2 y K,i5,DIA,tipología i5*
+8105675,Perforación y Construcción de Línea de Flujo para Pozo Exploratorio Teno C,i5,DIA,tipología i5*
+8160379,PERFORACIÓN DE POZO EXPLORATORIO DORADO SUR W,i5,DIA,tipología i5*
+8181617,Desarrollo del pozo Chercán x-1,i5,DIA,tipología i5*
+8186111,Perforación de Pozo Exploratorio Cullen PK A,i5,DIA,tipología i5*
+8215319,Extracción de Áridos Zúñiga,i1,DIA,nombre: árido
+8224246,Desarrollo del pozo Yakamush x-1,i5,DIA,tipología i5*
+8230392,LÍNEA DE FLUJO LYNCH V-1,i5,DIA,tipología i5*
+8240988,PERFORACIÓN DE POZOS HIDROCARBURÍFEROS EN ÁREA KENOS,i5,DIA,tipología i5*
+8244993,Desarrollo del pozo Omeling X-1,i5,DIA,tipología i5*
+8245071,Perforación de Pozos Exploratorios Lautaro Sur PK A y Lautaro Sur PK B,i5,DIA,tipología i5*
+8246001,Extraccion Mecanizada de Aridos Cantera Trongol,i1,DIA,nombre: árido
+8254511,PERFORACIÓN DE POZO EXPLORATORIO RIO DEL ORO ZG-A,i5,DIA,tipología i5*
+8259721,PERFORACIÓN DE POZOS HIDROCARBURÍFEROS EN ÁREA TEORATI,i5,DIA,tipología i5*
+8265115,"Aumento de extracción y procesamiento de áridos de pozo lastrero, fundo Tralpenes",i1,DIA,nombre: árido; nombre: pozo lastrero
+8273568,PERFORACIÓN DE POZOS HIDROCARBURÍFEROS EN ÁREA ELK NORTE,i5,DIA,tipología i5*
+8282488,"Construcción de acueductos asociados a los pozos Guanaco 6, Guanaco x-4 y Guanaco 10",i5,DIA,tipología i5*
+8293955,PERFORACIÓN DE POZOS HIDROCARBURÍFEROS EN ÁREA HÁMHMAM CENTRAL SUR,i5,DIA,tipología i5*
+8295344,"Ampliación Planta de Extracción y Procesamiento de Áridos en Pozo Lastrero, sector Huepil .",i1,DIA,nombre: árido; nombre: pozo lastrero
+8297256,"Extracción y Procesamiento de Áridos Río Aconcagua km 69 al 72 y km 73,2 al 79",i2,DIA,nombre: árido
+8312868,"Extracción y Procesamiento de Áridos Río Aconcagua km 69 al 72 y km 73,2 al 79 .",i2,DIA,nombre: árido
+8325993,"Extracción de Áridos La Varilla, Comuna de La Serena, Cuarta Región de Coquimbo",i1,DIA,nombre: árido
+8339731,REGULARIZACIÓN  Y AMPLIACIÓN EXTRACCIÓN DE ÁRIDOS BAJO CHUFQUEN,i1,DIA,nombre: árido
+8346921,"Extracción y procesamiento de áridos, Fundo Torreón",i1,DIA,nombre: árido
+8347037,EXPLOTACIÓN MECANIZADA DE ÁRIDOS,i2,DIA,nombre: árido
+8351043,AMPLIACIÓN EXTRACCIÓN DE ÁRIDOS GEMITA,i1,DIA,nombre: árido
+8362949,Ampliación de extracción y procesamiento de áridos en pozo la Laja,i1,DIA,nombre: árido
+8368404,"Extracción y Procesamiento de Áridos, Empréstito Fundo Chacayal, Propiedad de Fernando Horn, Comuna de Puerto Varas, Región de Los Lagos",i1,DIA,nombre: árido; nombre: empréstito
+8369440,"Genérica Sub Bloques Punta Baja, Lautaro y Maule Oeste en Bloque Arenal",i5,DIA,tipología i5*
+8373967,Regularización de Extracción de Aridos Emprestito La Higuera,i1,DIA,nombre: árido; nombre: empréstito
+8374556,Desarrollo del pozo Yagán Norte 9,i5,DIA,tipología i5*
+8379101,GENÉRICA SUB-BLOQUE VICTORIA-LAS VEGAS,i5,DIA,tipología i5*
+8379565,"GENÉRICA SUB-BLOQUES LYNCH B, CULLEN Y FORTUNA",i5,DIA,tipología i5*
+8385780,Modificación proyecto Extracción de áridos en el río Maipo sector km 8.0 al 10.5 aguas abajo puente Maipo,i2,DIA,nombre: árido
+2128410648,Modificación Km7 extracción y procesamiento de áridos para la industria del Hormigón Premezclado,i2,DIA,nombre: árido
+2128416861,"Proyecto Extracción y Procesamiento de Áridos, Empréstito Schilling, Comuna de Purranque, Región de Los Lagos",i1,DIA,nombre: árido; nombre: empréstito
+2128433065,Extracción y Procesamiento de Áridos - Cantera Las Corrientes,i1,DIA,nombre: árido
+2128451546,Extraccion Mecanizada de Aridos Inmobiliaria Las Tejas,i2,DIA,nombre: árido
+2128505360,CONSTRUCCIÓN DE LÍNEA DE FLUJO POZO CHERCÁN X-1,i5,DIA,tipología i5*
+2128513540,Construcción de Línea de Flujo para el Pozo Águila 1,i5,DIA,tipología i5*
+2128516188,Reinyección de Agua Producto de la Extracción de Hidrocarburos en Pozos Existentes,i5,DIA,tipología i5*
+2128528011,"Genérica Sub Bloques Punta Baja, Lautaro y Maule Oeste en Bloque Arenal",i5,DIA,tipología i5*
+2128530528,Modificación km7 extracción y procesamiento de áridos para la industria del Hormigón Premezclado,i2,DIA,nombre: árido
+2128533621,Construcción de línea de flujo pozo Cerro Sutlej Norte x-1,i5,DIA,tipología i5*
+2128537600,GENÉRICA SUB-BLOQUE VICTORIA-LAS VEGAS,i5,DIA,tipología i5*
+2128537723,"GENÉRICA SUB-BLOQUES LYNCH B, CULLEN Y FORTUNA",i5,DIA,tipología i5*
+2128543723,Explotación de Áridos en Minera Escondida,i1,DIA,nombre: árido
+2128555275,"Extracción de Maicillo desde pozo lastrero, Los Perros. Comuna de Hualqui",i1,DIA,nombre: pozo lastrero
+2128584372,Construcción de línea de flujo pozo Molino Norte x-1,i5,DIA,tipología i5*
+2128589807,Construcción de Línea de Flujo Pozo Molino Oeste X - 1,i5,DIA,tipología i5*
+2128605891,"PROCESO DE FRACTURACIÓN HIDRÁULICA EN POZOS DE HIDROCARBUROS, BLOQUE ARENAL",i5,DIA,tipología i5*
+2128606881,"PROCESO DE FRACTURACIÓN HIDRÁULICA EN POZOS DE HIDROCARBUROS, BLOQUE DORADO RIQUELME",i5,DIA,tipología i5*
+2128663631,"EXTRACCIÓN DE ÁRIDOS EN RIO PUTAENDO, AGUAS ARRIBA DEL PUENTE 21 DE MAYO, COMUNA DE PUTAENDO, REGION DE VALPARAISO",i2,DIA,nombre: árido
+2128698014,"Empréstito Millaquén, Comuna de Calbuco, Región de Los Lagos",i1,DIA,nombre: empréstito
+2128704347,Perforación de Pozos Hidrocarburíferos en Área Kankoat,i5,DIA,tipología i5*
+2128705736,Construcción de línea de flujo pozo Konawentru 7,i5,DIA,tipología i5*
+2128708869,Prospección Geológica Sector Alcaparra D,i5,DIA,tipología i5*
+2128719747,Desarrollo del pozo Tagua x-1,i5,DIA,tipología i5*
+2128734190,Extracción y Procesamiento de Áridos - Petromax S.A.,i2,DIA,nombre: árido
+2128755903,Construcción de línea de flujo pozo Guanaco 14,i5,DIA,tipología i5*
+2128786807,Prospección Geológica Sector Alcaparra D,i5,DIA,tipología i5*
+2128789901,"Empréstito Los Melíes, Comuna de Osorno,  Región de Los Lagos",i1,DIA,nombre: empréstito
+2128835838,Perforación de Pozos Hidrocarburíferos en Área Hámhmam Central Norte,i5,DIA,tipología i5*
+2128842344,Construcción de Línea de Flujo Pozo Konawentru 9,i5,DIA,tipología i5*
+2128853265,CONSTRUCCIÓN DE SEIS LÍNEAS DE FLUJO EN EL BLOQUE ARENAL,i5,DIA,tipología i5*
+2128875035,Desarrollo del pozo Yagán xp-4,i5,DIA,tipología i5*
+2128877759,"Empréstito Gundert, Comuna de Calbuco, Región de Los Lagos",i1,DIA,nombre: empréstito
+2128879664,CONSTRUCCIÓN DE LÍNEA DE FLUJO PARA POZO DORADO SUR 12 (Ex X),i5,DIA,tipología i5*
+2128886746,"Extensión del Colector Arenal, Chañarcillo 37 - Central 4 Chañarcillo",i5,DIA,tipología i5*
+2128925614,"Extracción y procesamiento de áridos, cantera Fundo Landa, comuna de Penco",i1,DIA,nombre: árido
+2128930096,Perforación de Pozos Hidrocarburíferos en Área Yosi,i5,DIA,tipología i5*
+2128942091,Modificación proyecto Km 7 Extracción y procesamiento de áridos para la industria  del Hormigón premezclado,i2,DIA,nombre: árido
+2128945020,Perforación de Pozos Hidrocarburíferos en Área Elk Oeste,i5,DIA,tipología i5*
+2128946851,"PROYECTO DE EXPLOTACIÓN MECANIZADA DE ÁRIDOS EN RÍO ACONCAGUA, KILÓMETRO 14.0 AL 16.5, SECTORES 1 al 4, COMUNA DE LIMACHE, PROVINCIA DE MARGA MARGA, REGIÓN DE VALPARAISO",i2,DIA,nombre: árido
+2128956484,REGULARIZACION POZO DE EXTRACCION DE ARIDOS SECTOR MANTILHUE,i1,DIA,nombre: árido
+2128959467,Construcción de línea de flujo pozo Cerro Sutlej 2,i5,DIA,tipología i5*
+2128959572,Construcción de Línea de Flujo Pozo Ovejero 3,i5,DIA,tipología i5*
+2128960918,Perforación de Pozos Hidrocarburíferos en Área Kloketen,i5,DIA,tipología i5*
+2128971758,"Extracción y Procesamiento de Áridos desde el Río Maule, Sector Mellico y Piedra del Lobo",i2,DIA,nombre: árido
+2128971816,Extracción Mecanizada de Áridos,i2,DIA,nombre: árido
+2128972019,Proyecto Extracción y Procesamiento de Áridos - Transportes Petromax S.A.,i2,DIA,nombre: árido
+2128972447,PERFORACIÓN DE POZOS EXPLORATORIOS FORTUNA SUR A Y ROSAL B,i5,DIA,tipología i5*
+2128974284,"Proceso de Fracturación Hidráulica en 12 Pozos de Hidrocarburos, Bloque Arenal",i5,DIA,tipología i5*
+2128976410,REINYECCIÓN DE AGUA PRODUCTO DE LA EXTRACCIÓN DE HIDROCARBUROS EN 5 POZOS EXISTENTES EN ISLA,i5,DIA,tipología i5*
+2128979034,"Aumento de extracción y procesamiento de áridos, Huequecura",i1,DIA,nombre: árido
+2129187046,Extracción de Aridos e Instalaciones Asociadas Pozo El Manzano,i5,DIA,tipología i5*; nombre: árido
+2129193790,"EXTRACCIÓN DE ÁRIDOS VARIOS EMPRESTITOS RUTA T-775, RANCO.",i5,DIA,tipología i5*; nombre: árido; nombre: empréstito
+2129198984,"Aumento de extracción y procesamiento de áridos de pozo lastrero, Cruz de Piedra",i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2129276698,CONSTRUCCIÓN DE TRECE LÍNEAS DE FLUJO EN EL BLOQUE ARENAL,i5,DIA,tipología i5*
+2129299233,Extracción mecanizada de áridos y mejoramiento del rio Aconcagua proyecto camino internacional ruta 60 CH sector 1 tramo 2 variante Panquehue,i5,DIA,tipología i5*; nombre: árido
+2129370353,"EXTRACCIÓN MECANIZADA DE ÁRIDOS DEL RÍO CACHAPOAL, KM -1,5 AL -2,5, SECTOR GULTRO.",i5,DIA,tipología i5*; nombre: árido
+2129393364,Extracción de Aridos e Instalaciones Asociadas Pozo El Manzano,i5,DIA,tipología i5*; nombre: árido
+2129473960,Sector de Emplazamiento Proyecto Aumento de Extracción de Áridos en Empréstito Aldo Opazo Región del Maule,i5,DIA,tipología i5*; nombre: árido; nombre: empréstito
+2129545951,Proyecto Extracción de Aridos e Instalaciones Asociadas: Pozo el Manzano,i5,DIA,tipología i5*; nombre: árido
+2129570336,PROYECTO DE EXTRACCIÓN DE ARIDOS POZO SILVA,i5,DIA,tipología i5*; nombre: árido
+2129622455,AMPLIACION AREA DE EXTRACCION MECANIZADA DE ARIDOS RIO CACHAPOAL,i5,DIA,tipología i5*; nombre: árido
+2129649874,"Extracción y procesamiento de áridos desde pozo lastrero, sector Huechupín",i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2129720994,PROYECTO DE EXTRACCIÓN DE ARIDOS POZO SILVA,i5,DIA,tipología i5*; nombre: árido
+2129728798,PROYECTO DE EXTRACCIÓN DE ARIDOS POZO SILVA,i5,DIA,tipología i5*; nombre: árido
+2129755627,EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS DESDE POZO LASTRERO SECTOR PARGUA,i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2129795079,Proyecto de Extracción de Áridos Pozo 10,i5,DIA,tipología i5*; nombre: árido
+2129796970,Extracción y procesamiento de áridos Tafra,i5,DIA,tipología i5*; nombre: árido
+2129830537,Sector de Emplazamiento Proyecto de Extracción de Áridos en Empréstito Aldo Opazo Región del Maule,i5,DIA,tipología i5*; nombre: árido; nombre: empréstito
+2129887238,"EXTRACCION DE ARIDOS EN RIO MAIPO, TRAMOS 3 Y 8 COMUNA DE BUIN REGION METROPOLITANA",i5,DIA,tipología i5*; nombre: árido
+2129989831,"Extraccio&#769n mecanizada de a&#769ridos Km 3,5 aguas arriba del Puente Ruta 5 Sur en Ri&#769o Maule, obras de procesamiento e instalaciones",i5,DIA,tipología i5*
+2130013837,Sector de Emplazamiento Proyecto de Extracción de Áridos en Empréstito Aldo Opazo Región del Maule,i5,DIA,tipología i5*; nombre: árido; nombre: empréstito
+2130019213,"EXTRACCIÓN DE ÁRIDOS RÍO ACONCAGUA, AGUAS ARRIBA PUENTE COLMO KM 10,6 A KM 13,3, COMUNA DE QUILLOTA",i5,DIA,tipología i5*; nombre: árido
+2130057937,"Explotación Mecanizada de Áridos Empresa San Vicente, Río Cachapoal",i5,DIA,tipología i5*; nombre: árido
+2130149807,"Empréstito Andrade, comuna de Chonchi, Región de Los Lagos",i5,DIA,tipología i5*; nombre: empréstito
+2130236578,Proyecto Extracción de Áridos Pozo Silva,i1,DIA,nombre: árido
+2130289251,Extracción de Áridos Coloso,i5,DIA,tipología i5*; nombre: árido
+2130348352,Extracción y Procesamiento de Áridos Sector Aguada de la Teca,i5,DIA,tipología i5*; nombre: árido
+2130363662,Extracción y Procesamiento de Áridos - Compañía Minera La Isla Ltda.,i5,DIA,tipología i5*; nombre: árido
+2130367757,Extracción de Áridos e Instalaciones Asociadas Romeralcillo,i5,DIA,tipología i5*; nombre: árido
+2130394337,"Extracción Mecanizada de Áridos, Tramo B5-RíoMaipo",i5,DIA,tipología i5*; nombre: árido
+2130406120,"Explotación mecanizada de áridos  río Aconcagua, sector aguas abajo Puente Ferroviario Lo Venecia, comuna de Quillota",i5,DIA,tipología i5*; nombre: árido
+2130526443,Ampliación planta de extracción y procesamiento de áridos en pozo lastrero sector La Varilla,i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2130537819,"Extracción de arenas desde el río Bíobío para etapa 1 de proyecto, Mejoramiento interconexión vial costanera Concepción Chiguayante",i5,DIA,tipología i5*
+2130596407,"Extracción y Procesamiento de áridos en pozo Lastrero, sector Mesamávida",i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2130610531,"Extracción de arenas desde el río Bíobío para etapa 1 de proyecto, Mejoramiento interconexión vial costanera Concepción Chiguayante",i5,DIA,tipología i5*
+2130680529,"Extracción Mecanizada de Áridos, Tramo B5-RíoMaipo",i5,DIA,tipología i5*; nombre: árido
+2130711633,EXTRACCIÓN DE ÁRIDOS EN EL SECTOR PETORQUITA DEL RIO ACONCAGUA,i5,DIA,tipología i5*; nombre: árido
+2130750858,"Extracción de Áridos en río Biobío para construcción de Interconexión Vial Costanera Concepción - Chiguayante, Etapa 1",i5,DIA,tipología i5*; nombre: árido
+2130761962,"Extracción Mecanizada de Áridos Río Aconcagua, Proyecto Camino Internacional Ruta 60CH Sector 1 Tramo 2 Variante Panquehue",i5,DIA,tipología i5*; nombre: árido
+2130774774,MODIFICACIÓN PROYECTO AMPLIACIÓN EXTRACCIÓN DE ÁRIDOS DESDE EL RÍO BIOBIO EN SAN PEDRO DE LA PAZ,i5,DIA,tipología i5*; nombre: árido
+2130775854,"Extracción y procesamiento de áridos desde pozo lastrero, sector Huechupín",i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2130783602,Cantera I - Concremag S.A.,i5,DIA,tipología i5*
+2130798557,MODIFICACIÓN PROYECTO AMPLIACIÓN DE EXTRACCIÓN DE ÁRIDOS DESDE EL RÍO BIO BIO EN SAN PEDRO DE LA PAZ,i5,DIA,tipología i5*; nombre: árido
+2130826992,Extracción de áridos desde el río Biobío - sector La Suerte,i5,DIA,tipología i5*; nombre: árido
+2130853850,"Extracción y procesamiento de áridos, pozo Rinconada Diguillin",i5,DIA,tipología i5*; nombre: árido
+2130890361,"Extracción y Procesamiento de áridos Patagual, región del Biobio",i5,DIA,tipología i5*; nombre: árido
+2130954062,REGULARIZACION POZO DE EXTRACCION DE ARIDOS PARCELA 2 ARTURO PRAT,i5,DIA,tipología i5*; nombre: árido
+2131015441,Extracción de Áridos Laguna Amarga,i5,DIA,tipología i5*; nombre: árido
+2131072138,Extracción de Áridos Sectores Los Lumes y Piuquenes,i5,DIA,tipología i5*; nombre: árido
+2131082146,Proyecto Extracción Mecanizada de Áridos II,i5,DIA,tipología i5*; nombre: árido
+2131082190,"Extracción Mecanizada de Áridos II, Comuna de Temuco, Provincia de Cautín, Región de La Araucanía.",i5,DIA,tipología i5*; nombre: árido
+2131107875,"AUMENTO DE EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS DE POZO LASTRERO VICAT LTDA, COMUNA DE RÍO BUENO, REGIÓN DE LOS RÍOS",i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2131121659,"Extracción Mecanizada de Áridos, Tramo B5-Río Maipo",i5,DIA,tipología i5*; nombre: árido
+2131146585,"Extracción y Procesamiento, Áridos Maggi",i5,DIA,tipología i5*; nombre: árido
+2131150560,EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS EMPRESTITO CHIN CHIN,i5,DIA,tipología i5*; nombre: árido; nombre: empréstito
+2131214743,"Regularización de Extracción y Procesamiento de Áridos, Cantera San José",i5,DIA,tipología i5*; nombre: árido
+2131244869,"Regularización de Extracción y Procesamiento de Áridos, Cantera San José",i5,DIA,tipología i5*; nombre: árido
+2131245434,EXTRACCIÓN DE ÁRIDOS LAGUNA AMARGA,i5,DIA,tipología i5*; nombre: árido
+2131448840,Modificación RCA N°26/2014 Extracción de Áridos en Río Cachapoal,i5,DIA,tipología i5*; nombre: árido
+2131492828,EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS LA ISLA,i5,DIA,tipología i5*; nombre: árido
+2131528734,"EXTRACCIÓN DE ÁRIDOS RÍO ELQUI,  SECTOR ALTOVALSOL QUILACÁN",i5,DIA,tipología i5*; nombre: árido
+2131555710,EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS AGUAS ARRIBA DEL PUENTE RUTA 5 SUR EN RIO MAULE,i5,DIA,tipología i5*; nombre: árido
+2131604649,"Extracción Mecanizada Río Maipo, kilómetro 72,1 al 74,1 Comuna El Monte",i5,DIA,tipología i5*
+2131614053,"AUMENTO DE EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS DE POZO LASTRERO VICAT LTDA, COMUNA DE RÍO BUENO, REGIÓN DE LOS RÍOS",i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2131684033,"Extracción de Áridos Santa Elisa, Río Aconcagua, Comuna Quillota",i5,DIA,tipología i5*; nombre: árido
+2131750477,EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS LA ISLA,i5,DIA,tipología i5*; nombre: árido
+2131818330,"Extracción de áridos desde el río Biobío, sector La Suerte",i5,DIA,tipología i5*; nombre: árido
+2132002930,"Regularización Extracción De Áridos, Sector Champulli- Esmeralda, Lote N°3 y N°4",i5,DIA,tipología i5*; nombre: árido
+2132012103,MODIFICACÓN CANTERA II - RÍO SECO,i5,DIA,tipología i5*
+2132067266,"Extracción Mecanizada Río Maipo, kilómetro 108.300 al 110.000",i5,DIA,tipología i5*
+2132084984,Proyecto de explotación Canteras Lonco,i5,DIA,tipología i5*
+2132094198,EMPRÉSTITO SECTOR SAN VICTOR ÁLAMOS,i5,DIA,tipología i5*; nombre: empréstito
+2132134144,"Extracción de Áridos, Fundo La Playa",i5,DIA,tipología i5*; nombre: árido
+2132192678,Extracción y procesamiento de áridos desde pozo lastrero y cauce del río Itata,i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2132259288,"Ampliación de Extracción de Áridos Pozo Patagónico 1, Sierra Gorda",i5,DIA,tipología i5*; nombre: árido
+2132273213,"Extracción Mecanizada Río Maipo, kilómetro 72,1 al 74,1",i5,DIA,tipología i5*
+2132281579,Explotación Mecanizada de Áridos Gallardo,i5,DIA,tipología i5*; nombre: árido
+2132331933,"AMPLIACIÓN DE LA ZONA EXTRACTIVA, SECTOR PEDREGAL II",i5,DIA,tipología i5*
+2132441687,"Explotación de la Concesión D.E. Nº 1.137. Rio Maipo, Sector: Tramo 43-34 y Banco Decantador 40-37.",i5,DIA,tipología i5*
+2132442633,EXTRACCIÓN Y PROCESAMIENTO                                                 DE ÁRIDOS PRODUCTORA Y COMERCIALIZADORA LnullISOLA LTDA.,i5,DIA,tipología i5*; nombre: árido
+2132449915,Abandono Pozo de Extracción de Áridos Seimura Carrasco,i5,DIA,tipología i5*; nombre: árido
+2132547892,"Extracción Mecanizada de Áridos, Río Aconcagua",i5,DIA,tipología i5*; nombre: árido
+2132553288,Extracción y Procesamiento de Integral Río Maipo Lonquén,i5,DIA,tipología i5*
+2132559252,"Regularización Extracción De Áridos, Sector Unión Chirre, Pozo Seco Fredy Cárcamo",i5,DIA,tipología i5*; nombre: árido
+2132564001,"Extracción de Áridos Km -6,0 al -7,0 Río Cachapoal",i5,DIA,tipología i5*; nombre: árido
+2132591886,"Extracción y Procesamiento de Áridos Pozo Piedra Dura, Cañete",i5,DIA,tipología i5*; nombre: árido
+2132613306,Regularización Extracción de Áridos Pozo El Bosque,i5,DIA,tipología i5*; nombre: árido
+2132624055,Extracción de Aridos García,i5,DIA,tipología i5*; nombre: árido
+2132629041,"Extracción de Áridos Río Maipo, Sector Lo Gallardo",i5,DIA,tipología i5*; nombre: árido
+2132649970,Modificación Zona de Extracción RCA 307/2004,i5,DIA,tipología i5*
+2132656133,"Proyecto:Extracción de áridos desde el río Biobío, sector La Suerte",i5,DIA,tipología i5*; nombre: árido
+2132702893,"Río Aconcagua, Extracción Mecanizada de Áridos",i5,DIA,tipología i5*; nombre: árido
+2132705113,"Extracción y Procesamiento de Áridos desde Cauce del Río Biobío, Sector Mesamávida, Los Ángeles",i5,DIA,tipología i5*; nombre: árido
+2132777921,"Ampliación y Traslado de Extracción y Procesamiento de Áridos Río Ñuble en Confluencia con Ríos Chillán y Changaral, al Fundo San Francisco, sector Huape",i5,DIA,tipología i5*; nombre: árido
+2132837657,Nueva Área de Explotación de Áridos en MEL,i5,DIA,tipología i5*; nombre: árido
+2132855021,Extracción de Áridos Tres Lagos,i5,DIA,tipología i5*; nombre: árido
+2135598179,Extracción y Procesamiento de Áridos Nahueltoro,i5,DIA,tipología i5*; nombre: árido
+2137941964,Extracción de Áridos Cuevas,i5,DIA,tipología i5*; nombre: árido
+2137969549,Proyecto Extracción y Procesamiento de Áridos y Maquinarias Lindemann Spa,i5,DIA,tipología i5*; nombre: árido
+2137977503,Extracción de Áridos Río Maipo,i5,DIA,tipología i5*; nombre: árido
+2137997958,Extracción de áridos Macoga,i5,DIA,tipología i5*; nombre: árido
+2138137536,"Aumento de extracción de áridos, cantera Fundo Palco Chuponal",i5,DIA,tipología i5*; nombre: árido
+2138204708,Proyecto Empréstito La Vara,i5,DIA,tipología i5*; nombre: empréstito
+2138467833,"Explotación Mecanizada de Áridos en Río Cachapoal, kilómetro 3,6 al 6,2",i5,DIA,tipología i5*; nombre: árido
+2138523766,Extracción Mecanizada de Áridos Río Cachapoal,i5,DIA,tipología i5*; nombre: árido
+2138652931,MODIFICACIÓN FASE DE ABANDONO CANTERA SANTA BÁRBARA,i5,DIA,tipología i5*
+2138836687,Extracción de Áridos Aurora,i5,DIA,tipología i5*; nombre: árido
+2138938968,Extracción y Procesamiento de Áridos Nahueltoro,i5,DIA,tipología i5*; nombre: árido
+2138985706,Ampliación Planta Extracción de Áridos Brotec,i5,DIA,tipología i5*; nombre: árido
+2140892529,"?Extracción de Áridos Rio Aconcagua?,",i5,DIA,tipología i5*; nombre: árido
+2140974698,Extracción y Procesamiento de Áridos Cauce del Río Itata,i5,DIA,tipología i5*; nombre: árido
+2141007711,EXTRACCIÓN DE ÁRIDOS RIO MAIPO,i5,DIA,tipología i5*; nombre: árido
+2141089141,Extracción y Procesamiento de Áridos - Pozo El Tranque,i5,DIA,tipología i5*; nombre: árido
+2141224402,"ACTUALIZACIÓN Y AMPLIACIÓN DE LA EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS EN EL CAUCE DEL RÍO ÑUBLE, LnullISOLA LTDA.",i5,DIA,tipología i5*; nombre: árido
+2141232342,Extracción y Procesamiento de Áridos Río Lontué,i5,DIA,tipología i5*; nombre: árido
+2141457760,"Aumento de extracción de áridos, cantera Fundo Palco Chuponal",i5,DIA,tipología i5*; nombre: árido
+2141608605,"Extracción Mecanizada de Áridos en Río Maipo, Tramo A8 y A9",i5,DIA,tipología i5*; nombre: árido
+2141823894,"?Extracción Material Integral desde Pozo Lastrero Sector Tabolango, Comuna de Limache",i5,DIA,tipología i5*; nombre: pozo lastrero
+2141883155,"ACTUALIZACIÓN Y AMPLIACIÓN DE LA EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS EN EL CAUCE DEL RÍO ÑUBLE, LnullISOLA LTDA.",i5,DIA,tipología i5*; nombre: árido
+2141886889,Explotación Mecanizada de Áridos Gallardo,i5,DIA,tipología i5*; nombre: árido
+2141954754,Extracción de Áridos Empréstito Cárdenas y Hernández,i5,DIA,tipología i5*; nombre: árido; nombre: empréstito
+2142069563,?Extracción Mecanizada Áridos Normalizados Río Maipo Limitada?,i5,DIA,tipología i5*; nombre: árido
+2142169319,"Extracción Mecanizada de Áridos, km 72,1 al 74,1 Río Maipo",i5,DIA,tipología i5*; nombre: árido
+2142240273,"Extracción de áridos en río Cachapoal, Sector Sifón El Gringo",i5,DIA,tipología i5*; nombre: árido
+2142335522,"Ampliación de Extracción y Procesamiento de A&#769ridos, sector Quinchamalí",i5,DIA,tipología i5*
+2142430234,EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS SANTA GEMITA,i5,DIA,tipología i5*; nombre: árido
+2142436210,Extracción de Áridos en Sector Tranque de Relaves de Minera Escondida para periodo 2020-2030,i5,DIA,tipología i5*; nombre: árido
+2142447120,Extracción de áridos en río Itata,i5,DIA,tipología i5*; nombre: árido
+2142491491,Extracción de áridos en río Itata,i5,DIA,tipología i5*; nombre: árido
+2142502721,"Extracción de Áridos Km -6,0 al -7,0 Río Cachapoal",i5,DIA,tipología i5*; nombre: árido
+2142537328,"Aumento de Extracción de Áridos, Cantera Patagual",i5,DIA,tipología i5*; nombre: árido
+2142605535,"AMPLIACIÓN DE LA ZONA EXTRACTIVA, SECTOR LAS GARZAS ÁRIDOS ACONCAGUA",i5,DIA,tipología i5*; nombre: árido
+2142623912,"AMPLIACIÓN DE LA ZONA EXTRACTIVA, SECTOR LAS GARZAS. ÁRIDOS ACONCAGUA QUILLOTA",i5,DIA,tipología i5*; nombre: árido
+2142694143,Extracción y Procesamiento de Áridos Aguas Arriba del Puente Ruta 5 Sur en Río Maule,i5,DIA,tipología i5*; nombre: árido
+2142783097,"Extracción mecanizada de áridos en el río Mapocho, Km 1.650 al 3.450, sector aguas abajo del Puente San Francisco",i5,DIA,tipología i5*; nombre: árido
+2142875609,Prueba clave unica,i5,DIA,tipología i5*
+2142907142,"Extracción de Áridos Km -6,0 al -7,0 Río Cachapoal",i5,DIA,tipología i5*; nombre: árido
+2143001388,"Extracción de Áridos Km -6,0 al -7,0 Río Cachapoal",i5,DIA,tipología i5*; nombre: árido
+2143214218,"Extracción de Áridos ARIMIX, Sector Putúe Bajo",i5,DIA,tipología i5*; nombre: árido
+2143225122,Extracción de Aridos Rio Ñuble,i5,DIA,tipología i5*; nombre: árido
+2143309610,IMPLEMENTACIÓN DE MEDIDAS Y RECUPERACIÓN DE SUELO EN FUNDO LAS PALMAS,i5,DIA,tipología i5*
+2143391937,Regularización Extracción de Aridos Pozo El Bosque,i5,DIA,tipología i5*; nombre: árido
+2143527472,Mejoramiento Parcelación Mía Luisa,i5,DIA,tipología i5*
+2143668688,Extracción y Procesamiento de Áridos Río Maule,i5,DIA,tipología i5*; nombre: árido
+2143697524,Extracción y procesamiento de áridos río Lontué,i5,DIA,tipología i5*; nombre: árido
+2143939256,Quimal,i5,DIA,tipología i5*
+2143955039,AMPLIACIÓN EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS SERGIO CERVA S.A.,i5,DIA,tipología i5*; nombre: árido
+2144021806,"Extracción y Procesamiento de Áridos en Río Biobío, Predio El Chequen",i5,DIA,tipología i5*; nombre: árido
+2144121537,"Ampliación Extracción de Arenas de Mar desde la Playa de Polykarpo, Sector Escuadrón",i5,DIA,tipología i5*
+2144183067,Actualización de los Requerimientos de Materiales Asociados a la Construcción Diferida del Depósito de Relaves,i5,DIA,tipología i5*
+2144184771,Ampliación Planta de Extracción de Áridos El Fortín,i5,DIA,tipología i5*; nombre: árido
+2144233818,"Extracción Mecanizada de Áridos Río Maipo, Tramo A8 y A9",i5,DIA,tipología i5*; nombre: árido
+2144294775,REGULARIZACIÓN PLANTA DE EXTRACCIÓN DE ÁRIDOS DAYMA,i5,DIA,tipología i5*; nombre: árido
+2144343048,Acualización Planta MB Maquinarias,i5,DIA,tipología i5*
+2144350588,Mejoramiento Parcelacion Maria Luisa,i5,DIA,tipología i5*
+2144445595,"Proyecto de extracción y procesamiento de áridos desde pozo lastrero, sector Munilque",i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2144883895,"Extracción de Áridos MACOGA, Sector Santa Inés km 3",i5,DIA,tipología i5*; nombre: árido
+2144907407,Extracción Mecanizada de Aridos Río Cachapoal,i5,DIA,tipología i5*; nombre: árido
+2145086813,Extracción de áridos y restauración de pasivo ambiental Pozo La Vara,i5,DIA,tipología i5*; nombre: árido
+2145168635,Explotación de Áridos y RMI Clarisas I y II y María y Helena,i5,DIA,tipología i5*; nombre: árido
+2145188301,Extracción de Áridos Inversiones Piedras Negras,i5,DIA,tipología i5*; nombre: árido
+2145191954,Extracción y Procesamiento de Áridos Hydromaq Mininco,i5,DIA,tipología i5*; nombre: árido
+2145235914,Extracción de Aridos y Planta de Asfaltos Sector Pozo D8,i5,DIA,tipología i5*; nombre: árido
+2145240416,Mejoramiento y Mantención de Cauce Sector Imperialito Pancul,i5,DIA,tipología i5*
+2145293484,Extracción de Áridos Pozo L13 (km 0),i5,DIA,tipología i5*; nombre: árido
+2145328035,Extracción de Áridos Pozo E5 (km 27),i5,DIA,tipología i5*; nombre: árido
+2145347109,Extracción de Áridos Pozo E10 (km 100),i5,DIA,tipología i5*; nombre: árido
+2145403744,Ampliación Extracción de Áridos Pozo L12 (km 2),i5,DIA,tipología i5*; nombre: árido
+2145700005,Ampliación Extracción de Áridos Pozo E4 (km 13,i5,DIA,tipología i5*; nombre: árido
+2145708119,Extracción de Áridos Rio Aconcagua,i5,DIA,tipología i5*; nombre: árido
+2145719707,RUBIA N°1,i5,DIA,tipología i5*
+2145756846,"Extracción de áridos, río Maipo",i5,DIA,tipología i5*; nombre: árido
+2145789604,Extracción de áridos El Descanso,i5,DIA,tipología i5*; nombre: árido
+2145825060,Extracción de áridos El Descanso,i5,DIA,tipología i5*; nombre: árido
+2145828705,Extracción y Procesamiento de Áridos - Pozo El Sauce,i5,DIA,tipología i5*; nombre: árido
+2146185330,Ampliación Extracción de Áridos y Producción de Asfaltos Pozo km 38,i5,DIA,tipología i5*; nombre: árido
+2146364849,Ampliación Pozo de Extracción de Áridos El Bosque,i5,DIA,tipología i5*; nombre: árido
+2146473316,Producción de Áridos Eufemia,i5,DIA,tipología i5*; nombre: árido
+2146484179,"Explotación Mecanizada de Áridos en Río Cachapoal, Kilómetro 3,6 al 6,2",i5,DIA,tipología i5*; nombre: árido
+2146487404,Extracción y Procesamiento de Áridos Sector Chimbarongo,i5,DIA,tipología i5*; nombre: árido
+2146722528,"Extracción y procesamiento de áridos, Cantera Santa Rosa",i5,DIA,tipología i5*; nombre: árido
+2146735466,Extracción y Procesamiento de Áridos Río Lontué,i5,DIA,tipología i5*; nombre: árido
+2146851638,Modificaciones Embalse de Regadío Las Palmas,i5,DIA,tipología i5*
+2147110632,"Extracción Mecanizada de Áridos Río Maipo, Kilómetro 112,7 al 115,7",i5,DIA,tipología i5*; nombre: árido
+2147476180,Extracción de Áridos Estero Los Maquis,i5,DIA,tipología i5*; nombre: árido
+2147557521,"Actualizaciones de Ingeniería y Construcción Obras 7ª, 8ª y 9ª Etapas Peraltamiento Embalse Carén",i5,DIA,tipología i5*
+2147916954,"Extracción Mecanizada de Áridos Río Maipo, Kilómetro 112,7 al 115,7",i5,DIA,tipología i5*; nombre: árido
+2147921981,Extracción y Procesamiento de Áridos San José de Cancura,i5,DIA,tipología i5*; nombre: árido
+2147991491,Extracción de roca para defensas fluviales,i5,DIA,tipología i5*
+2148231091,Extracción de áridos Pozo Gallegos,i5,DIA,tipología i5*; nombre: árido
+2148382204,"Ampliación Extracción de Áridos Río Sin Nombre, Sector Laguna Verde",i5,DIA,tipología i5*; nombre: árido
+2148468963,DIA Extracción de Áridos Sector El Labrador,i5,DIA,tipología i5*; nombre: árido
+2148476229,DIA Extracción de Áridos Sector La Suerte,i5,DIA,tipología i5*; nombre: árido
+2148672585,Extracción y procesamiento de áridos Pozo el Sauce,i5,DIA,tipología i5*; nombre: árido
+2148734879,"Ampliación de pozo lastrero para extracción de áridos, ruta 240, Km 18 camino Aysén-Coyhaique, región de Aysén",i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2148954260,Extracción Mecanizada Áridos Normalizados Río Maipo Limitada,i5,DIA,tipología i5*; nombre: árido
+2148982452,"Proyecto de extracción y procesamiento de áridos desde pozo lastrero, sector Munilque",i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2148991179,Regularización de Actividades Banco Arenero Pre existente Catalán Herrera Hermanos y Cía Ltda,i5,DIA,tipología i5*
+2149466778,Extracción de Áridos en Río Biobío para Proyecto Ampliación Conexión Vial Concepción-Chiguayante. Etapa 2,i5,DIA,tipología i5*; nombre: árido
+2149534091,"Extracción y Procesamiento de Áridos Cantera El Pellín, Penco",i5,DIA,tipología i5*; nombre: árido
+2149562248,"Modificación Extracción de arena desde el río Biobío, sector Costanera Norte",i5,DIA,tipología i5*
+2149636084,Empréstito Las Arañas,i5,DIA,tipología i5*; nombre: empréstito
+2149753151,Extracción de áridos desde pozo lastrero Coronel,i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2150779497,Extracción de Áridos Alexis,i5,DIA,tipología i5*; nombre: árido
+2150781129,Pozo Lastrero Coyanco,i5,DIA,tipología i5*; nombre: pozo lastrero
+2150832485,Extracción de Arena desde Cauce del Río Biobío - Arenera Price,i5,DIA,tipología i5*
+2150897519,"CONTINUIDAD OPERACIONAL EXTRACCION ARIDOS RIO MAIPO TRAMO KM 8,5 A KM 11,2",i5,DIA,tipología i5*; nombre: árido
+2150963916,"Aumento de Extracción y Procesamiento, Pozo El Valle",i5,DIA,tipología i5*
+2151097193,Áridos San Vicente,i5,DIA,tipología i5*; nombre: árido
+2151210315,"Aumento de extracción y procesamiento, Pozo Vega Tercera",i5,DIA,tipología i5*
+2151260840,Ampliación extracción y procesamiento de áridos La Isla,i5,DIA,tipología i5*; nombre: árido
+2151359731,"Extracción de Áridos, Rinconada Los Maitenes",i5,DIA,tipología i5*; nombre: árido
+2151576006,Extracción de Material de Empréstito Faena Refugio,i5,DIA,tipología i5*; nombre: empréstito; nombre: extracción de material
+2151709292,Extracción de áridos Pozo Gallegos,i5,DIA,tipología i5*; nombre: árido
+2151844359,Regularización Área Explotación Cantera Proyecto Embalse Valle Hermoso,i5,DIA,tipología i5*
+2151856319,Pozo Lastrero Los Rogeles,i5,DIA,tipología i5*; nombre: pozo lastrero
+2151869997,"Extracción de Áridos en el kilómetro 21 de la Ruta 160, Parque Industrial Uno, Escuadrón, Coronel",i5,DIA,tipología i5*; nombre: árido
+2152041573,Extracción de Material de Empréstito Faena Refugio,i5,DIA,tipología i5*; nombre: empréstito; nombre: extracción de material
+2152192283,Ampliación Extracción y procesamiento de áridos sector Huepil,i5,DIA,tipología i5*; nombre: árido
+2152264935,Regularizacion Emprestito de Extraccion de Aridos Pozo Columo,i5,DIA,tipología i5*; nombre: árido; nombre: empréstito
+2152380652,Extracción de Áridos Camino viejo Pitrufquén km 2,i5,DIA,tipología i5*; nombre: árido
+2152437263,Extracción de Áridos desde el Río Biobío en San Pedro de la Paz,i5,DIA,tipología i5*; nombre: árido
+2152532447,"Extracción mecanizada en ribera sur Río Maipo km. 3.750 al km. 4.500 y km. 5.500 al km. 6.500 aguas abajo Puente Maipo, comuna de Buin",i5,DIA,tipología i5*
+2152951438,"Extracción y Procesamiento de Áridos, Río Achibueno, Sector Los Maitenes",i5,DIA,tipología i5*; nombre: árido
+2153014474,EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS SERGIO CERVA S.A.,i5,DIA,tipología i5*; nombre: árido
+2153152055,Ampliación Extracción de Áridos en Pozo ubicado en Ruta 240 Km 18,i5,DIA,tipología i5*; nombre: árido
+2153209494,"Extracción Material Integral desde Pozo Lastrero Fundo La Libertad, Comuna de Limache",i5,DIA,tipología i5*; nombre: pozo lastrero
+2153366471,Extracción de Áridos para Mejoramiento de Ruta 9,i5,DIA,tipología i5*; nombre: árido
+2153480258,"Extracción de áridos río Maipo, sector San Juan",i5,DIA,tipología i5*; nombre: árido
+2153516841,Proyecto Extracción de Áridos Justo Gutiérrez Schweitzer,i5,DIA,tipología i5*; nombre: árido
+2153935003,"Proyecto Extracción de Áridos Sector El Manque, Comuna de Quillón",i5,DIA,tipología i5*; nombre: árido
+2154153327,"Extracción de Áridos Km 4,5 a 5,5 ribera sur río Maipo",i5,DIA,tipología i5*; nombre: árido
+2154243372,Extracción Mecanizada de Áridos en Río Maipo Km 3+550 a Km 5+600 Aguas Abajo del Puente San Ramón,i5,DIA,tipología i5*; nombre: árido
+2154364519,"Extracción y Procesamiento de Áridos Cantera El Pellín, Penco",i5,DIA,tipología i5*; nombre: árido
+2154587856,"Ampliación de la Zona Extractiva, Sector las Garzas. Áridos Aconcagua Quillota",i5,DIA,tipología i5*; nombre: árido
+2154603837,Extracción de Áridos Pozo Miraflores,i5,DIA,tipología i5*; nombre: árido
+2154634906,Extracción y Procesamiento Grupo de Empresas Alcides Vidal,i5,DIA,tipología i5*
+2154861605,Extracción de Áridos Pozo Gallegos,i5,DIA,tipología i5*; nombre: árido
+2154903677,Extracción de Áridos Pozo Miraflores,i5,DIA,tipología i5*; nombre: árido
+2154973984,Proyecto extracción y procesamiento de áridos Santa Luisa,i5,DIA,tipología i5*; nombre: árido
+2155129309,"Proyecto extracción de arena de pozo lastrero, fundo Santa Gregoria",i5,DIA,tipología i5*; nombre: pozo lastrero
+2155135293,Extracción y Procesamiento de Áridos Río Maule,i5,DIA,tipología i5*; nombre: árido
+2155182346,Conservación y Mantención de ribera río Achibueno,i5,DIA,tipología i5*
+2155183981,"Proyecto extracción de arena de pozo lastrero, fundo Santa Gregoria",i5,DIA,tipología i5*; nombre: pozo lastrero
+2155196607,Extracción de arena sector San Pedro de la Paz,i5,DIA,tipología i5*
+2155229117,"Modificación de Extracción y Procesamiento de Áridos de pozo, Fundo El Manzanal",i5,DIA,tipología i5*; nombre: árido
+2155347956,Extracción de Áridos Sector Avaria,i5,DIA,tipología i5*; nombre: árido
+2155464786,"Extracción de Material Integral desde Pozo Lastrero Parcela 27, Comuna de La Serena",i5,DIA,tipología i5*; nombre: pozo lastrero; nombre: extracción de material
+2155550694,Extracción de áridos cañón río Blanco,i5,DIA,tipología i5*; nombre: árido
+2155615655,Extracción Mecanizada Áridos Normalizados Río Maipo Limitada,i5,DIA,tipología i5*; nombre: árido
+2155785822,"AMPLIACIÓN EXTRACCIÓN Y PROCESAMIENTO DE  ÁRIDOS, CANTERA FUNDO LANDA",i5,DIA,tipología i5*; nombre: árido
+2156269603,"Extracción de Áridos  Km 4,5 a 5,5 Ribera sur Río Maipo",i5,DIA,tipología i5*; nombre: árido
+2156271946,EXTRACCION DE ARIDOS RIO BLANCO,i5,DIA,tipología i5*; nombre: árido
+2156450559,Extracción Diatomea,i5,DIA,tipología i5*
+2156592492,"Extracción y Procesamiento de Áridos, Sector La Campana",i5,DIA,tipología i5*; nombre: árido
+2156598186,AMPLIACIÓN DEL POZO EXTRACCIÓN DE ÁRIDOS CANTERA QUILLÉN,i5,DIA,tipología i5*; nombre: árido
+2156817302,Extracción de Áridos Lo Valdivia,i5,DIA,tipología i5*; nombre: árido
+2156897452,Extracción y Procesamiento de Áridos La Italiana,i5,DIA,tipología i5*; nombre: árido
+2157150759,Regularización empréstito proyecto vial ruta 9,i5,DIA,tipología i5*; nombre: empréstito
+2157169111,Regularización Empréstito San Antonio,i5,DIA,tipología i5*; nombre: empréstito
+2157169157,Regularización Empréstito San Antonio,i5,DIA,tipología i5*; nombre: empréstito
+2157252104,Extracción y Procesamiento de Áridos L?Isola,i5,DIA,tipología i5*; nombre: árido
+2157269499,Extracción y Procesamiento de Áridos Fundo Las Camelias,i5,DIA,tipología i5*; nombre: árido
+2157305521,"Proyecto de Extracción de Áridos: Restauración Hidráulica y Morfodinámica de Cauce Sinuoso, Sector Placilla, Río Tinguiririca, Región de OnullHiggins",i5,DIA,tipología i5*; nombre: árido
+2157320821,"Extracción y Procesamiento de Áridos Río Maule, La Isla N°2, CivilPro",i5,DIA,tipología i5*; nombre: árido
+2157509249,Ampliación Extracción y Procesamiento de áridos Sector Huépil,i5,DIA,tipología i5*; nombre: árido
+2157970041,"Extensión del área de habilitación de suelo, Parcela Médanos Ex Hacienda Normandie",i5,DIA,tipología i5*
+2158474137,"Continuidad Operacional Extracción de Áridos Km 6,5 a Km 8 Ribera Norte Río Maipo",i5,DIA,tipología i5*; nombre: árido
+2158488896,Extracción de Áridos Cañón Río Blanco,i5,DIA,tipología i5*; nombre: árido
+2159043259,Ampliación de Extracción y Procesamiento de Áridos Pozo Lastrero Abice,i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2159150126,Modificación Cantera Hernán Muñoz,i5,DIA,tipología i5*
+2159427531,Regularización Pozo Columo extracción y procesamiento de Áridos,i5,DIA,tipología i5*; nombre: árido
+2159469274,Extracción Mecanizada de Áridos en Río Maipo Km 1+000 a Km 2+000 Aguas Abajo del Puente San Ramón,i5,DIA,tipología i5*; nombre: árido
+2159484745,"Extracción y Procesamiento de Áridos, Sector La Campana",i5,DIA,tipología i5*; nombre: árido
+2159515509,Regularización de Actividades Banco Arenero Preexistente Sociedad Catalán Herrera  Hermanos y Cía. Ltda,i5,DIA,tipología i5*
+2159746156,Extracción de Áridos Peu Peu,i5,DIA,tipología i5*; nombre: árido
+2159756862,Obras Eléctricas y Área para Extracción de Áridos al Interior de Minera Escondida,i5,DIA,tipología i5*; nombre: árido
+2159756977,"Extracción mecanizada en ribera sur río Maipo km 3.750 al km 4500 y km 5500 al km 6500 aguas abajo puente Maipo, comuna de Buin",i5,DIA,tipología i5*
+2159934652,Extracción de Áridos Peu Peu,i5,DIA,tipología i5*; nombre: árido
+2160047465,"Ampliación, extracción y procesamiento de áridos Pafal",i5,DIA,tipología i5*; nombre: árido
+2160220530,Extraccion y Procesamiento de Aridos Galvarino,i5,DIA,tipología i5*; nombre: árido
+2160304431,Ampliación de Zona de Extracción en Pozo Lastrero 2,i5,DIA,tipología i5*; nombre: pozo lastrero
+2160724419,"Extracción Mecanizada de Áridos en río Tinguiririca, comunas de Nancagua y Santa Cruz",i5,DIA,tipología i5*; nombre: árido
+2160852990,"Extracción de material integral desde Pozo Lastrero Parcela 27, Comuna de la Serena",i5,DIA,tipología i5*; nombre: pozo lastrero; nombre: extracción de material
+2160967379,"Extracción y procesamiento de áridos río Ñuble, sector Bajo el Ala",i5,DIA,tipología i5*; nombre: árido
+2161197414,Ampliación de Extracción de Áridos Pozo Köberl,i5,DIA,tipología i5*; nombre: árido
+2161340214,Cierre de pozo de extracción de áridos,i5,DIA,tipología i5*; nombre: árido
+2161441951,Cierre de pozo de extracción de áridos,i5,DIA,tipología i5*; nombre: árido
+2161793754,Extracción de Áridos Chaqueihua,i5,DIA,tipología i5*; nombre: árido
+2161858387,Ampliación de Extracción y Procesamiento de Áridos Pozo Lastrero Abice,i5,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2161920364,"Modificación RCA96/2013 por Ampliación y Continuidad Operacional de Extracción de Áridos con Rehabilitación Ambiental en Cauce de Río Aconcagua, Quillota",i5,DIA,tipología i5*; nombre: árido
+2162175120,Extracción de Áridos Santa Rosa,i5,DIA,tipología i5*; nombre: árido
+2162175137,Ampliación del Pozo de Extracción de Áridos Cantera Quillén,i5,DIA,tipología i5*; nombre: árido
+2162318218,"EXPLOTACIÓN MECANIZADA DE ÁRIDOS RÍO ACONCAGUA, SECTOR Km 13.1 AL 14.8,  REGION DE VALPARAISO",i5,DIA,tipología i5*; nombre: árido
+2162353299,Extraccion y procesamiento de aridos Los Grillos,i5,DIA,tipología i5*; nombre: árido
+2162832743,Extracción y procesamiento de áridos PAFAL,i5,DIA,tipología i5*; nombre: árido
+2162845708,"Revegetación con Especies Nativas en orilla norte del río Cachapoal, para Complementar Actividades de Extracción de Áridos",i1,DIA,nombre: árido
+2162861252,Ampliación del volumen de extracción y procesamiento de áridos Planta el Carmen,i5,DIA,tipología i5*; nombre: árido
+2162895536,Extraccion y Procesamiento de Aridos Socos,i5,DIA,tipología i5*; nombre: árido
+2162981201,Extracción y Procesamiento de Áridos Lo Valdivia,i5,DIA,tipología i5*; nombre: árido
+2163859477,Modificación Pila de Lixiviación Sulfolix El Abra,i5,DIA,tipología i5*
+2163884488,Extracción y Procesamiento de Áridos Georogu,i5,DIA,tipología i5*; nombre: árido
+2164258166,Extracción de Áridos Rio Teno Sector Los Guindos,i5,DIA,tipología i5*; nombre: árido
+2164386067,Extracción de Áridos Chaqueihua,i5,DIA,tipología i5*; nombre: árido
+2164612645,"Nueva Extracción de Áridos río Longaví, ubicada entre la ruta 5 sur y camino L-525",i5,DIA,tipología i5*; nombre: árido
+2164662457,"Extracción de Áridos en Río Maule, Isla N°2",i5,DIA,tipología i5*; nombre: árido
+2165776230,"Modificación y regularización del proyecto de extracción y procesamiento de áridos en el sector Alfalfares, La Serena",i5,DIA,tipología i5*; nombre: árido
+2165853464,"AMPLIACIÓN DEL POZO DE EXTRACCIÓN DE ÁRIDOS, SECTOR TRONLICO.",i5,DIA,tipología i5*; nombre: árido
+2166143371,Extracción y procesamiento de áridos Draga,i5,DIA,tipología i5*; nombre: árido
+2166297360,Continuidad operacional extraccion de aridos RCA N°40/2019,i5,DIA,tipología i5*; nombre: árido
+2166423458,"Optimización Operacional en Pila de Lixiviación de Sulfuros y Planta de Emulsión Matriz Nuevas Obras Eléctricas, Planta de Tratamiento de Aguas Servidas, Relleno Sanitario, Sitio de Empréstito y Obras Auxiliares en Minera Escondida",i1,DIA,nombre: empréstito
+2166497509,NORVIAL SPA,i5,DIA,tipología i5*
+2166637496,Pozo lastrero CONCREMAG,i5,DIA,tipología i5*; nombre: pozo lastrero
+2166806066,"Extracción de Aridos Rio Lontúe, Sector Santa Cristina",i5,DIA,tipología i5*; nombre: árido
+2166938746,Extracción y Procesamiento de áridos PAFAL,i5,DIA,tipología i5*; nombre: árido
+2167799099,Extracción y procesamiento de áridos Pozo Lastrero Atacama,i5.1,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2167833557,EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS EN POZO LASTRERO CALBUCO,i5.1,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2167913597,Pozo de Áridos Explonorte,i5.1,DIA,tipología i5*; nombre: árido
+2168087220,"Extracción y Procesamiento de Áridos desde Cantera en Cerro Lonquén, San Bernardo",i5.1,DIA,tipología i5*; nombre: árido
+2168119498,Ampliación de Extracción y Procesamiento de Áridos Fundo El Calabozo,i5.1,DIA,tipología i5*; nombre: árido
+2168203682,PROYECTO CANTERA PRE-EXISTENTE FUNDO EL SAUCE,i5.1,DIA,tipología i5*
+2168305436,"Cierre Operacional Pozo Lastrero de Áridos Columo, Comuna de La Unión, Región de Los Ríos",i5.1,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2168400567,Extracción de Áridos Río Blanco,i5.2,DIA,tipología i5*; nombre: árido
+2168653440,Extracción y Selección de Áridos Sierra Gorda,i5.2,DIA,tipología i5*; nombre: árido
+2168716154,"Modificación de extracción de estéril rajo Rosario, nueva cantera Ujina y ajustes en sistema de bombeo de relaves, Faena Cordillera Collahuasi",i5.1,DIA,tipología i5*
+2168772908,"EXTRACCIÓN DE ÁRIDOS EN RÍO MAULE, ISLA N°2",i5.2,DIA,tipología i5*; nombre: árido
+2168844472,EXTRACCIÓN Y PROCESAMIENTO DE ÁRIDOS LOS TILOS,i5.1,DIA,tipología i5*; nombre: árido
+2169209203,Extracción de Áridos Luis Marcelo Gallardo E.I.R.L.,i5.2,DIA,tipología i5*; nombre: árido
+2169257940,"Cierre del Pozo Lastrero y Continuidad Operacional de la Planta de Procesamiento de Áridos de Minera Rosario, Puente Alto",i5.1,DIA,tipología i5*; nombre: árido; nombre: pozo lastrero
+2143931910,Optimización Reservas Pozo San Bernardo y Nuevo Plan de Recuperación de Terreno,i5,EIA,tipología i5*
+2161812957,Variantes de la Concesión Ruta 66 Camino de la Fruta,i5,EIA,tipología i5*
+2161883211,Variantes de la Concesión Ruta 66 Camino de la Fruta,i5,EIA,tipología i5*
+2164802621,Modificación Proyecto de Extracción y Procesamiento de Áridos y Relleno con Residuos de la Construcción y Demolición en Fundo Miraflores,i5,EIA,tipología i5*; nombre: árido
+2165130455,Modificación Proyecto de Extracción y Procesamiento de Áridos y Relleno con Residuos de la Construcción y Demolición en Fundo Miraflores,i5,EIA,tipología i5*; nombre: árido
+2165225842,Modificación Proyecto de Extracción y Procesamiento de Áridos y Relleno con Residuos de la Construcción y Demolición en Fundo Miraflores,i5,EIA,tipología i5*; nombre: árido

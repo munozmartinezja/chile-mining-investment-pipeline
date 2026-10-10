@@ -183,10 +183,27 @@ def _is_secondary_filing(candidate: dict[str, object]) -> bool:
     return starts_with_secondary_term or is_small
 
 
-def _is_viable_principal(candidate: dict[str, object]) -> bool:
-    state = normalize_text(candidate.get("estado"))
-    excluded_states = ("no admitido", "desistido", "rechazado", "termino anticipado")
+def is_viable_principal_state(value: object) -> bool:
+    """Return whether a filing outcome remains eligible as a family principal."""
+    state = normalize_text(value)
+    excluded_states = (
+        "no admitido",
+        "no calificado",
+        "desistido",
+        "abandonado",
+        "rechazado",
+        "termino anticipado",
+    )
     return not any(term in state for term in excluded_states)
+
+
+def reentry_family_key(name: object, holder: object) -> tuple[str, str]:
+    """Group equivalent re-entry names only when the SEA holder is the same."""
+    return normalize_text(holder), strip_generic_mining_words(name)
+
+
+def _is_viable_principal(candidate: dict[str, object]) -> bool:
+    return is_viable_principal_state(candidate.get("estado"))
 
 
 def _prefer_principal_expediente(

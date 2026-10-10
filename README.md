@@ -15,27 +15,52 @@ tramitación ambiental en el SEA.
 
 ### Hallazgos
 
-- El tiempo mediano KM hasta aprobación entre proyectos que siguen en juego es
-  **7,7 meses para DIA** (IC 95%: 7,2–8,1) y **28,8 meses para EIA**
-  (23,7–32,9).
-- La incidencia acumulada de aprobación a 24 meses —la cifra principal con
-  riesgos competitivos— es **66,5% para DIA** y **31,1% para EIA**.
-- A 24 meses, KM entrega 96,2% para DIA y 41,2% para EIA: sobreestima la
-  incidencia de aprobación en **29,7 y 10,1 puntos porcentuales**, respectivamente,
-  porque censura los desenlaces competidores.
-- El desistimiento o abandono a 24 meses acumula **22,5% en DIA** y **19,2% en
-  EIA**; rechazo y término anticipado suman 9,7% y 8,0%, respectivamente.
+**20,9% de la inversión minera 2025–2034 no tiene expediente SEIA
+identificado:** 21.893,9 MMUS$ en 8 proyectos, todos en etapa de estudio.
 
-Las tablas, supuestos y límites están en
-[`docs/survival_results.md`](docs/survival_results.md).
+- La aprobación acumulada Aalen–Johansen de EIA es **31,7% a 24 meses** y
+  **51,7% a 36 meses**.
+- Para EIA ≥100 MMUS$, la aprobación Aalen–Johansen a 24 meses tiene un
+  **IC bootstrap por familia de reingreso de 27,6%–52,0%** (estimación central:
+  39,6%; 2.000 réplicas, semilla 20261002).
+- La inversión actualmente en evaluación alcanza **24.780 MMUS$ en 15
+  proyectos**.
+- La inversión con RCA favorable suma **32.746,4 MMUS$**, o **31,3%** de la
+  cartera.
+
+Sensibilidades fuera del PDF (DIA / EIA, respectivamente):
+
+| Población | n | Aprobación AJ a 24 meses |
+|---|---:|---:|
+| Principal, sin expedientes de áridos | 871 / 124 | 72,0% / 31,7% |
+| Con áridos y registros no mineros `i5*` | 1.515 / 130 | 66,5% / 31,3% |
+| Sin desistimientos a 60 días o menos | 764 / 112 | 82,1% / 35,2% |
+| Reingresos deduplicados | 765 / 107 | 79,0% / 32,8% |
+
+Briefs ejecutivos: [español](docs/brief/brief_c1_es.pdf) ·
+[English](docs/brief/brief_c1_en.pdf).
+
+#### Validación
+
+La compuerta de publicación exige que cada cifra esté en el registro de
+`build_claims_register()` con estado `verificada` y un recálculo independiente.
+El checklist conserva sus 40 filas respondidas y agrega 21 asignaciones
+automáticas pendientes. Por ello, 38 de 59 cruces están revisados ficha por
+ficha y la compuerta de publicación permanece cerrada hasta que J responda las
+21 filas nuevas. `make brief-draft` genera PDF con marca de agua para revisar el
+diseño; `make brief` falla mientras exista una respuesta vacía. Cuando J use
+`confirmado`, se mantiene el expediente sugerido; un `principal: <exp_id>` en
+`fuente_J` prevalece.
 
 ### Fuentes
 
 La fuente de cartera es la Comisión Chilena del Cobre (Cochilco), *Cartera de
 Proyectos de Inversión Minera en Chile 2025–2034*, Anexo C, diciembre de 2025.
 Los expedientes ambientales provienen del Servicio de Evaluación Ambiental
-(SEA), con corte al 30-09-2026. Las URL, nombres de archivos y sumas de
-verificación están en [`data/raw/SOURCES.md`](data/raw/SOURCES.md).
+(SEA), descargados el 30-09-2026. El último registro observado es del
+25-08-2026, fecha usada para censurar casos abiertos. Las URL, nombres de
+archivos y sumas de verificación están en
+[`data/raw/SOURCES.md`](data/raw/SOURCES.md).
 
 ### Arquitectura del pipeline
 
@@ -136,6 +161,19 @@ make test
 make lint
 ```
 
+### Power BI
+
+Ejecute `make powerbi` para generar seis Parquet livianos y con esquema
+explícito en `data/powerbi/`. En Power BI Desktop, use **Obtener datos →
+Parquet** para cargar cada archivo y mantenga el locale del archivo en
+`es-CL`. Las relaciones, la tabla calendario, las medidas DAX con formato y el
+diseño exacto de las tres páginas están en
+[`docs/powerbi/model.md`](docs/powerbi/model.md).
+
+Los Parquet son artefactos locales ignorados por Git. El archivo `.pbix` se
+versionará en `dashboards/` cuando J termine de construirlo y validarlo en
+Power BI Desktop.
+
 `docs/match_review.csv` permanece local porque contiene nombres. El único cruce
 versionado es `data/curated/cochilco_seia_match.csv`, con las columnas
 `cochilco_id`, `exp_id_confirmado`, `criterio` e `historial`. El catálogo
@@ -160,26 +198,47 @@ environmental-review outcomes.
 
 ### Findings
 
-- Median KM time to approval among projects that remain in play is **7.7 months
-  for DIA** (95% CI: 7.2–8.1) and **28.8 months for EIA** (23.7–32.9).
-- The 24-month cumulative incidence of approval—the principal competing-risk
-  estimate—is **66.5% for DIA** and **31.1% for EIA**.
-- At 24 months, KM reports 96.2% for DIA and 41.2% for EIA, overestimating
-  approval incidence by **29.7 and 10.1 percentage points**, respectively,
-  because competing outcomes are censored.
-- The 24-month cumulative incidence of withdrawal or abandonment is **22.5% for
-  DIA** and **19.2% for EIA**; rejection plus early termination total 9.7% and
-  8.0%, respectively.
+**20.9% of 2025–2034 mining investment has no identified SEIA filing:**
+US$21,893.9m across 8 projects, all at study stage.
 
-Tables, assumptions, and limitations are documented in
-[`docs/survival_results.md`](docs/survival_results.md).
+- EIA Aalen–Johansen cumulative approval is **31.7% at 24 months** and **51.7%
+  at 36 months**.
+- For EIAs ≥US$100m, 24-month Aalen–Johansen approval has a **27.6%–52.0%
+  re-entry-family cluster bootstrap CI** (central estimate: 39.6%; 2,000
+  replicates, seed 20261002).
+- Investment currently under review totals **US$24,780m across 15 projects**.
+- Investment with a favourable RCA totals **US$32,746.4m**, or **31.3%** of the
+  portfolio.
+
+Sensitivity results excluded from the PDF (DIA / EIA, respectively):
+
+| Population | n | 24-month AJ approval |
+|---|---:|---:|
+| Main population, excluding sand-and-gravel filings | 871 / 124 | 72.0% / 31.7% |
+| Including aggregates and non-mining `i5*` records | 1,515 / 130 | 66.5% / 31.3% |
+| Excluding withdrawals at 60 days or earlier | 764 / 112 | 82.1% / 35.2% |
+| Deduplicated re-entries | 765 / 107 | 79.0% / 32.8% |
+
+Executive briefs: [Español](docs/brief/brief_c1_es.pdf) ·
+[English](docs/brief/brief_c1_en.pdf).
+
+#### Validation
+
+The publication gate requires every figure to appear in
+`build_claims_register()` with status `verificada` and an independent
+recalculation. The checklist preserves its 40 answered rows and adds 21 pending
+automatic assignments. Consequently, 38 of 59 matches have been reviewed
+filing by filing, and the publication gate remains closed until J answers the
+21 new rows. `make brief-draft` creates watermarked review PDFs; `make brief`
+fails while any response is empty.
 
 ### Sources
 
 The portfolio source is the Chilean Copper Commission (Cochilco), *Mining
 Investment Project Portfolio in Chile 2025–2034*, Annex C, December 2025.
 Environmental cases come from Chile's Environmental Assessment Service (SEA),
-cut off at 2026-09-30. URLs, file names, and checksums are recorded in
+downloaded on 2026-09-30. The latest observed record is 2026-08-25, which is
+the censoring date for open cases. URLs, file names, and checksums are recorded in
 [`data/raw/SOURCES.md`](data/raw/SOURCES.md).
 
 ### Pipeline architecture
@@ -280,6 +339,18 @@ make analysis
 make test
 make lint
 ```
+
+### Power BI
+
+Run `make powerbi` to generate six compact, explicitly typed Parquet files in
+`data/powerbi/`. In Power BI Desktop, use **Get data → Parquet** to load each
+file and keep the file locale set to `es-CL`. Relationships, the calendar
+table, formatted DAX measures, and the exact three-page layout are specified in
+[`docs/powerbi/model.md`](docs/powerbi/model.md).
+
+The Parquet files are local artifacts ignored by Git. The `.pbix` file will be
+versioned under `dashboards/` after J finishes building and validating it in
+Power BI Desktop.
 
 `docs/match_review.csv` stays local because it contains names. The only
 versioned crosswalk is `data/curated/cochilco_seia_match.csv`, containing

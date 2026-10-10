@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from collections.abc import Callable
 from pathlib import Path
 from statistics import NormalDist
@@ -9,7 +11,12 @@ from statistics import NormalDist
 import numpy as np
 import pandas as pd
 
-from cmip.config import PROCESSED_DIR, PROJECT_ROOT
+from cmip.config import (
+    PROCESSED_DIR,
+    PROJECT_ROOT,
+    SEA_DATA_CURRENCY_DATE,
+    SEA_DOWNLOAD_DATE,
+)
 
 COMPETING_EVENT_CODES = {
     "aprobado": 1,
@@ -38,12 +45,110 @@ AJ_SUMMARY_PATH = PROCESSED_DIR / "survival_competing_risks_summary.parquet"
 TREND_PATH = PROCESSED_DIR / "survival_trend.parquet"
 COX_PATH = PROCESSED_DIR / "survival_cox.parquet"
 RESULTS_PATH = PROJECT_ROOT / "docs" / "survival_results.md"
+POPULATION_EXCLUSIONS_PATH = PROJECT_ROOT / "docs" / "population_exclusions.csv"
+POPULATION_EXCLUSIONS_REVIEW_PATH = (
+    PROJECT_ROOT / "docs" / "population_exclusions_review.csv"
+)
+EXCLUDED_MAIN_POPULATION_TIPOLOGIAS = frozenset({"i5", "i5.1", "i5.2"})
+EXCLUDED_MAIN_POPULATION_NAME_PATTERNS = (
+    ("árido", re.compile(r"aridos?")),
+    ("pozo lastrero", re.compile(r"pozo\s+lastrero")),
+    ("empréstito", re.compile(r"emprestitos?")),
+    (
+        "extracción de material",
+        re.compile(r"extraccion\s+de\s+material(?:es)?"),
+    ),
+)
+
+
+def _normalized_expediente_name(value: object) -> str:
+    normalized = unicodedata.normalize("NFKD", str(value).casefold())
+    return " ".join(
+        "".join(
+            character
+            for character in normalized
+            if not unicodedata.combining(character)
+        ).split()
+    )
+
+
+def main_population_exclusion_reasons(sea_mining: pd.DataFrame) -> pd.Series:
+    """Return an auditable reason for every record excluded by the main rule."""
+    names = sea_mining.get(
+        "exp_nombre", pd.Series("", index=sea_mining.index, dtype="string")
+    ).fillna("")
+    reasons: list[str] = []
+    for tipologia, name in zip(
+        sea_mining["tipologia"].fillna("").astype(str), names, strict=True
+    ):
+        matches = []
+        if tipologia.casefold().startswith("i5"):
+            matches.append("tipología i5*")
+        normalized_name = _normalized_expediente_name(name)
+        if tipologia.casefold() not in {"i3", "i4"}:
+            matches.extend(
+                f"nombre: {label}"
+                for label, pattern in EXCLUDED_MAIN_POPULATION_NAME_PATTERNS
+                if pattern.search(normalized_name)
+            )
+        reasons.append("; ".join(matches))
+    return pd.Series(reasons, index=sea_mining.index, dtype="string")
+
+
+def main_population_review_reasons(sea_mining: pd.DataFrame) -> pd.Series:
+    """Return name-rule matches held for review because their type is i3 or i4."""
+    names = sea_mining.get(
+        "exp_nombre", pd.Series("", index=sea_mining.index, dtype="string")
+    ).fillna("")
+    reasons: list[str] = []
+    for tipologia, name in zip(
+        sea_mining["tipologia"].fillna("").astype(str), names, strict=True
+    ):
+        matches: list[str] = []
+        if tipologia.casefold() in {"i3", "i4"}:
+            normalized_name = _normalized_expediente_name(name)
+            matches.extend(
+                f"nombre: {label}"
+                for label, pattern in EXCLUDED_MAIN_POPULATION_NAME_PATTERNS
+                if pattern.search(normalized_name)
+            )
+        reasons.append(
+            f"revisión i3/i4: {'; '.join(matches)}" if matches else ""
+        )
+    return pd.Series(reasons, index=sea_mining.index, dtype="string")
+
+
+def build_population_exclusions(sea_mining: pd.DataFrame) -> pd.DataFrame:
+    """Return otherwise eligible records removed from the main population."""
+    reasons = main_population_exclusion_reasons(sea_mining)
+    eligible = sea_mining["admitido"].eq(True) & sea_mining[
+        "fecha_inconsistente"
+    ].eq(False)
+    columns = ["exp_id", "exp_nombre", "tipologia", "instrumento"]
+    exclusions = sea_mining.loc[eligible & reasons.ne(""), columns].copy()
+    exclusions["motivo"] = reasons.loc[exclusions.index]
+    return exclusions.sort_values(["instrumento", "exp_id"]).reset_index(drop=True)
+
+
+def build_population_exclusions_review(sea_mining: pd.DataFrame) -> pd.DataFrame:
+    """Return i3/i4 name matches that require J's review instead of exclusion."""
+    reasons = main_population_review_reasons(sea_mining)
+    eligible = sea_mining["admitido"].eq(True) & sea_mining[
+        "fecha_inconsistente"
+    ].eq(False)
+    columns = ["exp_id", "exp_nombre", "tipologia", "instrumento"]
+    review = sea_mining.loc[eligible & reasons.ne(""), columns].copy()
+    review["motivo"] = reasons.loc[review.index]
+    return review.sort_values(["instrumento", "exp_id"]).reset_index(drop=True)
 
 
 def build_survival_population(sea_mining: pd.DataFrame) -> pd.DataFrame:
     """Return admitted, date-consistent records with estimator event encodings."""
+    excluded = main_population_exclusion_reasons(sea_mining).ne("")
     population = sea_mining.loc[
-        sea_mining["admitido"].eq(True) & sea_mining["fecha_inconsistente"].eq(False)
+        sea_mining["admitido"].eq(True)
+        & sea_mining["fecha_inconsistente"].eq(False)
+        & ~excluded
     ].copy()
     if population["duracion_dias"].isna().any():
         raise ValueError("Filtered survival population contains missing durations")
@@ -195,6 +300,9 @@ def _confidence_frame(frame: pd.DataFrame, lower_name: str, upper_name: str) -> 
     else:
         result = frame.iloc[:, :2].reset_index()
     result.columns = ["time_days", lower_name, upper_name]
+    bounds = result[[lower_name, upper_name]]
+    result[lower_name] = bounds.min(axis=1)
+    result[upper_name] = bounds.max(axis=1)
     return result
 
 
@@ -264,6 +372,15 @@ def extract_competing_risk_tables(
         else:
             curve["ci_lower"] = np.nan
             curve["ci_upper"] = np.nan
+        bounded = curve.dropna(subset=["ci_lower", "ci_upper"])
+        if not (
+            bounded["ci_lower"].le(bounded["cumulative_incidence"]).all()
+            and bounded["cumulative_incidence"].le(bounded["ci_upper"]).all()
+        ):
+            raise ValueError(
+                f"{instrument}/{outcome} confidence interval does not contain "
+                "cumulative incidence"
+            )
         curves.append(curve)
         for months in HORIZON_MONTHS:
             summaries.append(
@@ -445,8 +562,11 @@ def write_results_markdown(
         "# Resultados de supervivencia SEA",
         "",
         (
-            "Corte: **30-09-2026**. Población: proyectos mineros admitidos a "
-            "tramitación y sin inconsistencia de fechas."
+            f"Censura: **{SEA_DATA_CURRENCY_DATE:%d-%m-%Y}** (último registro; "
+            f"descarga {SEA_DOWNLOAD_DATE:%d-%m-%Y}). Población: proyectos mineros "
+            "admitidos a tramitación, sin inconsistencia de fechas y excluyendo "
+            "tipologías i5* y nombres de áridos según la lista explícita, salvo "
+            "tipologías i3 e i4 enviadas a revisión."
         ),
         "",
         "## Kaplan–Meier",
@@ -522,7 +642,7 @@ def write_results_markdown(
                     ],
                 ),
                 "",
-                f"N={cox_metadata['n']}; aprobaciones={cox_metadata['eventos']}. ",
+                f"N={cox_metadata['n']}; aprobaciones={cox_metadata['eventos']}.",
                 "El test de Schoenfeld "
                 + (
                     (
@@ -544,7 +664,7 @@ def write_results_markdown(
             "",
             (
                 "- Las duraciones son días calendario desde ingreso hasta cierre; "
-                "expedientes abiertos se censuran al 30-09-2026."
+                "expedientes abiertos se censuran al 25-08-2026."
             ),
             (
                 "- KM estima el tiempo hasta aprobación condicionado a seguir en juego; "
@@ -560,7 +680,10 @@ def write_results_markdown(
                 "selección, especialmente en 2025–2026."
             ),
             "",
-            "Fuente: Cochilco (dic-2025), SEA (corte 30-09-2026). Elaboración propia.",
+            (
+                "Fuente: Cochilco (dic-2025), SEA (descarga 30-09-2026; "
+                "vigencia de datos 25-08-2026). Elaboración propia."
+            ),
             "",
         ]
     )
@@ -585,10 +708,17 @@ def _cox_failure_types() -> tuple[type[BaseException], ...]:
 
 
 def run_survival_analysis(
-    sea_path: Path = SEA_PATH, output_dir: Path = PROCESSED_DIR, results_path: Path = RESULTS_PATH
+    sea_path: Path = SEA_PATH,
+    output_dir: Path = PROCESSED_DIR,
+    results_path: Path = RESULTS_PATH,
+    exclusions_path: Path | None = None,
+    exclusions_review_path: Path | None = None,
 ) -> dict[str, pd.DataFrame]:
     """Run every survival analysis and persist tidy data contracts."""
-    population = build_survival_population(pd.read_parquet(sea_path))
+    sea_mining = pd.read_parquet(sea_path)
+    population = build_survival_population(sea_mining)
+    exclusions = build_population_exclusions(sea_mining)
+    exclusions_review = build_population_exclusions_review(sea_mining)
     km_curve, km_summary = extract_km_tables(fit_kaplan_meier(population))
     aj_curve, aj_summary = extract_competing_risk_tables(fit_competing_risks(population))
     trend = build_trend_table(population)
@@ -600,6 +730,16 @@ def run_survival_analysis(
         cox_error = str(error)
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    if exclusions_path is None:
+        exclusions_path = results_path.parent / POPULATION_EXCLUSIONS_PATH.name
+    if exclusions_review_path is None:
+        exclusions_review_path = (
+            results_path.parent / POPULATION_EXCLUSIONS_REVIEW_PATH.name
+        )
+    exclusions_path.parent.mkdir(parents=True, exist_ok=True)
+    exclusions.to_csv(exclusions_path, index=False)
+    exclusions_review_path.parent.mkdir(parents=True, exist_ok=True)
+    exclusions_review.to_csv(exclusions_review_path, index=False)
     outputs = {
         "population": population,
         "km": km_curve,

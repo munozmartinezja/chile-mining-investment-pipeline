@@ -8,6 +8,8 @@ data/interim/*
 !data/interim/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+data/powerbi/*
+!data/powerbi/README.md
 data/cmip.duckdb
 data/raw/sea/*.twbx
 docs/match_review.csv

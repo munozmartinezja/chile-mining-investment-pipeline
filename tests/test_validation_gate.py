@@ -6,6 +6,8 @@ import pytest
 from lifelines import AalenJohansenFitter, KaplanMeierFitter
 
 from cmip.validation import (
+    _cluster_bootstrap_cif,
+    _independent_pending_update_summary,
     build_claims_register,
     build_validation_checklist,
     claim_state,
@@ -49,6 +51,61 @@ def test_manual_aalen_johansen_matches_lifelines_known_competing_risks() -> None
     assert actual["cumulative_incidence"].to_numpy() == pytest.approx(
         expected.iloc[:, 0].to_numpy()
     )
+
+
+def test_cluster_bootstrap_does_not_concat_unused_datetime_columns(recwarn) -> None:  # noqa: ANN001
+    group = pd.DataFrame(
+        {
+            "exp_nombre": ["Proyecto A", "Proyecto B"],
+            "empresa_nombre": ["Empresa A", "Empresa B"],
+            "duration_days": [100.0, 200.0],
+            "competing_event": [1, 0],
+            "fecha_cierre": pd.to_datetime([None, None]),
+        }
+    )
+
+    estimates = _cluster_bootstrap_cif(group, replicas=3, seed=20261002)
+
+    assert len(estimates) == 3
+    assert not [
+        warning
+        for warning in recwarn
+        if "generic' unit for NumPy timedelta" in str(warning.message)
+    ]
+
+
+def test_pending_update_summary_is_recalculated_by_independent_sql(tmp_path) -> None:  # noqa: ANN001
+    checklist_path = tmp_path / "checklist.csv"
+    portfolio_path = tmp_path / "portfolio.parquet"
+    sea_path = tmp_path / "sea.parquet"
+    pd.DataFrame(
+        {
+            "cochilco_id": ["project-a", "project-b"],
+            "fuente_J": [
+                "principal: 1111111 | modificaciones: 2222222 | nota: caso A",
+                "principal: 3333333 | modificaciones: 4444444 | nota: caso B",
+            ],
+        }
+    ).to_csv(checklist_path, index=False)
+    pd.DataFrame(
+        {
+            "project_id": ["project-a", "project-b"],
+            "estado_ambiental": ["aprobado", "en_evaluacion"],
+            "inversion_musd": [4_850.9, 900.0],
+        }
+    ).to_parquet(portfolio_path, index=False)
+    pd.DataFrame(
+        {
+            "exp_id": [2_222_222, 4_444_444],
+            "evento": ["en_tramite", "en_tramite"],
+        }
+    ).to_parquet(sea_path, index=False)
+
+    result = _independent_pending_update_summary(
+        checklist_path, portfolio_path, sea_path
+    )
+
+    assert result == (1, pytest.approx(4_850.9))
 
 
 @pytest.mark.parametrize(

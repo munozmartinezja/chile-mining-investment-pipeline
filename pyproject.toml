@@ -17,8 +17,10 @@ dependencies = [
   "pandas>=2.2,<3",
   "pyarrow>=17,<20",
   "pydantic>=2.9,<3",
+  "pypdf>=5,<6",
   "pytest>=8.3,<9",
   "rapidfuzz>=3.10,<4",
+  "reportlab>=4.2,<5",
   "ruff>=0.7,<1",
   "tableauhyperapi>=0.0.22500,<1",
 ]
