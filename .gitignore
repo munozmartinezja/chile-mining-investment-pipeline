@@ -17,3 +17,6 @@ docs/match_review.csv
 hyperd.log
 docs/superpowers/
 docs/validation_worksheet*.txt
+
+# Respuesta Ley de Transparencia SEA (contiene nombres de titulares): nunca versionar
+data/raw/sea_transparencia/
