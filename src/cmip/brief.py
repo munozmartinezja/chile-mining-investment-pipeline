@@ -700,6 +700,17 @@ def write_claims_map(outputs: dict[str, Path], metrics: pd.DataFrame) -> Path:
     result = pd.DataFrame(
         records, columns=["lang", "bloque", "texto_renderizado", "claim_ids", "evidencia"]
     )
+    result.loc[len(result)] = {
+        "lang": "audit",
+        "bloque": "validacion_sea_oficial",
+        "texto_renderizado": "",
+        "claim_ids": (
+            "sea_oficial_expedientes_coinciden_n;"
+            "sea_oficial_diferencias_previas_al_corte_n;"
+            "sea_oficial_fecha_respuesta"
+        ),
+        "evidencia": "docs/reconciliation_sea_oficial_summary.json",
+    }
     CLAIMS_MAP_PATH.parent.mkdir(parents=True, exist_ok=True)
     result.to_csv(CLAIMS_MAP_PATH, index=False)
     return CLAIMS_MAP_PATH

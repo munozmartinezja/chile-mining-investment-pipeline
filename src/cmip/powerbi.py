@@ -301,6 +301,12 @@ def _english_claim_text(claim_id: str) -> str:
         "cartera_proyectos_n": "Projects in the Cochilco portfolio",
         "sea_poblacion_admitida_n": "Admitted mining filings in the survival population",
         "sea_poblacion_eia_n": "Admitted EIAs in the survival population",
+        "sea_oficial_expedientes_coinciden_n": (
+            "Pipeline filings present in the official SEA response"
+        ),
+        "sea_oficial_diferencias_previas_al_corte_n": (
+            "Differences from the official SEA response on or before the cut-off"
+        ),
         "eia_100m_aj_aprobado_24m_estimacion": (
             "Central estimate: 24-month AJ approval for EIAs ≥US$100m"
         ),
@@ -376,12 +382,15 @@ def _english_claim_text(claim_id: str) -> str:
 
 def _kpi_table(claims: pd.DataFrame) -> pa.Table:
     verified = claims.loc[claims["estado"].eq("verificada")].copy()
+    numeric_values = pd.to_numeric(verified["valor"], errors="coerce")
+    verified = verified.loc[numeric_values.notna()].copy()
+    verified["valor"] = numeric_values.loc[numeric_values.notna()].astype(float)
     frame = pd.DataFrame(
         {
             "claim_id": verified["claim_id"],
             "texto_es": verified["texto_es"],
             "texto_en": verified["claim_id"].map(_english_claim_text),
-            "valor": verified["valor"].astype(float),
+            "valor": verified["valor"],
             "unidad": verified["unidad"],
             "estado": verified["estado"],
         }

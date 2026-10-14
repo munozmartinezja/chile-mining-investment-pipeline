@@ -1,0 +1,11 @@
+exp_id,campo,valor_nuestro,valor_oficial,posterior_al_corte,en_poblacion_995
+2169293205,presencia_nuestra,False,True,True,False
+2169361568,presencia_nuestra,False,True,True,False
+2169421677,presencia_nuestra,False,True,True,False
+2169422237,presencia_nuestra,False,True,True,False
+2162983270,estado,En Calificación,Aprobado,True,True
+2165064793,estado,En Calificación,Desistido,True,True
+2129479024,fecha_ingreso,2014-05-14,2014-05-15,False,True
+2129570336,fecha_ingreso,2014-06-18,2014-06-19,False,False
+2162983270,fecha_cierre,,2026-09-21,True,True
+2165064793,fecha_cierre,,2026-09-22,True,True

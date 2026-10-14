@@ -10,6 +10,7 @@ import pytest
 import reportlab  # noqa: F401
 
 from cmip.brief import compute_brief_metrics, format_number
+from cmip.validation import build_claims_register
 
 ROOT = Path(__file__).resolve().parents[1]
 PORTFOLIO_PATH = ROOT / "data/processed/cochilco_seia.parquet"
@@ -199,7 +200,7 @@ def test_leach_residue_ripios_remain_in_population_and_not_name_exclusions() -> 
 @requires_brief_data
 def test_claims_map_covers_every_extracted_pdf_line() -> None:
     claims_map = pd.read_csv(ROOT / "docs/brief/claims_map.csv", keep_default_na=False)
-    register = compute_brief_metrics().set_index("claim_id")
+    register = build_claims_register().set_index("claim_id")
     assert claims_map.columns.tolist() == [
         "lang",
         "bloque",
@@ -235,3 +236,18 @@ def test_claims_map_supports_favourable_rca_update_copy_with_count() -> None:
         "aprobado_con_actualizacion_en_calificacion_n;"
         "aprobado_con_actualizacion_en_calificacion_inversion"
     ).all()
+
+
+def test_claims_map_records_official_sea_validation_without_adding_brief_copy() -> None:
+    claims_map = pd.read_csv(ROOT / "docs/brief/claims_map.csv", keep_default_na=False)
+    audit = claims_map.loc[claims_map["bloque"].eq("validacion_sea_oficial")]
+
+    assert len(audit) == 1
+    assert audit.iloc[0]["lang"] == "audit"
+    assert audit.iloc[0]["texto_renderizado"] == ""
+    assert audit.iloc[0]["claim_ids"] == (
+        "sea_oficial_expedientes_coinciden_n;"
+        "sea_oficial_diferencias_previas_al_corte_n;"
+        "sea_oficial_fecha_respuesta"
+    )
+    assert audit.iloc[0]["evidencia"] == "docs/reconciliation_sea_oficial_summary.json"

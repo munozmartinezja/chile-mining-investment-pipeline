@@ -73,3 +73,4 @@ en,metodo,"Favourable RCA includes 1 project (US$4,851m) whose valid RCA has an 
 en,metodo,Figures are reproducible from the repository's code and data and checked by automated tests.,,src/cmip/validation.py:build_claims_register
 en,autor,J. A. Muñoz Martínez · github.com/munozmartinezja,,src/cmip/config.py:AUTHOR_LINE
 en,pie,github.com/munozmartinezja/chile-mining-investment-pipeline,,README.md
+audit,validacion_sea_oficial,,sea_oficial_expedientes_coinciden_n;sea_oficial_diferencias_previas_al_corte_n;sea_oficial_fecha_respuesta,docs/reconciliation_sea_oficial_summary.json

@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+import cmip.validation as validation
 from cmip.validation import (
     bootstrap_eia_high_investment_approval_24m,
     build_claims_register,
@@ -88,6 +89,9 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
         "headline_techo_pct",
         "aprobado_con_actualizacion_en_calificacion_n",
         "aprobado_con_actualizacion_en_calificacion_inversion",
+        "sea_oficial_expedientes_coinciden_n",
+        "sea_oficial_diferencias_previas_al_corte_n",
+        "sea_oficial_fecha_respuesta",
     }.issubset(claim_ids)
     indexed = register.set_index("claim_id")
     assert indexed.loc["sea_poblacion_admitida_n", "valor"] == 995
@@ -107,6 +111,29 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
     assert indexed.loc[
         "aprobado_con_actualizacion_en_calificacion_inversion", "valor"
     ] == pytest.approx(4_850.9)
+    assert indexed.loc["sea_oficial_expedientes_coinciden_n", "valor"] == 1_961
+    assert indexed.loc["sea_oficial_diferencias_previas_al_corte_n", "valor"] == 2
+    assert indexed.loc["sea_oficial_fecha_respuesta", "valor"] == "2026-10-13"
+
+
+@requires_local_data
+def test_claims_register_uses_versioned_summary_when_official_csv_is_absent(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(validation, "SEA_OFFICIAL_PATH", tmp_path / "missing-official.csv")
+
+    register = build_claims_register().set_index("claim_id")
+
+    expected = {
+        "sea_oficial_expedientes_coinciden_n": 1_961,
+        "sea_oficial_diferencias_previas_al_corte_n": 2,
+        "sea_oficial_fecha_respuesta": "2026-10-13",
+    }
+    for claim_id, value in expected.items():
+        assert register.loc[claim_id, "valor"] == value
+        assert register.loc[claim_id, "fuente"] == (
+            "docs/reconciliation_sea_oficial_summary.json"
+        )
 
 
 @requires_local_data
