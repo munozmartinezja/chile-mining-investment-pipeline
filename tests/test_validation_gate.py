@@ -81,7 +81,7 @@ def test_pending_update_summary_is_recalculated_by_independent_sql(tmp_path) -> 
     pd.DataFrame(
         {
             "cochilco_id": ["project-a", "project-b"],
-            "fuente_J": [
+            "fuente_decision": [
                 "principal: 1111111 | modificaciones: 2222222 | nota: caso A",
                 "principal: 3333333 | modificaciones: 4444444 | nota: caso B",
             ],
@@ -230,7 +230,7 @@ def _synthetic_checklist_sources(tmp_path):  # noqa: ANN001
     return portfolio_path, sea_path, decisions_path
 
 
-def test_validation_checklist_builds_human_urls_and_orders_groups(tmp_path) -> None:  # noqa: ANN001
+def test_validation_checklist_builds_evidence_urls_and_orders_groups(tmp_path) -> None:  # noqa: ANN001
     portfolio, sea, decisions = _synthetic_checklist_sources(tmp_path)
 
     candidate_review = pd.DataFrame(
@@ -261,10 +261,7 @@ def test_validation_checklist_builds_human_urls_and_orders_groups(tmp_path) -> N
     assert missing["candidato_sugerido"] == (
         "999 | Candidato sugerido | inversion_ratio=1.040"
     )
-    assert confirmed["url_busqueda"] == (
-        "https://www.google.com/search?q=site%3Aseia.sea.gob.cl+"
-        "%22Do%C3%B1a+%22In%C3%A9s%22+Proyecto%22"
-    )
+    assert "url_busqueda" not in checklist
     assert checklist.columns[:3].tolist() == ["cochilco_id", "cochilco_nombre", "empresa"]
     assert checklist.iloc[:6]["cochilco_id"].tolist() == [
         "ejecucion-6",
@@ -280,7 +277,7 @@ def test_validation_checklist_builds_human_urls_and_orders_groups(tmp_path) -> N
     ]
 
 
-def test_regenerating_checklist_preserves_j_response_and_source(tmp_path) -> None:  # noqa: ANN001
+def test_regenerating_checklist_preserves_decision_and_source(tmp_path) -> None:  # noqa: ANN001
     portfolio, sea, decisions = _synthetic_checklist_sources(tmp_path)
     checklist_path = tmp_path / "validation_checklist.csv"
     orphans_path = tmp_path / "validation_checklist_orphans.csv"
@@ -288,8 +285,8 @@ def test_regenerating_checklist_preserves_j_response_and_source(tmp_path) -> Non
         portfolio, sea, decisions, checklist_path=None, orphans_path=None
     )
     target = existing["cochilco_id"].eq("con-expediente")
-    existing.loc[target, "respuesta_J"] = "Sí, corresponde"
-    existing.loc[target, "fuente_J"] = "Revisión ficha pública"
+    existing.loc[target, "decision"] = "Sí, corresponde"
+    existing.loc[target, "fuente_decision"] = "Revisión ficha pública"
     existing.to_csv(checklist_path, index=False)
 
     regenerated = write_validation_checklist(
@@ -301,10 +298,10 @@ def test_regenerating_checklist_preserves_j_response_and_source(tmp_path) -> Non
     )
 
     preserved = regenerated.loc[regenerated["cochilco_id"].eq("con-expediente")].iloc[0]
-    assert preserved["respuesta_J"] == "Sí, corresponde"
-    assert preserved["fuente_J"] == "Revisión ficha pública"
+    assert preserved["decision"] == "Sí, corresponde"
+    assert preserved["fuente_decision"] == "Revisión ficha pública"
     persisted = pd.read_csv(checklist_path, keep_default_na=False)
-    assert persisted.loc[persisted["cochilco_id"].eq("con-expediente"), "respuesta_J"].item() == (
+    assert persisted.loc[persisted["cochilco_id"].eq("con-expediente"), "decision"].item() == (
         "Sí, corresponde"
     )
 
@@ -318,7 +315,7 @@ def test_regenerating_checklist_warns_and_saves_orphan_without_loss(tmp_path) ->
     )
     orphan = existing.iloc[[0]].copy()
     orphan["cochilco_id"] = "proyecto-huerfano"
-    orphan["respuesta_J"] = "Respuesta que no debe perderse"
+    orphan["decision"] = "Respuesta que no debe perderse"
     pd.concat([existing, orphan], ignore_index=True).to_csv(checklist_path, index=False)
 
     with pytest.warns(UserWarning, match="proyecto-huerfano"):
@@ -332,4 +329,4 @@ def test_regenerating_checklist_warns_and_saves_orphan_without_loss(tmp_path) ->
 
     saved = pd.read_csv(orphans_path, keep_default_na=False)
     assert saved["cochilco_id"].tolist() == ["proyecto-huerfano"]
-    assert saved["respuesta_J"].tolist() == ["Respuesta que no debe perderse"]
+    assert saved["decision"].tolist() == ["Respuesta que no debe perderse"]
