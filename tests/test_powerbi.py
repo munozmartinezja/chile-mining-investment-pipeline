@@ -193,6 +193,21 @@ def test_write_powerbi_exports_round_trips_each_parquet(tmp_path: Path) -> None:
         assert actual.equals(expected)
 
 
+def test_powerbi_kpis_ignore_text_only_audit_claims(tmp_path: Path) -> None:
+    sources = _write_sources(tmp_path)
+    claims = _claims()
+    audit = claims.iloc[[0]].copy()
+    audit["claim_id"] = "sea_oficial_fecha_respuesta"
+    audit["valor"] = "2026-10-13"
+    audit["valor_recalculado"] = "2026-10-13"
+    audit["unidad"] = "fecha"
+    claims = pd.concat([claims, audit], ignore_index=True)
+
+    tables = build_powerbi_tables(**sources, claims=claims)
+
+    assert "sea_oficial_fecha_respuesta" not in tables["kpi_validados"]["claim_id"].to_pylist()
+
+
 ROOT = Path(__file__).resolve().parents[1]
 REAL_SOURCES = {
     "portfolio_path": ROOT / "data/processed/cochilco_seia.parquet",

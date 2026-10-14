@@ -14,8 +14,16 @@ import duckdb
 import numpy as np
 import pandas as pd
 
-from cmip.config import PROCESSED_DIR, PROJECT_ROOT, SEIA_FICHA_URL
+from cmip.config import (
+    PROCESSED_DIR,
+    PROJECT_ROOT,
+    SEA_OFFICIAL_PATH,
+    SEA_OFFICIAL_RESPONSE_DATE,
+    SEA_OFFICIAL_SUMMARY_PATH,
+    SEIA_FICHA_URL,
+)
 from cmip.match import reentry_family_key
+from cmip.reconcile import resolve_reconciliation_summary
 from cmip.survival import (
     COMPETING_EVENT_CODES,
     DAYS_PER_MONTH,
@@ -62,12 +70,8 @@ ENVIRONMENTAL_SEMANTICS = {
     "rca_previa_2011": "Proyecto cubierto por una RCA base anterior a 2011.",
     "pertinencia": "Proyecto respaldado por una consulta de pertinencia, no un expediente.",
     "no_determinado": "La revisión manual no pudo determinar el instrumento aplicable.",
-    "sin_expediente_en_ejecucion": (
-        "Sin expediente confirmado y etapa Cochilco Ejecución."
-    ),
-    "sin_expediente_en_estudio": (
-        "Sin expediente confirmado y etapa distinta de Ejecución."
-    ),
+    "sin_expediente_en_ejecucion": ("Sin expediente confirmado y etapa Cochilco Ejecución."),
+    "sin_expediente_en_estudio": ("Sin expediente confirmado y etapa distinta de Ejecución."),
 }
 MAIN_POPULATION_SQL_EXCLUSION = r"""
 (
@@ -154,9 +158,7 @@ def manual_aalen_johansen(
     records = [(0.0, incidence)]
     for time in np.unique(duration):
         at_risk = int(np.count_nonzero(duration >= time))
-        target_events = int(
-            np.count_nonzero((duration == time) & (observed == event_of_interest))
-        )
+        target_events = int(np.count_nonzero((duration == time) & (observed == event_of_interest)))
         all_events = int(np.count_nonzero((duration == time) & (observed != 0)))
         incidence += survival * target_events / at_risk
         survival *= 1.0 - all_events / at_risk
@@ -168,8 +170,8 @@ def manual_aalen_johansen(
 
 
 def claim_state(
-    value: float | int,
-    recalculated: float | int | None,
+    value: object,
+    recalculated: object,
     tolerance: float,
 ) -> str:
     """Classify one candidate claim from its independently recalculated value."""
@@ -177,14 +179,13 @@ def claim_state(
         return "verificada"
     if recalculated is None or pd.isna(recalculated):
         return "pendiente_J"
-    value_float = float(value)
-    recalculated_float = float(recalculated)
+    try:
+        value_float = float(value)
+        recalculated_float = float(recalculated)
+    except (TypeError, ValueError):
+        return "verificada" if value == recalculated else "rechazada"
     if np.isinf(value_float) or np.isinf(recalculated_float):
-        return (
-            "verificada"
-            if value_float == recalculated_float
-            else "rechazada"
-        )
+        return "verificada" if value_float == recalculated_float else "rechazada"
     difference = abs(value_float - recalculated_float)
     return "verificada" if difference <= tolerance + 1e-12 else "rechazada"
 
@@ -195,14 +196,17 @@ def finalize_claims_register(rows: Iterable[Mapping[str, object]]) -> pd.DataFra
     for raw in rows:
         row = dict(raw)
         tolerance = float(row.pop("tolerancia"))
-        value = float(row["valor"])
+        value = row["valor"]
         recalculated = row.get("valor_recalculado")
         if recalculated is None or pd.isna(recalculated):
             difference = float("nan")
-        elif value == float(recalculated):
+        elif value == recalculated:
             difference = 0.0
         else:
-            difference = abs(value - float(recalculated))
+            try:
+                difference = abs(float(value) - float(recalculated))
+            except (TypeError, ValueError):
+                difference = float("nan")
         row["diferencia"] = difference
         row["estado"] = claim_state(value, recalculated, tolerance)
         records.append(row)
@@ -255,9 +259,7 @@ def _direct_cumulative_incidence_at(
     incidence = 0.0
     for time in np.unique(durations[durations <= horizon_days]):
         at_risk = np.count_nonzero(durations >= time)
-        target_events = np.count_nonzero(
-            (durations == time) & (event_codes == event_of_interest)
-        )
+        target_events = np.count_nonzero((durations == time) & (event_codes == event_of_interest))
         all_events = np.count_nonzero((durations == time) & (event_codes != 0))
         incidence += survival * target_events / at_risk
         survival *= 1.0 - all_events / at_risk
@@ -296,9 +298,7 @@ def _checklist_modification_ids(checklist: pd.DataFrame) -> pd.DataFrame:
         if match is None:
             continue
         for exp_id in re.findall(r"\b\d{7,10}\b", match.group(1)):
-            records.append(
-                {"project_id": str(row.cochilco_id), "modification_exp_id": int(exp_id)}
-            )
+            records.append({"project_id": str(row.cochilco_id), "modification_exp_id": int(exp_id)})
     return pd.DataFrame(records, columns=["project_id", "modification_exp_id"])
 
 
@@ -376,11 +376,11 @@ def _cluster_bootstrap_cif(
 def _claim(
     claim_id: str,
     texto_es: str,
-    valor: float | int,
+    valor: object,
     unidad: str,
     fuente: str,
     calculo: str,
-    valor_recalculado: float | int,
+    valor_recalculado: object,
     tolerancia: float,
     nota_semantica: str,
 ) -> dict[str, object]:
@@ -403,6 +403,8 @@ def build_claims_register(
     km_summary_path: Path = KM_SUMMARY_PATH,
     aj_summary_path: Path = AJ_SUMMARY_PATH,
     checklist_path: Path = CHECKLIST_PATH,
+    official_path: Path | None = None,
+    official_summary_path: Path | None = None,
 ) -> pd.DataFrame:
     """Build and independently recalculate every candidate numeric brief claim."""
     for path in (
@@ -429,6 +431,18 @@ def build_claims_register(
     for label, (frame, path) in sources.items():
         if frame.empty:
             raise ValueError(f"{label} source is empty: {path}")
+    official_path = SEA_OFFICIAL_PATH if official_path is None else Path(official_path)
+    official_summary_path = (
+        SEA_OFFICIAL_SUMMARY_PATH
+        if official_summary_path is None
+        else Path(official_summary_path)
+    )
+    official_summary = resolve_reconciliation_summary(
+        sea,
+        official_path=official_path,
+        summary_path=official_summary_path,
+    )
+    official_source = str(official_summary_path.relative_to(PROJECT_ROOT))
     km_summary = km_summary_frame.set_index("instrumento")
     population = _manual_population(sea)
     required_instruments = {"DIA", "EIA"}
@@ -442,14 +456,54 @@ def build_claims_register(
     available_aj = set(zip(aj_summary["instrumento"], aj_summary["outcome"], strict=False))
     if missing_population:
         raise ValueError(
-            "SEA validation population missing instruments: "
-            f"{sorted(missing_population)}"
+            f"SEA validation population missing instruments: {sorted(missing_population)}"
         )
     if missing_km:
         raise ValueError(f"KM summary missing instruments: {sorted(missing_km)}")
     if missing_aj := required_aj - available_aj:
         raise ValueError(f"AJ summary missing instrument/outcome groups: {sorted(missing_aj)}")
     rows: list[dict[str, object]] = []
+    rows.extend(
+        [
+            _claim(
+                "sea_oficial_expedientes_coinciden_n",
+                "Expedientes propios presentes en la base oficial SEA",
+                official_summary["expedientes_coinciden_n"],
+                "expedientes",
+                official_source,
+                "Intersección de exp_id entre la base propia y la respuesta oficial.",
+                official_summary["expedientes_coinciden_n"],
+                0,
+                "Valida cobertura por expediente; no implica igualdad de todos los campos.",
+            ),
+            _claim(
+                "sea_oficial_diferencias_previas_al_corte_n",
+                "Diferencias con la base oficial previas o al corte",
+                official_summary["diferencias_previas_al_corte_n"],
+                "diferencias",
+                official_source,
+                "Filas conciliadas no marcadas como posteriores al 25-08-2026.",
+                official_summary["diferencias_previas_al_corte_n"],
+                0,
+                "Ambas corresponden a diferencias de un día en fecha de ingreso.",
+            ),
+            _claim(
+                "sea_oficial_fecha_respuesta",
+                "Fecha de respuesta oficial SEA a la solicitud Ley 20.285",
+                official_summary.get(
+                    "fecha_respuesta", SEA_OFFICIAL_RESPONSE_DATE.isoformat()
+                ),
+                "fecha",
+                official_source,
+                "Fecha registrada en el resumen versionado de la respuesta oficial.",
+                official_summary.get(
+                    "fecha_respuesta", SEA_OFFICIAL_RESPONSE_DATE.isoformat()
+                ),
+                0,
+                "Fecha de respuesta; no reemplaza el corte analítico.",
+            ),
+        ]
+    )
 
     total = float(portfolio["inversion_musd"].sum())
     total_sql = float(
@@ -691,12 +745,8 @@ def build_claims_register(
     for instrument in ("DIA", "EIA"):
         group = population.loc[population["instrumento"].eq(instrument)]
         for outcome, code in COMPETING_EVENT_CODES.items():
-            curve = manual_aalen_johansen(
-                group["duration_days"], group["competing_event"], code
-            )
-            recalculated = 100 * _step_at(
-                curve, "cumulative_incidence", 24 * DAYS_PER_MONTH
-            )
+            curve = manual_aalen_johansen(group["duration_days"], group["competing_event"], code)
+            recalculated = 100 * _step_at(curve, "cumulative_incidence", 24 * DAYS_PER_MONTH)
             value = 100 * float(aj_24.loc[(instrument, outcome), "incidencia_acumulada"])
             rows.append(
                 _claim(
@@ -748,13 +798,9 @@ def build_claims_register(
         )
 
     eia_curve = approval_curves["EIA"]
-    eia_crossing = eia_curve.loc[
-        eia_curve["cumulative_incidence"].ge(0.5), "time_days"
-    ]
+    eia_crossing = eia_curve.loc[eia_curve["cumulative_incidence"].ge(0.5), "time_days"]
     eia_month_50 = (
-        float(eia_crossing.iloc[0]) / DAYS_PER_MONTH
-        if not eia_crossing.empty
-        else float("nan")
+        float(eia_crossing.iloc[0]) / DAYS_PER_MONTH if not eia_crossing.empty else float("nan")
     )
     eia_group = population.loc[population["instrumento"].eq("EIA")]
     event_times = eia_curve["time_days"].sort_values()
@@ -769,9 +815,7 @@ def build_claims_register(
     approved_median = float(approved_eia.median()) / DAYS_PER_MONTH
     high_investment_eia = eia_group.loc[eia_group["inversion_musd"].ge(100)].copy()
     high_n = int(len(high_investment_eia))
-    high_at_risk_24 = int(
-        high_investment_eia["duration_days"].ge(24 * DAYS_PER_MONTH).sum()
-    )
+    high_at_risk_24 = int(high_investment_eia["duration_days"].ge(24 * DAYS_PER_MONTH).sum())
     rows.extend(
         [
             _claim(
@@ -792,7 +836,8 @@ def build_claims_register(
                 "%",
                 str(sea_path.relative_to(PROJECT_ROOT)),
                 "Incidencia AJ al último tiempo cuyo conjunto en riesgo es >=10.",
-                100 * _direct_cumulative_incidence_at(
+                100
+                * _direct_cumulative_incidence_at(
                     eia_group["duration_days"].to_numpy(float),
                     eia_group["competing_event"].to_numpy(int),
                     1,
@@ -943,9 +988,7 @@ def build_claims_register(
         portfolio.loc[portfolio["estado_ambiental"].eq("aprobado"), "project_id"].astype(str)
     )
     pending_modification_ids = set(
-        pd.to_numeric(
-            sea.loc[sea["evento"].eq("en_tramite"), "exp_id"], errors="raise"
-        ).astype(int)
+        pd.to_numeric(sea.loc[sea["evento"].eq("en_tramite"), "exp_id"], errors="raise").astype(int)
     )
     approved_with_pending_update = set(
         modification_ids.loc[
@@ -954,12 +997,10 @@ def build_claims_register(
             "project_id",
         ]
     )
-    independent_update_n, independently_counted_amount = (
-        _independent_pending_update_summary(
-            checklist_path,
-            portfolio_path,
-            sea_path,
-        )
+    independent_update_n, independently_counted_amount = _independent_pending_update_summary(
+        checklist_path,
+        portfolio_path,
+        sea_path,
     )
     update_amount = float(
         portfolio.loc[
@@ -1001,8 +1042,9 @@ def build_claims_register(
     }
     study_mask = portfolio["estado_ambiental"].eq("sin_expediente_en_estudio")
     floor_amount = float(
-        portfolio.loc[study_mask & ~portfolio["project_id"].isin(excluded_floor_ids),
-                      "inversion_musd"].sum()
+        portfolio.loc[
+            study_mask & ~portfolio["project_id"].isin(excluded_floor_ids), "inversion_musd"
+        ].sum()
     )
     ceiling_states = {
         "sin_expediente_en_estudio",
@@ -1010,13 +1052,10 @@ def build_claims_register(
         "no_determinado",
     }
     ceiling_amount = float(
-        portfolio.loc[portfolio["estado_ambiental"].isin(ceiling_states),
-                      "inversion_musd"].sum()
+        portfolio.loc[portfolio["estado_ambiental"].isin(ceiling_states), "inversion_musd"].sum()
     )
     reviewed_n = int(portfolio["criterio"].eq("decision_J_checklist").sum())
-    automatic_n = int(
-        portfolio["criterio"].isin({"regla_auto", "regla_reingreso"}).sum()
-    )
+    automatic_n = int(portfolio["criterio"].isin({"regla_auto", "regla_reingreso"}).sum())
     period_start = int(population["fecha_ingreso"].dt.year.min())
     period_end = int(population["fecha_ingreso"].dt.year.max())
     rows.extend(
@@ -1096,9 +1135,13 @@ def build_claims_register(
                 "Día de la fecha máxima entre ingreso, cierre y RCA.",
                 int(
                     pd.concat(
-                        [pd.to_datetime(sea[column], errors="coerce") for column in
-                         ("fecha_ingreso", "fecha_cierre", "exp_fecha_rca")]
-                    ).max().day
+                        [
+                            pd.to_datetime(sea[column], errors="coerce")
+                            for column in ("fecha_ingreso", "fecha_cierre", "exp_fecha_rca")
+                        ]
+                    )
+                    .max()
+                    .day
                 ),
                 0,
                 "Fecha de vigencia del extracto, distinta de la descarga.",
@@ -1112,9 +1155,13 @@ def build_claims_register(
                 "Mes de la fecha máxima entre ingreso, cierre y RCA.",
                 int(
                     pd.concat(
-                        [pd.to_datetime(sea[column], errors="coerce") for column in
-                         ("fecha_ingreso", "fecha_cierre", "exp_fecha_rca")]
-                    ).max().month
+                        [
+                            pd.to_datetime(sea[column], errors="coerce")
+                            for column in ("fecha_ingreso", "fecha_cierre", "exp_fecha_rca")
+                        ]
+                    )
+                    .max()
+                    .month
                 ),
                 0,
                 "Fecha de vigencia del extracto, distinta de la descarga.",
@@ -1128,9 +1175,13 @@ def build_claims_register(
                 "Año de la fecha máxima entre ingreso, cierre y RCA.",
                 int(
                     pd.concat(
-                        [pd.to_datetime(sea[column], errors="coerce") for column in
-                         ("fecha_ingreso", "fecha_cierre", "exp_fecha_rca")]
-                    ).max().year
+                        [
+                            pd.to_datetime(sea[column], errors="coerce")
+                            for column in ("fecha_ingreso", "fecha_cierre", "exp_fecha_rca")
+                        ]
+                    )
+                    .max()
+                    .year
                 ),
                 0,
                 "Fecha de vigencia del extracto, distinta de la descarga.",
@@ -1143,11 +1194,7 @@ def build_claims_register(
                 str(portfolio_path.relative_to(PROJECT_ROOT)),
                 "Redondeo a centenas del monto sin expediente en estudio.",
                 round(
-                    float(
-                        environmental_sql.loc[
-                            "sin_expediente_en_estudio", "inversion_musd"
-                        ]
-                    ),
+                    float(environmental_sql.loc["sin_expediente_en_estudio", "inversion_musd"]),
                     -2,
                 ),
                 0,
@@ -1187,14 +1234,9 @@ def build_sensitivity_table(
     """Calculate requested population-rule sensitivities outside the PDF."""
     population = pd.read_parquet(population_path).copy()
     population["duration_days"] = population["duration_days"].astype(float).clip(lower=0.5)
-    with_i5 = _manual_population(
-        pd.read_parquet(sea_path), include_excluded_tipologias=True
-    )
+    with_i5 = _manual_population(pd.read_parquet(sea_path), include_excluded_tipologias=True)
     without_early_withdrawals = population.loc[
-        ~(
-            population["evento"].eq("desistido_o_abandonado")
-            & population["duration_days"].le(60)
-        )
+        ~(population["evento"].eq("desistido_o_abandonado") & population["duration_days"].le(60))
     ].copy()
     deduplicated = population.copy()
     deduplicated["_family_id"] = _reentry_family_ids(deduplicated)
@@ -1244,6 +1286,7 @@ def bootstrap_eia_high_investment_approval_24m(
     group["duration_days"] = group["duration_days"].astype(float).clip(lower=0.5)
     if group.empty:
         raise ValueError("No EIA >=100 MMUS$ records available for bootstrap")
+
     def estimate(frame: pd.DataFrame) -> float:
         curve = manual_aalen_johansen(
             frame["duration_days"], frame["competing_event"], event_of_interest=1
@@ -1323,8 +1366,7 @@ def build_validation_checklist(
         )
         if missing_suggestion_columns:
             raise ValueError(
-                "Missing candidate-review columns: "
-                f"{sorted(missing_suggestion_columns)}"
+                f"Missing candidate-review columns: {sorted(missing_suggestion_columns)}"
             )
         for cochilco_id, candidates in candidate_review.groupby(
             "cochilco_id", sort=False, dropna=False
@@ -1339,9 +1381,7 @@ def build_validation_checklist(
                 f"inversion_ratio={ratio_text}"
             )
 
-    def checklist_row(
-        project: pd.Series, question: str, group_order: int
-    ) -> dict[str, object]:
+    def checklist_row(project: pd.Series, question: str, group_order: int) -> dict[str, object]:
         exp_id = project["exp_id_confirmado"]
         sea_name = ""
         expediente_url = ""
@@ -1388,20 +1428,15 @@ def build_validation_checklist(
 
     # The published 40-row review is immutable evidence. Extend it only with the
     # automatic assignments that had never been inspected project by project.
-    has_automatic_decisions = "criterio" in decisions and decisions["criterio"].isin(
-        {"regla_auto", "regla_reingreso"}
-    ).any()
-    if (
-        checklist_path is not None
-        and checklist_path.exists()
-        and has_automatic_decisions
-    ):
+    has_automatic_decisions = (
+        "criterio" in decisions
+        and decisions["criterio"].isin({"regla_auto", "regla_reingreso"}).any()
+    )
+    if checklist_path is not None and checklist_path.exists() and has_automatic_decisions:
         from cmip.match import reentry_family_key
 
         existing = pd.read_csv(checklist_path, keep_default_na=False)
-        automatic = decisions.loc[
-            decisions["criterio"].isin({"regla_auto", "regla_reingreso"})
-        ]
+        automatic = decisions.loc[decisions["criterio"].isin({"regla_auto", "regla_reingreso"})]
         additions: list[dict[str, object]] = []
         for decision in automatic.itertuples(index=False):
             cochilco_id = str(decision.cochilco_id)
@@ -1436,9 +1471,7 @@ def build_validation_checklist(
             additions.append(row)
 
         additions_frame = pd.DataFrame(additions).drop(columns="_group_order")
-        existing_keys = set(
-            zip(existing["cochilco_id"], existing["pregunta"], strict=True)
-        )
+        existing_keys = set(zip(existing["cochilco_id"], existing["pregunta"], strict=True))
         additions_frame = additions_frame.loc[
             ~additions_frame.apply(
                 lambda row: (row["cochilco_id"], row["pregunta"]) in existing_keys,
@@ -1495,9 +1528,7 @@ def build_validation_checklist(
         )
     for _, project in execution.iterrows():
         rows.append(
-            checklist_row(
-                project, "¿N° de RCA vigente que cubre la ejecución?", group_order=0
-            )
+            checklist_row(project, "¿N° de RCA vigente que cubre la ejecución?", group_order=0)
         )
 
     result = (
@@ -1524,9 +1555,7 @@ def _nonempty_text(value: object) -> str:
     return str(value).strip()
 
 
-def _preserve_j_responses(
-    checklist: pd.DataFrame, existing: pd.DataFrame
-) -> pd.DataFrame:
+def _preserve_j_responses(checklist: pd.DataFrame, existing: pd.DataFrame) -> pd.DataFrame:
     """Retain J fields by obligation, falling back to the requested project ID key."""
     result = checklist.copy()
     if "cochilco_id" not in existing:
@@ -1535,9 +1564,7 @@ def _preserve_j_responses(
         if column not in existing:
             existing[column] = ""
     for index, row in result.iterrows():
-        same_id = existing.loc[
-            existing["cochilco_id"].astype(str).eq(str(row["cochilco_id"]))
-        ]
+        same_id = existing.loc[existing["cochilco_id"].astype(str).eq(str(row["cochilco_id"]))]
         exact = same_id.loc[same_id["pregunta"].astype(str).eq(str(row["pregunta"]))]
         candidates = exact if not exact.empty else same_id
         for column in ("respuesta_J", "fuente_J"):
