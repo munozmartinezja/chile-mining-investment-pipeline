@@ -197,15 +197,14 @@ def test_validation_checklist_preserves_40_answers_and_adds_21_pending_automatic
         "exp_id_confirmado",
         "sea_nombre",
         "url_expediente",
-        "url_busqueda",
         "pregunta",
-        "respuesta_J",
-        "fuente_J",
+        "decision",
+        "fuente_decision",
     ]
     assert len(checklist) == 61
     assert checklist["pregunta"].str.contains("corresponde|Existe expediente propio").sum() == 34
     assert checklist["pregunta"].eq("¿N° de RCA vigente que cubre la ejecución?").sum() == 6
-    assert checklist["url_busqueda"].str.startswith("https://www.google.com/search?q=").all()
+    assert "url_busqueda" not in checklist
     confirmed = checklist["exp_id_confirmado"].ne("")
     assert checklist.loc[confirmed, "url_expediente"].str.contains(r"id_expediente=\d+&").all()
     assert checklist.loc[~confirmed, "url_expediente"].eq("").all()
@@ -215,7 +214,7 @@ def test_validation_checklist_preserves_40_answers_and_adds_21_pending_automatic
         )
     ]
     assert len(automatic) == 21
-    assert automatic["respuesta_J"].eq("confirmado").all()
+    assert automatic["decision"].eq("confirmado").all()
     assert automatic["candidato_sugerido"].str.contains("otros_familia=").all()
     assert automatic["url_expediente"].str.contains(r"id_expediente=\d+&").all()
 
@@ -228,7 +227,7 @@ def test_versioned_validation_checklist_gate_is_complete() -> None:
     checklist = pd.read_csv(path, keep_default_na=False)
 
     assert len(checklist) == 61
-    assert checklist["respuesta_J"].str.strip().ne("").all()
+    assert checklist["decision"].str.strip().ne("").all()
     assert not checklist.duplicated(["cochilco_id", "pregunta"]).any()
 
 

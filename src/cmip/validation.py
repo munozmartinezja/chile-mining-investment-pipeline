@@ -8,7 +8,6 @@ import warnings
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from statistics import NormalDist
-from urllib.parse import quote_plus
 
 import duckdb
 import numpy as np
@@ -287,13 +286,13 @@ def _reentry_family_ids(frame: pd.DataFrame) -> pd.Series:
 
 def _checklist_modification_ids(checklist: pd.DataFrame) -> pd.DataFrame:
     """Return modification expediente IDs explicitly curated for each project."""
-    required = {"cochilco_id", "fuente_J"}
+    required = {"cochilco_id", "fuente_decision"}
     missing = required - set(checklist.columns)
     if missing:
         raise ValueError(f"Checklist missing modification evidence columns: {sorted(missing)}")
     records: list[dict[str, object]] = []
     for row in checklist.itertuples(index=False):
-        source = str(row.fuente_J)
+        source = str(row.fuente_decision)
         match = re.search(r"(?:^|\s+\|\s+)modificaciones:\s*([^|]+)", source)
         if match is None:
             continue
@@ -314,7 +313,7 @@ def _independent_pending_update_summary(
           SELECT
             cochilco_id AS project_id,
             regexp_extract(
-              fuente_J,
+              fuente_decision,
               '(?:^|[[:space:]]+[|][[:space:]]+)modificaciones:[[:space:]]*([^|]+)',
               1
             ) AS modification_segment
@@ -1320,7 +1319,7 @@ def build_validation_checklist(
     orphans_path: Path | None = CHECKLIST_ORPHANS_PATH,
     candidate_review: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Build J's obligations, retaining prior answers and archiving removed IDs."""
+    """Build validation obligations, retaining prior decisions and archiving removed IDs."""
     portfolio = pd.read_parquet(portfolio_path)
     sea_source = pd.read_parquet(sea_path)
     sea = sea_source.set_index("exp_id")
@@ -1392,7 +1391,6 @@ def build_validation_checklist(
             sea_name = str(sea.loc[numeric_id, "exp_nombre"])
             expediente_url = SEIA_FICHA_URL.format(exp_id=numeric_id)
         cochilco_name = str(project["nombre_del_proyecto"])
-        encoded_query = quote_plus(f'site:seia.sea.gob.cl "{cochilco_name}"')
         return {
             "cochilco_id": project["project_id"],
             "cochilco_nombre": cochilco_name,
@@ -1403,10 +1401,9 @@ def build_validation_checklist(
             "exp_id_confirmado": exp_id,
             "sea_nombre": sea_name,
             "url_expediente": expediente_url,
-            "url_busqueda": f"https://www.google.com/search?q={encoded_query}",
             "pregunta": question,
-            "respuesta_J": "",
-            "fuente_J": "",
+            "decision": "",
+            "fuente_decision": "",
             "_group_order": group_order,
         }
 
@@ -1420,10 +1417,9 @@ def build_validation_checklist(
         "exp_id_confirmado",
         "sea_nombre",
         "url_expediente",
-        "url_busqueda",
         "pregunta",
-        "respuesta_J",
-        "fuente_J",
+        "decision",
+        "fuente_decision",
     ]
 
     # The published 40-row review is immutable evidence. Extend it only with the
@@ -1544,7 +1540,7 @@ def build_validation_checklist(
     result = result.loc[:, columns]
     if checklist_path is not None and checklist_path.exists():
         existing = pd.read_csv(checklist_path, keep_default_na=False)
-        result = _preserve_j_responses(result, existing)
+        result = _preserve_decisions(result, existing)
         _archive_checklist_orphans(result, existing, orphans_path)
     return result
 
@@ -1555,19 +1551,19 @@ def _nonempty_text(value: object) -> str:
     return str(value).strip()
 
 
-def _preserve_j_responses(checklist: pd.DataFrame, existing: pd.DataFrame) -> pd.DataFrame:
-    """Retain J fields by obligation, falling back to the requested project ID key."""
+def _preserve_decisions(checklist: pd.DataFrame, existing: pd.DataFrame) -> pd.DataFrame:
+    """Retain decision fields by obligation, falling back to the project ID key."""
     result = checklist.copy()
     if "cochilco_id" not in existing:
         raise ValueError("Existing validation checklist has no cochilco_id column")
-    for column in ("pregunta", "respuesta_J", "fuente_J"):
+    for column in ("pregunta", "decision", "fuente_decision"):
         if column not in existing:
             existing[column] = ""
     for index, row in result.iterrows():
         same_id = existing.loc[existing["cochilco_id"].astype(str).eq(str(row["cochilco_id"]))]
         exact = same_id.loc[same_id["pregunta"].astype(str).eq(str(row["pregunta"]))]
         candidates = exact if not exact.empty else same_id
-        for column in ("respuesta_J", "fuente_J"):
+        for column in ("decision", "fuente_decision"):
             saved = [text for text in candidates[column].map(_nonempty_text) if text]
             if saved:
                 result.at[index, column] = saved[0]
@@ -1603,7 +1599,7 @@ def _archive_checklist_orphans(
         orphans = pd.concat([archived, orphans], ignore_index=True, sort=False)
         dedupe_columns = [
             column
-            for column in ("cochilco_id", "pregunta", "respuesta_J", "fuente_J")
+            for column in ("cochilco_id", "pregunta", "decision", "fuente_decision")
             if column in orphans
         ]
         orphans = orphans.drop_duplicates(dedupe_columns, keep="last")
@@ -1618,7 +1614,7 @@ def write_validation_checklist(
     orphans_path: Path = CHECKLIST_ORPHANS_PATH,
     candidate_review: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Regenerate the checklist without discarding J responses or removed projects."""
+    """Regenerate the checklist without discarding decisions or removed projects."""
     result = build_validation_checklist(
         portfolio_path,
         sea_path,
@@ -1637,7 +1633,7 @@ def main() -> None:
     sensitivity = build_sensitivity_table()
     bootstrap = bootstrap_eia_high_investment_approval_24m()
     checklist = pd.read_csv(CHECKLIST_PATH, keep_default_na=False)
-    answered = int(checklist["respuesta_J"].astype(str).str.strip().ne("").sum())
+    answered = int(checklist["decision"].astype(str).str.strip().ne("").sum())
     print("\nRegistro de cifras\n", claims.to_string(index=False))
     print("\nSensibilidad\n", sensitivity.to_string(index=False))
     print("\nBootstrap\n", bootstrap.to_string(index=False))

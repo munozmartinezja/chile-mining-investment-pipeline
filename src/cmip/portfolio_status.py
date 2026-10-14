@@ -298,7 +298,7 @@ def _principal_from_source(source: object) -> int | None:
         return None
     principals = {int(value) for value in matches}
     if len(principals) != 1:
-        raise ValueError(f"Contradictory principal segments in fuente_J: {text!r}")
+        raise ValueError(f"Contradictory principal segments in fuente_decision: {text!r}")
     return principals.pop()
 
 
@@ -307,9 +307,9 @@ def apply_checklist_decisions(
     checklist: pd.DataFrame,
     sea_mining: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Override automatic matches with J's validated checklist decisions."""
+    """Override automatic matches with validated checklist decisions."""
     confirmed_required = {"cochilco_id", "exp_id_confirmado", "criterio"}
-    checklist_required = {"cochilco_id", "pregunta", "respuesta_J", "fuente_J"}
+    checklist_required = {"cochilco_id", "pregunta", "decision", "fuente_decision"}
     missing_confirmed = confirmed_required.difference(confirmed.columns)
     missing_checklist = checklist_required.difference(checklist.columns)
     if missing_confirmed:
@@ -335,10 +335,10 @@ def apply_checklist_decisions(
     if unknown_ids:
         raise ValueError(f"Checklist contains unknown cochilco_id values: {sorted(unknown_ids)}")
 
-    responses = checklist["respuesta_J"].map(_decision_text).str.casefold()
+    responses = checklist["decision"].map(_decision_text).str.casefold()
     invalid = set(responses) - CHECKLIST_RESPONSES
     if invalid:
-        raise ValueError(f"Invalid respuesta_J values: {sorted(invalid)}")
+        raise ValueError(f"Invalid decision values: {sorted(invalid)}")
     sea_ids = set(pd.to_numeric(sea_mining["exp_id"], errors="raise").astype(int))
 
     checklist_work = checklist.copy()
@@ -353,10 +353,10 @@ def apply_checklist_decisions(
         ]
         principals: set[int] = set()
         for row in affirmative.itertuples(index=False):
-            principal = _principal_from_source(row.fuente_J)
+            principal = _principal_from_source(row.fuente_decision)
             if principal is None:
                 raise ValueError(
-                    "Checklist affirmative response requires a principal in fuente_J "
+                    "Checklist affirmative response requires a principal in fuente_decision "
                     f"for {cochilco_id}"
                 )
             principals.add(principal)
@@ -364,7 +364,7 @@ def apply_checklist_decisions(
             decisions["_response"].eq(CONFIRM_ASSIGNED_RESPONSE)
         ]
         for row in confirmed_rows.itertuples(index=False):
-            if (principal := _principal_from_source(row.fuente_J)) is not None:
+            if (principal := _principal_from_source(row.fuente_decision)) is not None:
                 principals.add(principal)
         if len(principals) > 1:
             raise ValueError(

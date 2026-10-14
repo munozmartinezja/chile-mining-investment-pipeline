@@ -44,13 +44,12 @@ Briefs ejecutivos: [español](docs/brief/brief_c1_es.pdf) ·
 
 La compuerta de publicación exige que cada cifra esté en el registro de
 `build_claims_register()` con estado `verificada` y un recálculo independiente.
-El checklist conserva sus 40 filas respondidas y agrega 21 asignaciones
-automáticas pendientes. Por ello, 38 de 59 cruces están revisados ficha por
-ficha y la compuerta de publicación permanece cerrada hasta que J responda las
-21 filas nuevas. `make brief-draft` genera PDF con marca de agua para revisar el
-diseño; `make brief` falla mientras exista una respuesta vacía. Cuando J use
-`confirmado`, se mantiene el expediente sugerido; un `principal: <exp_id>` en
-`fuente_J` prevalece.
+El checklist contiene 61 obligaciones completas: 40 comprobaciones iniciales y
+21 asignaciones automáticas confirmadas. Los 59 proyectos de cartera cuentan con
+una decisión documentada. `make brief-draft` genera PDF con marca de agua;
+`make brief` exige que todas las decisiones estén completas. La decisión
+`confirmado` mantiene el expediente sugerido; un `principal: <exp_id>` en
+`fuente_decision` prevalece.
 
 ### Fuentes
 

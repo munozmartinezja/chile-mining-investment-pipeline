@@ -30,8 +30,8 @@ def _checklist_sources(
         {
             "cochilco_id": ["project"],
             "pregunta": ["Pregunta validada"],
-            "respuesta_J": [response],
-            "fuente_J": [source],
+            "decision": [response],
+            "fuente_decision": [source],
         }
     )
     sea = pd.DataFrame({"exp_id": [101]})
@@ -406,8 +406,8 @@ def test_checklist_two_questions_accept_same_principal_and_principal_over_empty(
                 {
                     "cochilco_id": ["project"],
                     "pregunta": ["Segunda pregunta"],
-                    "respuesta_J": ["sin_expediente"],
-                    "fuente_J": ["nota: sin expediente separado"],
+                    "decision": ["sin_expediente"],
+                    "fuente_decision": ["nota: sin expediente separado"],
                 }
             ),
         ],
@@ -429,8 +429,8 @@ def test_checklist_aggregate_precedes_prior_rca_and_empty_response() -> None:
                 {
                     "cochilco_id": ["project", "project"],
                     "pregunta": ["Segunda pregunta", "Tercera pregunta"],
-                    "respuesta_J": ["rca_previa", "sin_expediente"],
-                    "fuente_J": ["modificaciones: 101", ""],
+                    "decision": ["rca_previa", "sin_expediente"],
+                    "fuente_decision": ["modificaciones: 101", ""],
                 }
             ),
         ],
@@ -452,8 +452,8 @@ def test_checklist_rejects_contradictory_principals() -> None:
                 {
                     "cochilco_id": ["project"],
                     "pregunta": ["Segunda pregunta"],
-                    "respuesta_J": ["expediente_encontrado"],
-                    "fuente_J": ["principal: 102"],
+                    "decision": ["expediente_encontrado"],
+                    "fuente_decision": ["principal: 102"],
                 }
             ),
         ],
@@ -474,8 +474,8 @@ def test_checklist_rejects_incompatible_special_categories() -> None:
                 {
                     "cochilco_id": ["project"],
                     "pregunta": ["Segunda pregunta"],
-                    "respuesta_J": ["no_determinado"],
-                    "fuente_J": ["nota: instrumento desconocido"],
+                    "decision": ["no_determinado"],
+                    "fuente_decision": ["nota: instrumento desconocido"],
                 }
             ),
         ],

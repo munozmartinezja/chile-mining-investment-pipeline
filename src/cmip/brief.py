@@ -958,10 +958,10 @@ def main() -> None:
     checklist = pd.read_csv(
         PROJECT_ROOT / "docs" / "validation_checklist.csv", keep_default_na=False
     )
-    pending = checklist["respuesta_J"].astype(str).str.strip().eq("")
+    pending = checklist["decision"].astype(str).str.strip().eq("")
     if pending.any() and not args.draft:
         raise SystemExit(
-            f"GATE: {int(pending.sum())} checklist rows have no respuesta_J; "
+            f"GATE: {int(pending.sum())} checklist rows have no decision; "
             "use --draft for watermarked review PDFs"
         )
     metrics = compute_brief_metrics()
