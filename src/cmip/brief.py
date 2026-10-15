@@ -360,7 +360,13 @@ def make_brief_portfolio_figure(
     ax.tick_params(axis="x", labelsize=8)
     fig.tight_layout(pad=0.6)
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(path, dpi=180, bbox_inches="tight", facecolor="white")
+    fig.savefig(
+        path,
+        dpi=180,
+        bbox_inches="tight",
+        facecolor="white",
+        metadata={"Software": None, "Creation Time": None},
+    )
     plt.close(fig)
     return path
 
@@ -435,7 +441,13 @@ def make_brief_incidence_figure(lang: str, path: Path) -> Path:
     ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout(pad=0.7)
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(path, dpi=180, bbox_inches="tight", facecolor="white")
+    fig.savefig(
+        path,
+        dpi=180,
+        bbox_inches="tight",
+        facecolor="white",
+        metadata={"Software": None, "Creation Time": None},
+    )
     plt.close(fig)
     return path
 
@@ -732,7 +744,7 @@ def _render_reportlab(
         metrics, lang, PORTFOLIO_FIGURE_PATHS[lang]
     )
     incidence_path = make_brief_incidence_figure(lang, INCIDENCE_FIGURE_PATHS[lang])
-    document = canvas.Canvas(str(path), pagesize=A4, pageCompression=1)
+    document = canvas.Canvas(str(path), pagesize=A4, pageCompression=1, invariant=1)
     page_width, page_height = A4
     ink = colors.HexColor("#26343A")
     muted = colors.HexColor("#617078")

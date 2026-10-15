@@ -114,6 +114,22 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
     assert indexed.loc["sea_oficial_expedientes_coinciden_n", "valor"] == 1_961
     assert indexed.loc["sea_oficial_diferencias_previas_al_corte_n", "valor"] == 2
     assert indexed.loc["sea_oficial_fecha_respuesta", "valor"] == "2026-10-13"
+    expected_new = {
+        "km_aj_brecha_EIA_24m_pp": 9.825071,
+        "km_aj_brecha_DIA_24m_pp": 25.2917,
+        "sin_expediente_inversion_tarapaca": 8_000.0,
+        "sin_expediente_inversion_atacama": 5_767.0,
+        "sin_expediente_inversion_valparaiso": 2_776.0,
+        "sin_expediente_inversion_antofagasta": 500.0,
+        "sin_expediente_mayor_proyecto_inversion": 8_000.0,
+        "aj_EIA_otros_desenlaces_24m": 26.432,
+        "aj_EIA_sin_desenlace_24m": 41.8244,
+    }
+    for claim_id, expected_value in expected_new.items():
+        assert indexed.loc[claim_id, "valor"] == pytest.approx(expected_value, abs=0.001)
+        assert indexed.loc[claim_id, "estado"] == "verificada"
+    assert indexed.loc["sin_expediente_regiones_suma_ok", "valor"] is True
+    assert indexed.loc["sin_expediente_regiones_suma_ok", "valor_recalculado"] is True
 
 
 @requires_local_data

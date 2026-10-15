@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 import pytest
+from PIL import Image
 
 from cmip.figures import (
     conclusion_titles,
@@ -100,6 +101,27 @@ def test_all_four_renderers_write_png_files(tmp_path) -> None:  # noqa: ANN001
 
     for path in paths:
         assert path.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+
+
+def test_rendered_figure_is_byte_deterministic_without_variable_metadata(tmp_path) -> None:  # noqa: ANN001
+    km = pd.DataFrame(
+        {
+            "instrumento": ["EIA", "EIA"],
+            "time_days": [0.0, 365.0],
+            "approval_probability": [0.0, 0.3],
+            "approval_ci_lower": [0.0, 0.2],
+            "approval_ci_upper": [0.0, 0.4],
+        }
+    )
+    first = tmp_path / "first.png"
+    second = tmp_path / "second.png"
+
+    plot_km(km, "Conclusión", first)
+    plot_km(km, "Conclusión", second)
+
+    assert first.read_bytes() == second.read_bytes()
+    assert "Software" not in Image.open(first).info
+    assert "Creation Time" not in Image.open(first).info
 
 
 def test_survival_figure_orchestration_does_not_require_portfolio(

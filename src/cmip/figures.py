@@ -120,7 +120,13 @@ def _pyplot():
 
 def _finish(fig, path: Path) -> None:  # noqa: ANN001
     fig.text(0.01, 0.01, SOURCE, fontsize=7, color="#4B5563")
-    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
+    fig.savefig(
+        path,
+        dpi=150,
+        bbox_inches="tight",
+        facecolor="white",
+        metadata={"Software": None, "Creation Time": None},
+    )
 
 
 def plot_km(curve: pd.DataFrame, title: str, path: Path) -> None:

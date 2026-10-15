@@ -270,6 +270,11 @@ def _normalized_name(value: object) -> str:
     return "".join(character for character in normalized if not unicodedata.combining(character))
 
 
+def _ascii_slug(value: object) -> str:
+    """Return a stable ASCII identifier component for a displayed label."""
+    return re.sub(r"[^a-z0-9]+", "_", _normalized_name(value)).strip("_")
+
+
 def _reentry_family_ids(frame: pd.DataFrame) -> pd.Series:
     """Return stable cluster IDs from holder and equivalent normalized name."""
     holder = frame.get("empresa_nombre", pd.Series("", index=frame.index)).fillna("")
@@ -687,6 +692,129 @@ def build_claims_register(
             )
         )
 
+    study_portfolio = portfolio.loc[
+        portfolio["estado_ambiental"].eq("sin_expediente_en_estudio")
+    ]
+    study_by_region = study_portfolio.groupby("region", observed=True)[
+        "inversion_musd"
+    ].sum()
+    study_by_region_sql = _duckdb_frame(
+        f"""
+        WITH classified AS (
+          SELECT
+            region,
+            inversion_musd,
+            CASE
+              {override_case}
+              WHEN exp_id_confirmado IS NULL AND etapa = 'Ejecución'
+                THEN 'sin_expediente_en_ejecucion'
+              WHEN exp_id_confirmado IS NULL THEN 'sin_expediente_en_estudio'
+              WHEN evento = 'aprobado' THEN 'aprobado'
+              WHEN evento = 'en_tramite' THEN 'en_evaluacion'
+              WHEN evento IN (
+                'desistido_o_abandonado', 'rechazado', 'termino_anticipado'
+              ) THEN 'desistido_rechazado_o_no_calificado'
+              ELSE 'otro'
+            END AS estado_ambiental
+          FROM read_parquet(?)
+        )
+        SELECT region, SUM(inversion_musd) AS inversion_musd
+        FROM classified
+        WHERE estado_ambiental = 'sin_expediente_en_estudio'
+        GROUP BY region
+        HAVING SUM(inversion_musd) > 0
+        """,
+        portfolio_path,
+    ).set_index("region")["inversion_musd"]
+    for region, amount in study_by_region.items():
+        if float(amount) <= 0:
+            continue
+        rows.append(
+            _claim(
+                f"sin_expediente_inversion_{_ascii_slug(region)}",
+                f"Inversión sin expediente en estudio en {region}",
+                float(amount),
+                "MMUS$",
+                str(portfolio_path.relative_to(PROJECT_ROOT)),
+                "Suma regional de proyectos en estudio sin expediente identificado.",
+                float(study_by_region_sql.loc[region]),
+                0.1,
+                "Desagregación regional del titular; excluye proyectos en ejecución.",
+            )
+        )
+    regional_sum = float(study_by_region.sum())
+    regional_sum_sql = float(study_by_region_sql.sum())
+    rows.extend(
+        [
+            _claim(
+                "sin_expediente_regiones_suma_ok",
+                "La suma regional sin expediente coincide con el total en estudio",
+                bool(
+                    np.isclose(
+                        regional_sum,
+                        environmental_pipeline.loc[
+                            "sin_expediente_en_estudio", "inversion_musd"
+                        ],
+                    )
+                ),
+                "bool",
+                str(portfolio_path.relative_to(PROJECT_ROOT)),
+                "Comparación de la suma regional con el total del estado ambiental.",
+                bool(
+                    np.isclose(
+                        regional_sum_sql,
+                        environmental_sql.loc[
+                            "sin_expediente_en_estudio", "inversion_musd"
+                        ],
+                    )
+                ),
+                0,
+                "Control de reconciliación; verdadero equivale a 17.043 MMUS$.",
+            ),
+            _claim(
+                "sin_expediente_mayor_proyecto_inversion",
+                "Mayor inversión de un proyecto en estudio sin expediente",
+                float(study_portfolio["inversion_musd"].max()),
+                "MMUS$",
+                str(portfolio_path.relative_to(PROJECT_ROOT)),
+                "Máximo de inversión entre proyectos sin expediente en estudio.",
+                float(
+                    _duckdb_frame(
+                        f"""
+                        WITH classified AS (
+                          SELECT
+                            inversion_musd,
+                            CASE
+                              {override_case}
+                              WHEN exp_id_confirmado IS NULL AND etapa = 'Ejecución'
+                                THEN 'sin_expediente_en_ejecucion'
+                              WHEN exp_id_confirmado IS NULL
+                                THEN 'sin_expediente_en_estudio'
+                              WHEN evento = 'aprobado' THEN 'aprobado'
+                              WHEN evento = 'en_tramite' THEN 'en_evaluacion'
+                              WHEN evento IN (
+                                'desistido_o_abandonado', 'rechazado',
+                                'termino_anticipado'
+                              ) THEN 'desistido_rechazado_o_no_calificado'
+                              ELSE 'otro'
+                            END AS estado_ambiental
+                          FROM read_parquet(?)
+                        )
+                        SELECT MAX(inversion_musd) AS value
+                        FROM classified
+                        WHERE estado_ambiental = 'sin_expediente_en_estudio'
+                        """,
+                        portfolio_path,
+                    ).loc[0, "value"]
+                ),
+                0.1,
+                "Máximo individual, no suma regional.",
+            ),
+        ]
+    )
+
+    km_24_values: dict[str, float] = {}
+    km_24_recalculated_values: dict[str, float] = {}
     for instrument in ("DIA", "EIA"):
         group = population.loc[population["instrumento"].eq(instrument)]
         curve = manual_kaplan_meier(group["duration_days"], group["approval_event"])
@@ -724,6 +852,8 @@ def build_claims_register(
         km_24_recalculated = 100 * (
             1.0 - _step_at(curve, "survival_probability", 24 * DAYS_PER_MONTH)
         )
+        km_24_values[instrument] = km_24_value
+        km_24_recalculated_values[instrument] = km_24_recalculated
         rows.append(
             _claim(
                 f"km_{instrument}_aprobado_24m",
@@ -741,12 +871,16 @@ def build_claims_register(
     aj_24 = aj_summary.loc[aj_summary["horizonte_meses"].eq(24)].set_index(
         ["instrumento", "outcome"]
     )
+    aj_24_values: dict[tuple[str, str], float] = {}
+    aj_24_recalculated_values: dict[tuple[str, str], float] = {}
     for instrument in ("DIA", "EIA"):
         group = population.loc[population["instrumento"].eq(instrument)]
         for outcome, code in COMPETING_EVENT_CODES.items():
             curve = manual_aalen_johansen(group["duration_days"], group["competing_event"], code)
             recalculated = 100 * _step_at(curve, "cumulative_incidence", 24 * DAYS_PER_MONTH)
             value = 100 * float(aj_24.loc[(instrument, outcome), "incidencia_acumulada"])
+            aj_24_values[(instrument, outcome)] = value
+            aj_24_recalculated_values[(instrument, outcome)] = recalculated
             rows.append(
                 _claim(
                     f"aj_{instrument}_{outcome}_24m",
@@ -760,6 +894,62 @@ def build_claims_register(
                     "Incidencia acumulada marginal; conserva todos los desenlaces competidores.",
                 )
             )
+
+    for instrument in ("DIA", "EIA"):
+        rows.append(
+            _claim(
+                f"km_aj_brecha_{instrument}_24m_pp",
+                f"Brecha KM menos AJ de aprobación a 24 meses: {instrument}",
+                km_24_values[instrument] - aj_24_values[(instrument, "aprobado")],
+                "pp",
+                (
+                    f"{km_summary_path.relative_to(PROJECT_ROOT)};"
+                    f"{aj_summary_path.relative_to(PROJECT_ROOT)}"
+                ),
+                "Probabilidad KM menos incidencia acumulada AJ, en puntos porcentuales.",
+                km_24_recalculated_values[instrument]
+                - aj_24_recalculated_values[(instrument, "aprobado")],
+                0.5,
+                "La brecha cuantifica el sesgo de censurar los riesgos competitivos.",
+            )
+        )
+    other_outcomes = (
+        "desistido_o_abandonado",
+        "rechazado",
+        "termino_anticipado",
+    )
+    eia_other = sum(aj_24_values[("EIA", outcome)] for outcome in other_outcomes)
+    eia_other_recalculated = sum(
+        aj_24_recalculated_values[("EIA", outcome)] for outcome in other_outcomes
+    )
+    rows.extend(
+        [
+            _claim(
+                "aj_EIA_otros_desenlaces_24m",
+                "Otros desenlaces AJ de EIA a 24 meses",
+                eia_other,
+                "%",
+                str(aj_summary_path.relative_to(PROJECT_ROOT)),
+                "Suma de desistido, rechazado y término anticipado a 24 meses.",
+                eia_other_recalculated,
+                0.5,
+                "Riesgos competitivos acumulados distintos de aprobación.",
+            ),
+            _claim(
+                "aj_EIA_sin_desenlace_24m",
+                "EIA sin desenlace a 24 meses",
+                100 - aj_24_values[("EIA", "aprobado")] - eia_other,
+                "%",
+                str(aj_summary_path.relative_to(PROJECT_ROOT)),
+                "Cien menos aprobación y otros desenlaces AJ a 24 meses.",
+                100
+                - aj_24_recalculated_values[("EIA", "aprobado")]
+                - eia_other_recalculated,
+                0.5,
+                "Complemento de todas las incidencias acumuladas a 24 meses.",
+            ),
+        ]
+    )
 
     approval_curves: dict[str, pd.DataFrame] = {}
     for instrument in ("DIA", "EIA"):
