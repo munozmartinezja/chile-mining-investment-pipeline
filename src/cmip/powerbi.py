@@ -90,6 +90,23 @@ POWERBI_SCHEMAS = {
             pa.field("cohorte_incompleta", pa.bool_()),
         ]
     ),
+    "agg_brecha_km_aj": pa.schema(
+        [
+            pa.field("instrumento", pa.string()),
+            pa.field("mes", pa.int16()),
+            pa.field("km", pa.float64()),
+            pa.field("aj", pa.float64()),
+            pa.field("brecha", pa.float64()),
+        ]
+    ),
+    "agg_waffle_24m": pa.schema(
+        [
+            pa.field("instrumento", pa.string()),
+            pa.field("desenlace", pa.string()),
+            pa.field("pct", pa.float64()),
+            pa.field("cuadros", pa.int16()),
+        ]
+    ),
     "kpi_validados": pa.schema(
         [
             pa.field("claim_id", pa.string()),
@@ -295,6 +312,82 @@ def _trend_table(trend: pd.DataFrame) -> pa.Table:
     return _frame_to_table("agg_tendencia", frame)
 
 
+def _gap_table(km: pd.DataFrame, cif: pd.DataFrame) -> pa.Table:
+    km_monthly = pd.DataFrame(
+        _monthly_step_rows(km, ["instrumento"], ["approval_probability"])
+    ).rename(columns={"approval_probability": "km"})
+    approvals = cif.loc[cif["outcome"].eq("aprobado")]
+    aj_monthly = pd.DataFrame(
+        _monthly_step_rows(
+            approvals, ["instrumento"], ["cumulative_incidence"]
+        )
+    ).rename(columns={"cumulative_incidence": "aj"})
+    frame = km_monthly.merge(
+        aj_monthly, on=["instrumento", "mes"], how="inner", validate="one_to_one"
+    )
+    frame["brecha"] = frame["km"] - frame["aj"]
+    if frame["brecha"].lt(-1e-12).any():
+        raise ValueError("agg_brecha_km_aj contains negative KM minus AJ values")
+    frame["brecha"] = frame["brecha"].clip(lower=0.0)
+    return _frame_to_table("agg_brecha_km_aj", frame)
+
+
+WAFFLE_OUTCOMES = (
+    "aprobado",
+    "desistido_o_abandonado",
+    "termino_anticipado",
+    "rechazado",
+    "en_tramite",
+)
+
+
+def _largest_remainder(percentages: list[float]) -> list[int]:
+    floors = np.floor(percentages).astype(int)
+    remaining = 100 - int(floors.sum())
+    remainders = np.asarray(percentages) - floors
+    order = sorted(range(len(percentages)), key=lambda index: (-remainders[index], index))
+    for index in order[:remaining]:
+        floors[index] += 1
+    return floors.tolist()
+
+
+def _waffle_table(cif: pd.DataFrame) -> pa.Table:
+    monthly = pd.DataFrame(
+        _monthly_step_rows(cif, ["instrumento", "outcome"], ["cumulative_incidence"])
+    )
+    at_24 = monthly.loc[monthly["mes"].eq(24)].set_index(["instrumento", "outcome"])
+    records: list[dict[str, object]] = []
+    instruments = sorted(at_24.index.get_level_values("instrumento").unique())
+    event_outcomes = WAFFLE_OUTCOMES[:-1]
+    for instrument in instruments:
+        missing = [
+            outcome for outcome in event_outcomes if (instrument, outcome) not in at_24.index
+        ]
+        if missing:
+            raise ValueError(f"Waffle source missing {instrument} outcomes: {missing}")
+        percentages = [
+            100 * float(at_24.loc[(instrument, outcome), "cumulative_incidence"])
+            for outcome in event_outcomes
+        ]
+        in_process = 100.0 - sum(percentages)
+        if in_process < -1e-9:
+            raise ValueError(f"Waffle outcomes exceed 100% for {instrument}")
+        percentages.append(max(0.0, in_process))
+        squares = _largest_remainder(percentages)
+        records.extend(
+            {
+                "instrumento": instrument,
+                "desenlace": outcome,
+                "pct": percentage,
+                "cuadros": square,
+            }
+            for outcome, percentage, square in zip(
+                WAFFLE_OUTCOMES, percentages, squares, strict=True
+            )
+        )
+    return _frame_to_table("agg_waffle_24m", pd.DataFrame(records))
+
+
 def _english_claim_text(claim_id: str) -> str:
     exact = {
         "cartera_inversion_total": "Total portfolio investment",
@@ -343,6 +436,19 @@ def _english_claim_text(claim_id: str) -> str:
         "headline_amount_round_mmusd": "Rounded investment without an identified SEIA filing",
         "confidence_level_pct": "Confidence interval level",
         "aj_threshold_pct": "Cumulative approval threshold",
+        "km_aj_brecha_DIA_24m_pp": "24-month KM minus AJ approval gap: DIA",
+        "km_aj_brecha_EIA_24m_pp": "24-month KM minus AJ approval gap: EIA",
+        "sin_expediente_inversion_tarapaca": "Investment without a filing: Tarapacá",
+        "sin_expediente_inversion_atacama": "Investment without a filing: Atacama",
+        "sin_expediente_inversion_valparaiso": "Investment without a filing: Valparaíso",
+        "sin_expediente_inversion_antofagasta": (
+            "Investment without a filing: Antofagasta"
+        ),
+        "sin_expediente_mayor_proyecto_inversion": (
+            "Largest project investment without a filing"
+        ),
+        "aj_EIA_otros_desenlaces_24m": "Other EIA outcomes by 24 months",
+        "aj_EIA_sin_desenlace_24m": "EIA without an outcome by 24 months",
     }
     if claim_id in exact:
         return exact[claim_id]
@@ -382,6 +488,7 @@ def _english_claim_text(claim_id: str) -> str:
 
 def _kpi_table(claims: pd.DataFrame) -> pa.Table:
     verified = claims.loc[claims["estado"].eq("verificada")].copy()
+    verified = verified.loc[verified["unidad"].ne("bool")].copy()
     numeric_values = pd.to_numeric(verified["valor"], errors="coerce")
     verified = verified.loc[numeric_values.notna()].copy()
     verified["valor"] = numeric_values.loc[numeric_values.notna()].astype(float)
@@ -406,18 +513,22 @@ def build_powerbi_tables(
     trend_path: Path = TREND_PATH,
     claims: pd.DataFrame | None = None,
 ) -> dict[str, pa.Table]:
-    """Build all six Power BI tables against explicit Arrow schemas."""
+    """Build all eight Power BI tables against explicit Arrow schemas."""
     paths = (portfolio_path, population_path, km_path, cif_path, trend_path)
     missing = [str(path) for path in paths if not path.exists()]
     if missing:
         raise FileNotFoundError(f"Required Power BI sources are missing: {missing}")
     portfolio = pd.read_parquet(portfolio_path)
+    km = pd.read_parquet(km_path)
+    cif = pd.read_parquet(cif_path)
     return {
         "fact_cartera": _portfolio_table(portfolio),
         "fact_expedientes": _population_table(pd.read_parquet(population_path), portfolio),
-        "agg_km": _km_table(pd.read_parquet(km_path)),
-        "agg_cif": _cif_table(pd.read_parquet(cif_path)),
+        "agg_km": _km_table(km),
+        "agg_cif": _cif_table(cif),
         "agg_tendencia": _trend_table(pd.read_parquet(trend_path)),
+        "agg_brecha_km_aj": _gap_table(km, cif),
+        "agg_waffle_24m": _waffle_table(cif),
         "kpi_validados": _kpi_table(build_claims_register() if claims is None else claims),
     }
 

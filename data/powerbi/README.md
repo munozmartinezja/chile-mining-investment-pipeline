@@ -2,7 +2,7 @@
 
 ## Español
 
-Ejecute `make powerbi` desde la raíz del repositorio para generar los seis
+Ejecute `make powerbi` desde la raíz del repositorio para generar los ocho
 archivos Parquet de esta carpeta. Los `.parquet` son artefactos locales y están
 ignorados por Git; este README es el único archivo versionado del directorio.
 
@@ -13,7 +13,7 @@ de relaciones, medidas, formatos y páginas está en
 
 ## English
 
-Run `make powerbi` from the repository root to generate the six Parquet files
+Run `make powerbi` from the repository root to generate the eight Parquet files
 in this directory. The `.parquet` files are local artifacts ignored by Git;
 this README is the only versioned file in the directory.
 

@@ -238,6 +238,18 @@ def test_rendered_brief_is_one_page_and_contains_no_portfolio_names(tmp_path: Pa
 
 
 @requires_figure_data
+def test_rendered_brief_is_byte_deterministic(tmp_path: Path) -> None:
+    metrics = compute_brief_metrics(_synthetic_register())
+    first = tmp_path / "first.pdf"
+    second = tmp_path / "second.pdf"
+
+    render_brief(metrics, "es", first)
+    render_brief(metrics, "es", second)
+
+    assert first.read_bytes() == second.read_bytes()
+
+
+@requires_figure_data
 @pytest.mark.parametrize(
     ("lang", "headline", "footer_sentence"),
     [

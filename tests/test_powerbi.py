@@ -63,18 +63,37 @@ def _write_sources(tmp_path: Path) -> dict[str, Path]:
         {
             "instrumento": ["DIA", "DIA", "DIA", "EIA", "EIA", "EIA"],
             "time_days": [0.0, 20.0, 50.0, 0.0, 20.0, 50.0],
-            "approval_probability": [0.0, 0.2, 0.4, 0.0, 0.1, 0.3],
+            "approval_probability": [0.0, 0.2, 0.4, 0.0, 0.2, 0.5],
             "approval_ci_lower": [0.0, 0.1, 0.3, 0.0, 0.05, 0.2],
             "approval_ci_upper": [0.0, 0.3, 0.5, 0.0, 0.15, 0.4],
         }
     ).to_parquet(sources["km_path"], index=False)
+    cif_values = {
+        "DIA": {
+            "aprobado": [0.0, 0.15, 0.25],
+            "desistido_o_abandonado": [0.0, 0.10, 0.20],
+            "termino_anticipado": [0.0, 0.05, 0.10],
+            "rechazado": [0.0, 0.02, 0.05],
+        },
+        "EIA": {
+            "aprobado": [0.0, 0.20, 0.317436],
+            "desistido_o_abandonado": [0.0, 0.10, 0.178864],
+            "termino_anticipado": [0.0, 0.04, 0.075000],
+            "rechazado": [0.0, 0.005, 0.010456],
+        },
+    }
     pd.DataFrame(
-        {
-            "instrumento": ["DIA", "DIA", "DIA", "EIA", "EIA", "EIA"],
-            "outcome": ["aprobado"] * 3 + ["rechazado"] * 3,
-            "time_days": [0.0, 20.0, 50.0, 0.0, 20.0, 50.0],
-            "cumulative_incidence": [0.0, 0.15, 0.25, 0.0, 0.02, 0.04],
-        }
+        [
+            {
+                "instrumento": instrument,
+                "outcome": outcome,
+                "time_days": time,
+                "cumulative_incidence": incidence,
+            }
+            for instrument, outcomes in cif_values.items()
+            for outcome, incidences in outcomes.items()
+            for time, incidence in zip([0.0, 20.0, 50.0], incidences, strict=True)
+        ]
     ).to_parquet(sources["cif_path"], index=False)
     pd.DataFrame(
         {
@@ -172,12 +191,39 @@ def test_monthly_curves_are_right_continuous_steps_from_zero_to_72(tmp_path: Pat
     assert dia.loc[2, "prob_aprobado"] == pytest.approx(0.4)
 
     cif = tables["agg_cif"].to_pandas()
-    assert len(cif) == 2 * 73
+    assert len(cif) == 2 * 4 * 73
     dia_approved = cif.loc[
         cif["instrumento"].eq("DIA") & cif["desenlace"].eq("aprobado")
     ].set_index("mes")
     assert dia_approved.loc[1, "incidencia"] == pytest.approx(0.15)
     assert dia_approved.loc[2, "incidencia"] == pytest.approx(0.25)
+
+    gap = tables["agg_brecha_km_aj"].to_pandas()
+    assert gap.columns.tolist() == ["instrumento", "mes", "km", "aj", "brecha"]
+    assert len(gap) == 2 * 73
+    assert gap["brecha"].ge(0).all()
+    eia_gap = gap.loc[gap["instrumento"].eq("EIA")].set_index("mes")
+    assert eia_gap.loc[24, ["km", "aj", "brecha"]].to_dict() == pytest.approx(
+        {"km": 0.5, "aj": 0.317436, "brecha": 0.182564}
+    )
+
+    waffle = tables["agg_waffle_24m"].to_pandas()
+    assert waffle.columns.tolist() == ["instrumento", "desenlace", "pct", "cuadros"]
+    assert waffle["desenlace"].tolist() == [
+        "aprobado",
+        "desistido_o_abandonado",
+        "termino_anticipado",
+        "rechazado",
+        "en_tramite",
+    ] * 2
+    assert waffle.groupby("instrumento", sort=False)["cuadros"].sum().tolist() == [100, 100]
+    assert waffle.loc[waffle["instrumento"].eq("EIA"), "cuadros"].tolist() == [
+        32,
+        18,
+        7,
+        1,
+        42,
+    ]
 
 
 def test_write_powerbi_exports_round_trips_each_parquet(tmp_path: Path) -> None:
@@ -238,6 +284,37 @@ def test_real_powerbi_exports_meet_acceptance_contract(tmp_path: Path) -> None:
     )
     assert tables["fact_expedientes"].num_rows == 995
     assert set(tables["kpi_validados"]["estado"].to_pylist()) == {"verificada"}
+    kpi_ids = set(tables["kpi_validados"]["claim_id"].to_pylist())
+    assert {
+        "km_aj_brecha_EIA_24m_pp",
+        "km_aj_brecha_DIA_24m_pp",
+        "sin_expediente_inversion_tarapaca",
+        "sin_expediente_inversion_atacama",
+        "sin_expediente_inversion_valparaiso",
+        "sin_expediente_inversion_antofagasta",
+        "sin_expediente_mayor_proyecto_inversion",
+        "aj_EIA_otros_desenlaces_24m",
+        "aj_EIA_sin_desenlace_24m",
+    } <= kpi_ids
+    assert "sin_expediente_regiones_suma_ok" not in kpi_ids
+    gap = tables["agg_brecha_km_aj"].to_pandas()
+    assert len(gap) == 146
+    assert gap[["km", "aj", "brecha"]].ge(0).all().all()
+    assert gap[["km", "aj", "brecha"]].le(1).all().all()
+    assert gap.loc[
+        gap["instrumento"].eq("EIA") & gap["mes"].eq(24),
+        ["km", "aj", "brecha"],
+    ].iloc[0].to_dict() == pytest.approx(
+        {"km": 0.41568682, "aj": 0.31743611, "brecha": 0.09825071}
+    )
+    waffle = tables["agg_waffle_24m"].to_pandas()
+    assert waffle.loc[waffle["instrumento"].eq("EIA"), "cuadros"].tolist() == [
+        32,
+        18,
+        7,
+        1,
+        42,
+    ]
     assert tables["fact_cartera"].schema.field("fecha_ingreso").type == pa.date32()
     assert tables["fact_expedientes"].schema.field("fecha_ingreso").type == pa.date32()
     assert tables["fact_expedientes"].schema.field("fecha_cierre").type == pa.date32()
