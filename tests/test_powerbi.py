@@ -176,6 +176,42 @@ def test_powerbi_translates_favourable_rca_pending_update_claim(tmp_path: Path) 
     ] == "Projects with a favourable RCA and an update under review"
 
 
+def test_powerbi_translates_population_count_claims(tmp_path: Path) -> None:
+    expected = {
+        "sea_poblacion_dia_n": "Admitted DIAs in the survival population",
+        "sea_poblacion_evento_aprobado_n": (
+            "Filings in the survival population approved by the cut-off"
+        ),
+        "sea_poblacion_evento_desistido_o_abandonado_n": (
+            "Filings in the survival population withdrawn or abandoned by the cut-off"
+        ),
+        "sea_poblacion_evento_termino_anticipado_n": (
+            "Filings in the survival population terminated early by the cut-off"
+        ),
+        "sea_poblacion_evento_rechazado_n": (
+            "Filings in the survival population rejected by the cut-off"
+        ),
+        "sea_poblacion_evento_en_tramite_n": (
+            "Filings in the survival population without an outcome by the cut-off"
+        ),
+    }
+    claims = pd.DataFrame(
+        {
+            "claim_id": list(expected),
+            "texto_es": [f"Conteo {claim_id}" for claim_id in expected],
+            "valor": [871, 681, 192, 70, 11, 41],
+            "unidad": ["expedientes"] * len(expected),
+            "estado": ["verificada"] * len(expected),
+        }
+    )
+
+    kpis = build_powerbi_tables(
+        **_write_sources(tmp_path), claims=claims
+    )["kpi_validados"].to_pandas().set_index("claim_id")
+
+    assert kpis["texto_en"].to_dict() == expected
+
+
 def test_monthly_curves_are_right_continuous_steps_from_zero_to_72(tmp_path: Path) -> None:
     tables = build_powerbi_tables(**_write_sources(tmp_path), claims=_claims())
 
@@ -284,7 +320,8 @@ def test_real_powerbi_exports_meet_acceptance_contract(tmp_path: Path) -> None:
     )
     assert tables["fact_expedientes"].num_rows == 995
     assert set(tables["kpi_validados"]["estado"].to_pylist()) == {"verificada"}
-    kpi_ids = set(tables["kpi_validados"]["claim_id"].to_pylist())
+    kpis = tables["kpi_validados"].to_pandas().set_index("claim_id")
+    kpi_ids = set(kpis.index)
     assert {
         "km_aj_brecha_EIA_24m_pp",
         "km_aj_brecha_DIA_24m_pp",
@@ -296,6 +333,28 @@ def test_real_powerbi_exports_meet_acceptance_contract(tmp_path: Path) -> None:
         "aj_EIA_otros_desenlaces_24m",
         "aj_EIA_sin_desenlace_24m",
     } <= kpi_ids
+    facts = tables["fact_expedientes"].to_pandas()
+    exported_counts = {
+        "sea_poblacion_admitida_n": len(facts),
+        "sea_poblacion_dia_n": int(facts["instrumento"].eq("DIA").sum()),
+        "sea_poblacion_eia_n": int(facts["instrumento"].eq("EIA").sum()),
+        "sea_poblacion_evento_aprobado_n": int(facts["evento"].eq("aprobado").sum()),
+        "sea_poblacion_evento_desistido_o_abandonado_n": int(
+            facts["evento"].eq("desistido_o_abandonado").sum()
+        ),
+        "sea_poblacion_evento_termino_anticipado_n": int(
+            facts["evento"].eq("termino_anticipado").sum()
+        ),
+        "sea_poblacion_evento_rechazado_n": int(
+            facts["evento"].eq("rechazado").sum()
+        ),
+        "sea_poblacion_evento_en_tramite_n": int(
+            facts["evento"].eq("en_tramite").sum()
+        ),
+    }
+    assert exported_counts == {
+        claim_id: int(kpis.loc[claim_id, "valor"]) for claim_id in exported_counts
+    }
     assert "sin_expediente_regiones_suma_ok" not in kpi_ids
     gap = tables["agg_brecha_km_aj"].to_pandas()
     assert len(gap) == 146

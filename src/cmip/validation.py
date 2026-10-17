@@ -536,6 +536,17 @@ def build_claims_register(
     )
     admitted_n = int(len(population))
     admitted_eia_n = int(population["instrumento"].eq("EIA").sum())
+    admitted_dia_n = int(population["instrumento"].eq("DIA").sum())
+    population_events = (
+        "aprobado",
+        "desistido_o_abandonado",
+        "termino_anticipado",
+        "rechazado",
+        "en_tramite",
+    )
+    event_counts = {
+        event: int(population["evento"].eq(event).sum()) for event in population_events
+    }
     admitted_n_sql = int(
         _duckdb_frame(
             f"""
@@ -559,6 +570,27 @@ def build_claims_register(
             sea_path,
         ).loc[0, "value"]
     )
+    population_counts_sql = _duckdb_frame(
+        f"""
+        SELECT instrumento, evento, COUNT(*) AS n
+        FROM read_parquet(?)
+        WHERE admitido = TRUE AND fecha_inconsistente = FALSE
+          AND NOT {MAIN_POPULATION_SQL_EXCLUSION}
+        GROUP BY instrumento, evento
+        """,
+        sea_path,
+    )
+    admitted_dia_n_sql = int(
+        population_counts_sql.loc[
+            population_counts_sql["instrumento"].eq("DIA"), "n"
+        ].sum()
+    )
+    event_counts_sql = {
+        event: int(
+            population_counts_sql.loc[population_counts_sql["evento"].eq(event), "n"].sum()
+        )
+        for event in population_events
+    }
     rows.extend(
         [
             _claim(
@@ -593,6 +625,72 @@ def build_claims_register(
                 admitted_eia_n_sql,
                 0.0,
                 "Denominador de los KPI de aprobación acumulada de EIA.",
+            ),
+            _claim(
+                "sea_poblacion_dia_n",
+                "DIA admitidos en la población de supervivencia",
+                admitted_dia_n,
+                "expedientes",
+                str(sea_path.relative_to(PROJECT_ROOT)),
+                "Conteo de DIA admitidos con fechas consistentes.",
+                admitted_dia_n_sql,
+                0.0,
+                "Complemento de los EIA dentro de la población de supervivencia.",
+            ),
+        ]
+    )
+    event_text = {
+        "aprobado": "Expedientes de la población con desenlace aprobado al corte",
+        "desistido_o_abandonado": (
+            "Expedientes de la población desistidos o abandonados al corte"
+        ),
+        "termino_anticipado": (
+            "Expedientes de la población con término anticipado al corte"
+        ),
+        "rechazado": "Expedientes de la población rechazados al corte",
+        "en_tramite": "Expedientes de la población sin desenlace al corte",
+    }
+    rows.extend(
+        _claim(
+            f"sea_poblacion_evento_{event}_n",
+            event_text[event],
+            event_counts[event],
+            "expedientes",
+            str(sea_path.relative_to(PROJECT_ROOT)),
+            f"Conteo de la población de supervivencia con evento = '{event}'.",
+            event_counts_sql[event],
+            0.0,
+            (
+                "Caso censurado al 25-08-2026; no equivale a rechazo."
+                if event == "en_tramite"
+                else "Clasificación de evento usada por las curvas de supervivencia y el waffle."
+            ),
+        )
+        for event in population_events
+    )
+    rows.extend(
+        [
+            _claim(
+                "sea_poblacion_eventos_suma_ok",
+                "Los cinco desenlaces suman la población admitida",
+                sum(event_counts.values()) == admitted_n,
+                "bool",
+                str(sea_path.relative_to(PROJECT_ROOT)),
+                "Suma de los cinco conteos por evento igual al total admitido.",
+                sum(event_counts_sql.values()) == admitted_n_sql,
+                0.0,
+                "Control de exhaustividad y exclusión mutua de los desenlaces.",
+            ),
+            _claim(
+                "sea_poblacion_instrumentos_suma_ok",
+                "DIA más EIA suman la población admitida",
+                admitted_dia_n + admitted_eia_n == admitted_n,
+                "bool",
+                str(sea_path.relative_to(PROJECT_ROOT)),
+                "Suma de los conteos DIA y EIA igual al total admitido.",
+                admitted_dia_n_sql + admitted_eia_n_sql == admitted_n_sql,
+                0.0,
+                "Control de exhaustividad de los dos instrumentos admitidos.",
             ),
         ]
     )

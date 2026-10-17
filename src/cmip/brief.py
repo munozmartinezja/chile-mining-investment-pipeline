@@ -723,6 +723,22 @@ def write_claims_map(outputs: dict[str, Path], metrics: pd.DataFrame) -> Path:
         ),
         "evidencia": "docs/reconciliation_sea_oficial_summary.json",
     }
+    result.loc[len(result)] = {
+        "lang": "audit",
+        "bloque": "dashboard_expedientes",
+        "texto_renderizado": "",
+        "claim_ids": (
+            "sea_poblacion_dia_n;"
+            "sea_poblacion_evento_aprobado_n;"
+            "sea_poblacion_evento_desistido_o_abandonado_n;"
+            "sea_poblacion_evento_termino_anticipado_n;"
+            "sea_poblacion_evento_rechazado_n;"
+            "sea_poblacion_evento_en_tramite_n;"
+            "sea_poblacion_eventos_suma_ok;"
+            "sea_poblacion_instrumentos_suma_ok"
+        ),
+        "evidencia": "data/processed/survival_population.parquet",
+    }
     CLAIMS_MAP_PATH.parent.mkdir(parents=True, exist_ok=True)
     result.to_csv(CLAIMS_MAP_PATH, index=False)
     return CLAIMS_MAP_PATH

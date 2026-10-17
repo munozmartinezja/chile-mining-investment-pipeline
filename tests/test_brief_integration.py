@@ -251,3 +251,23 @@ def test_claims_map_records_official_sea_validation_without_adding_brief_copy() 
         "sea_oficial_fecha_respuesta"
     )
     assert audit.iloc[0]["evidencia"] == "docs/reconciliation_sea_oficial_summary.json"
+
+
+def test_claims_map_records_dashboard_population_counts_without_brief_copy() -> None:
+    claims_map = pd.read_csv(ROOT / "docs/brief/claims_map.csv", keep_default_na=False)
+    support = claims_map.loc[claims_map["bloque"].eq("dashboard_expedientes")]
+
+    assert len(support) == 1
+    assert support.iloc[0]["lang"] == "audit"
+    assert support.iloc[0]["texto_renderizado"] == ""
+    assert set(support.iloc[0]["claim_ids"].split(";")) == {
+        "sea_poblacion_dia_n",
+        "sea_poblacion_evento_aprobado_n",
+        "sea_poblacion_evento_desistido_o_abandonado_n",
+        "sea_poblacion_evento_termino_anticipado_n",
+        "sea_poblacion_evento_rechazado_n",
+        "sea_poblacion_evento_en_tramite_n",
+        "sea_poblacion_eventos_suma_ok",
+        "sea_poblacion_instrumentos_suma_ok",
+    }
+    assert support.iloc[0]["evidencia"] == "data/processed/survival_population.parquet"

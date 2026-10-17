@@ -96,6 +96,22 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
     indexed = register.set_index("claim_id")
     assert indexed.loc["sea_poblacion_admitida_n", "valor"] == 995
     assert indexed.loc["sea_poblacion_eia_n", "valor"] == 124
+    expected_population_counts = {
+        "sea_poblacion_dia_n": 871,
+        "sea_poblacion_evento_aprobado_n": 681,
+        "sea_poblacion_evento_desistido_o_abandonado_n": 192,
+        "sea_poblacion_evento_termino_anticipado_n": 70,
+        "sea_poblacion_evento_rechazado_n": 11,
+        "sea_poblacion_evento_en_tramite_n": 41,
+    }
+    for claim_id, expected_value in expected_population_counts.items():
+        assert indexed.loc[claim_id, "valor"] == expected_value
+        assert indexed.loc[claim_id, "valor_recalculado"] == expected_value
+        assert indexed.loc[claim_id, "estado"] == "verificada"
+    assert indexed.loc["sea_poblacion_eventos_suma_ok", "valor"]
+    assert indexed.loc["sea_poblacion_eventos_suma_ok", "valor_recalculado"]
+    assert indexed.loc["sea_poblacion_instrumentos_suma_ok", "valor"]
+    assert indexed.loc["sea_poblacion_instrumentos_suma_ok", "valor_recalculado"]
     assert indexed.loc["eia_100m_n", "valor"] == 81
     assert indexed.loc["poblacion_periodo_inicio", "valor"] == 2011
     assert indexed.loc["poblacion_periodo_fin", "valor"] == 2026

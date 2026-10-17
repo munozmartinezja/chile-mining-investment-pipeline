@@ -394,6 +394,22 @@ def _english_claim_text(claim_id: str) -> str:
         "cartera_proyectos_n": "Projects in the Cochilco portfolio",
         "sea_poblacion_admitida_n": "Admitted mining filings in the survival population",
         "sea_poblacion_eia_n": "Admitted EIAs in the survival population",
+        "sea_poblacion_dia_n": "Admitted DIAs in the survival population",
+        "sea_poblacion_evento_aprobado_n": (
+            "Filings in the survival population approved by the cut-off"
+        ),
+        "sea_poblacion_evento_desistido_o_abandonado_n": (
+            "Filings in the survival population withdrawn or abandoned by the cut-off"
+        ),
+        "sea_poblacion_evento_termino_anticipado_n": (
+            "Filings in the survival population terminated early by the cut-off"
+        ),
+        "sea_poblacion_evento_rechazado_n": (
+            "Filings in the survival population rejected by the cut-off"
+        ),
+        "sea_poblacion_evento_en_tramite_n": (
+            "Filings in the survival population without an outcome by the cut-off"
+        ),
         "sea_oficial_expedientes_coinciden_n": (
             "Pipeline filings present in the official SEA response"
         ),
