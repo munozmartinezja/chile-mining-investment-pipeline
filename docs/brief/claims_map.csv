@@ -74,3 +74,4 @@ en,metodo,Figures are reproducible from the repository's code and data and check
 en,autor,J. A. Muñoz Martínez · github.com/munozmartinezja,,src/cmip/config.py:AUTHOR_LINE
 en,pie,github.com/munozmartinezja/chile-mining-investment-pipeline,,README.md
 audit,validacion_sea_oficial,,sea_oficial_expedientes_coinciden_n;sea_oficial_diferencias_previas_al_corte_n;sea_oficial_fecha_respuesta,docs/reconciliation_sea_oficial_summary.json
+audit,dashboard_expedientes,,sea_poblacion_dia_n;sea_poblacion_evento_aprobado_n;sea_poblacion_evento_desistido_o_abandonado_n;sea_poblacion_evento_termino_anticipado_n;sea_poblacion_evento_rechazado_n;sea_poblacion_evento_en_tramite_n;sea_poblacion_eventos_suma_ok;sea_poblacion_instrumentos_suma_ok,data/processed/survival_population.parquet
