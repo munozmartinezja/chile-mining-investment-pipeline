@@ -52,8 +52,9 @@ def register():
     return build_ml_claims_register()
 
 
-# ── Always-run structural tests ───────────────────────────────────────────────
+# ── Structural tests (need the local data/ml/ outputs) ────────────────────────
 
+@requires_local_data
 def test_claims_schema_columns(register):
     from cmip.validation import CLAIM_COLUMNS
 
@@ -63,11 +64,13 @@ def test_claims_schema_columns(register):
     )
 
 
+@requires_local_data
 def test_claims_prefix(register):
     bad = [cid for cid in register["claim_id"] if not cid.startswith("ml_")]
     assert bad == [], f"claim_ids without 'ml_' prefix: {bad}"
 
 
+@requires_local_data
 def test_claims_unique(register):
     dupes = register[register["claim_id"].duplicated()]["claim_id"].tolist()
     assert dupes == [], f"Duplicate claim_ids: {dupes}"
