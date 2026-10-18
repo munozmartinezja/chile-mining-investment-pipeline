@@ -228,7 +228,11 @@ def test_altered_summary_is_rejected_explicitly(
 
 
 @pytest.mark.skipif(
-    not (OFFICIAL_PATH.exists() and NUESTRA_PATH.exists()),
+    not (
+        OFFICIAL_PATH.exists()
+        and NUESTRA_PATH.exists()
+        and (ROOT / "data/processed/cochilco_seia.parquet").exists()
+    ),
     reason="requires local official SEA response and local analysis data",
 )
 def test_official_recalculation_preserves_every_published_rounded_claim(recwarn) -> None:  # noqa: ANN001
