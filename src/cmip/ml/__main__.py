@@ -122,6 +122,66 @@ def _draft_summary(dataset: pd.DataFrame, oof_result) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _build_metrics_agg_df(oof_result) -> pd.DataFrame:
+    """Build long-format metrics aggregation DataFrame for ml_metrics_agg.parquet."""
+    agg = oof_result.metrics_agg
+    ci = oof_result.bootstrap_ci
+    rows = []
+    nan = float("nan")
+
+    plain_metrics = [
+        "roc_auc", "pr_auc", "brier", "brier_skill", "log_loss",
+        "roc_auc_media_folds", "roc_auc_min_fold",
+    ]
+    for model in ["B0", "M1", "M2", "M2c"]:
+        m = agg[model]
+        for metrica in plain_metrics:
+            val = m.get(metrica, nan)
+            ic_lo = ci.get(f"{model}_roc_auc_ci_lo", nan) if metrica == "roc_auc" else nan
+            ic_hi = ci.get(f"{model}_roc_auc_ci_hi", nan) if metrica == "roc_auc" else nan
+            rows.append({"model": model, "metrica": metrica,
+                         "valor": val, "ic95_inf": ic_lo, "ic95_sup": ic_hi})
+
+    for model_a, model_b in [("M2c", "B0"), ("M1", "B0"), ("M2", "B0")]:
+        key = f"{model_a}_minus_{model_b}"
+        rows.append({"model": key, "metrica": "roc_auc", "valor": nan,
+                     "ic95_inf": ci.get(f"{key}_ci_lo", nan),
+                     "ic95_sup": ci.get(f"{key}_ci_hi", nan)})
+        if model_a in ("M2c", "M1"):
+            rows.append({"model": key, "metrica": "brier", "valor": nan,
+                         "ic95_inf": ci.get(f"{key}_brier_ci_lo", nan),
+                         "ic95_sup": ci.get(f"{key}_brier_ci_hi", nan)})
+            rows.append({"model": key, "metrica": "logloss", "valor": nan,
+                         "ic95_inf": ci.get(f"{key}_logloss_ci_lo", nan),
+                         "ic95_sup": ci.get(f"{key}_logloss_ci_hi", nan)})
+
+    # EIA per-model results
+    for model in ["M1", "M2", "M2c"]:
+        em = oof_result.eia_metrics.get(model, {})
+        if isinstance(em, dict) and "roc_auc" in em:
+            for metrica, fld in [("roc_auc", "roc_auc"), ("brier", "brier"),
+                                  ("n", "n"), ("positivos", "positivos")]:
+                rows.append({"model": f"EIA_{model}", "metrica": metrica,
+                             "valor": em.get(fld, nan), "ic95_inf": nan, "ic95_sup": nan})
+        else:
+            rows.append({"model": f"EIA_{model}", "metrica": "resultado",
+                         "valor": nan, "ic95_inf": nan, "ic95_sup": nan})
+
+    # DIA per-model results (B0, M1, M2, M2c)
+    for model in ["B0", "M1", "M2", "M2c"]:
+        dm = oof_result.dia_metrics.get(model, {})
+        if isinstance(dm, dict) and "roc_auc" in dm:
+            for metrica, fld in [("roc_auc", "roc_auc"), ("brier", "brier"),
+                                  ("n", "n"), ("positivos", "positivos")]:
+                rows.append({"model": f"DIA_{model}", "metrica": metrica,
+                             "valor": dm.get(fld, nan), "ic95_inf": nan, "ic95_sup": nan})
+        else:
+            rows.append({"model": f"DIA_{model}", "metrica": "resultado",
+                         "valor": nan, "ic95_inf": nan, "ic95_sup": nan})
+
+    return pd.DataFrame(rows)
+
+
 def cmd_train(args: argparse.Namespace) -> None:
     from cmip.ml.dataset import load_ml_population
     from cmip.ml.evaluate import run_oof
@@ -148,6 +208,7 @@ def cmd_train(args: argparse.Namespace) -> None:
     oof.calibration.to_parquet(ML_DIR / "ml_calibration.parquet", index=False)
     oof.logit_coefs.to_parquet(ML_DIR / "ml_logit_coefs.parquet", index=False)
     oof.ablation.to_parquet(ML_DIR / "ml_ablation.parquet", index=False)
+    _build_metrics_agg_df(oof).to_parquet(ML_DIR / "ml_metrics_agg.parquet", index=False)
 
     draft = _draft_summary(dataset, oof)
     (ML_DIR / "ml_results_draft.md").write_text(draft, encoding="utf-8")
@@ -159,17 +220,26 @@ def cmd_train(args: argparse.Namespace) -> None:
     print(f"\nSalidas escritas en {ML_DIR}/")
 
 
+def cmd_claims(args: argparse.Namespace) -> None:
+    from cmip.ml.claims import main as claims_main
+
+    claims_main()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m cmip.ml")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("features", help="Build and save ML dataset")
     sub.add_parser("train", help="Run split, train models, evaluate OOF")
+    sub.add_parser("claims", help="Build ML claims register and write docs/ml_results.md")
     args = parser.parse_args()
 
     if args.command == "features":
         cmd_features(args)
     elif args.command == "train":
         cmd_train(args)
+    elif args.command == "claims":
+        cmd_claims(args)
 
 
 if __name__ == "__main__":

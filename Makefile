@@ -50,4 +50,7 @@ ml-features:
 ml-train:
 	$(PYTHON) -m cmip.ml train
 
-ml: ml-features ml-train
+ml-claims:
+	$(PYTHON) -m cmip.ml claims
+
+ml: ml-features ml-train ml-claims

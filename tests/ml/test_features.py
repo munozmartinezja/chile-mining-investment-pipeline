@@ -25,6 +25,7 @@ def test_titular_features_no_future_leakage():
             "fecha_ingreso": "2015-01-01",
             "fecha_cierre": "2016-06-01",
             "evento": "aprobado",
+            "seco_nombre": "Minería",
         },
         {
             "exp_id": "T2",
@@ -32,6 +33,7 @@ def test_titular_features_no_future_leakage():
             "fecha_ingreso": "2017-03-01",
             "fecha_cierre": None,
             "evento": None,
+            "seco_nombre": "Minería",
         },
     ], date_cols=["fecha_ingreso", "fecha_cierre"])
 
@@ -56,6 +58,7 @@ def test_titular_same_day_close_not_counted():
             "fecha_ingreso": "2016-01-01",
             "fecha_cierre": "2018-05-01",
             "evento": "aprobado",
+            "seco_nombre": "Minería",
         },
     ], date_cols=["fecha_ingreso", "fecha_cierre"])
 
@@ -151,6 +154,7 @@ def test_build_ml_population_no_private_output():
     sea["region"] = "Atacama"
     sea["tipologia"] = "Proyecto"
     sea["inversion_musd"] = 100.0
+    sea["seco_nombre"] = "Minería"
 
     result = build_ml_population(pop, sea_projects=sea)
     assert "titular_nombre" not in result.columns
@@ -265,6 +269,7 @@ def test_null_titular_features_are_zero():
             "fecha_ingreso": "2015-01-01",
             "fecha_cierre": "2016-01-01",
             "evento": "aprobado",
+            "seco_nombre": "Minería",
         },
     ], date_cols=["fecha_ingreso", "fecha_cierre"])
 
@@ -326,3 +331,28 @@ def test_reingreso_probable_mining_only():
     assert result_with_mining.iloc[0]["reingreso_probable"] == 1, (
         "Mining closure within 365 days must set reingreso_probable=1"
     )
+
+
+# ── Robustness: seco_nombre required ─────────────────────────────────────────
+
+def test_add_titular_features_missing_seco_nombre_raises():
+    """add_titular_features raises ValueError when seco_nombre column is absent."""
+    from cmip.ml.features import add_titular_features
+
+    sea = _make_df([{
+        "exp_id": "S1",
+        "titular_nombre": "Empresa X",
+        "fecha_ingreso": "2015-01-01",
+        "fecha_cierre": None,
+        "evento": None,
+        # deliberately no seco_nombre
+    }], date_cols=["fecha_ingreso", "fecha_cierre"])
+
+    df = _make_df([{
+        "exp_id": "N1",
+        "titular_nombre": "Empresa X",
+        "fecha_ingreso": "2018-01-01",
+    }], date_cols=["fecha_ingreso"])
+
+    with pytest.raises(ValueError, match="seco_nombre"):
+        add_titular_features(df, sea)

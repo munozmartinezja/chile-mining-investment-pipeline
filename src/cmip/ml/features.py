@@ -110,11 +110,14 @@ def add_titular_features(
 
     df["_norm_titular"] = df["titular_nombre"].map(_normalize_name)
 
-    # A5: reingreso_probable must be mining-only
-    mining_sea = sea
-    if "seco_nombre" in sea_projects.columns:
-        mining_sea = sea_projects[sea_projects["seco_nombre"] == "Minería"][cols].copy()
-        mining_sea["_norm_titular"] = mining_sea["titular_nombre"].map(_normalize_name)
+    # A5: reingreso_probable must be mining-only; seco_nombre is required
+    if "seco_nombre" not in sea_projects.columns:
+        raise ValueError(
+            "add_titular_features requires 'seco_nombre' in sea_projects; "
+            "pass a DataFrame that includes the sector column."
+        )
+    mining_sea = sea_projects[sea_projects["seco_nombre"] == "Minería"][cols].copy()
+    mining_sea["_norm_titular"] = mining_sea["titular_nombre"].map(_normalize_name)
 
     n_previos = []
     aprob_prev = []

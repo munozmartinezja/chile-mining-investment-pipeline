@@ -30,6 +30,8 @@ BOOTSTRAP_N = 1_000
 BOOTSTRAP_SEED = 42
 EIA_MIN_N = 30
 EIA_MIN_CLASS = 5
+DIA_MIN_N = 30
+DIA_MIN_CLASS = 5
 
 _RARE_CATS = ["tipologia", "region"]
 _PLAIN_CATS = ["instrumento", "macro_zona"]
@@ -90,6 +92,7 @@ class OofResult:
     calibration: pd.DataFrame
     logit_coefs: pd.DataFrame
     eia_metrics: dict[str, Any]
+    dia_metrics: dict[str, Any]
     ablation: pd.DataFrame
     skipped: list[dict[str, Any]] = field(default_factory=list)
 
@@ -133,27 +136,38 @@ def _calibration_table(
     return pd.DataFrame(rows)
 
 
-def _eia_metrics_for_model(
+def _subgroup_metrics_for_model(
     oof: pd.DataFrame,
     pred_col: str,
+    instrumento: str,
+    min_n: int,
+    min_class: int,
 ) -> dict[str, Any]:
-    eia_mask = oof["instrumento"] == "EIA"
-    eia_y = oof.loc[eia_mask, "y"].to_numpy()
-    eia_pred = oof.loc[eia_mask, pred_col].to_numpy()
-    eia_b0 = oof.loc[eia_mask, "pred_b0"].to_numpy()
-    n_eia = int(eia_mask.sum())
-    n_eia_pos = int(eia_y.sum())
-    n_eia_neg = n_eia - n_eia_pos
-    if n_eia < EIA_MIN_N or n_eia_pos < EIA_MIN_CLASS or n_eia_neg < EIA_MIN_CLASS:
+    mask = oof["instrumento"] == instrumento
+    y = oof.loc[mask, "y"].to_numpy()
+    pred = oof.loc[mask, pred_col].to_numpy()
+    b0 = oof.loc[mask, "pred_b0"].to_numpy()
+    n = int(mask.sum())
+    n_pos = int(y.sum())
+    n_neg = n - n_pos
+    if n < min_n or n_pos < min_class or n_neg < min_class:
         return {
             "resultado": "insuficiente",
             "motivo": (
-                f"n={n_eia} (mínimo {EIA_MIN_N}), "
-                f"positivos={n_eia_pos}, negativos={n_eia_neg} "
-                f"(mínimo {EIA_MIN_CLASS} de cada clase)"
+                f"n={n} (mínimo {min_n}), "
+                f"positivos={n_pos}, negativos={n_neg} "
+                f"(mínimo {min_class} de cada clase)"
             ),
         }
-    return _metrics_for(eia_y, eia_pred, eia_b0)
+    return _metrics_for(y, pred, b0)
+
+
+def _eia_metrics_for_model(oof: pd.DataFrame, pred_col: str) -> dict[str, Any]:
+    return _subgroup_metrics_for_model(oof, pred_col, "EIA", EIA_MIN_N, EIA_MIN_CLASS)
+
+
+def _dia_metrics_for_model(oof: pd.DataFrame, pred_col: str) -> dict[str, Any]:
+    return _subgroup_metrics_for_model(oof, pred_col, "DIA", DIA_MIN_N, DIA_MIN_CLASS)
 
 
 def _run_ablation(
@@ -305,6 +319,31 @@ def run_oof(
         ci[f"{key}_ci_lo"] = float(np.percentile(diffs_arr, 2.5))
         ci[f"{key}_ci_hi"] = float(np.percentile(diffs_arr, 97.5))
 
+    # Bootstrap Brier and log-loss CIs (same scheme and seed as ROC AUC)
+    for model_a, model_b in [("M2c", "B0"), ("M1", "B0")]:
+        col_a = f"pred_{model_a.lower()}"
+        col_b = f"pred_{model_b.lower()}"
+        rng = np.random.default_rng(BOOTSTRAP_SEED)
+        brier_diffs: list[float] = []
+        ll_diffs: list[float] = []
+        for _ in range(BOOTSTRAP_N):
+            idx = rng.integers(0, len(y_all), size=len(y_all))
+            yt = y_all[idx]
+            pa = oof[col_a].to_numpy()[idx]
+            pb = oof[col_b].to_numpy()[idx]
+            brier_diffs.append(
+                brier_score_loss(yt, pa) - brier_score_loss(yt, pb)
+            )
+            ll_diffs.append(
+                log_loss(yt, np.clip(pa, 1e-15, 1 - 1e-15))
+                - log_loss(yt, np.clip(pb, 1e-15, 1 - 1e-15))
+            )
+        key = f"{model_a}_minus_{model_b}"
+        ci[f"{key}_brier_ci_lo"] = float(np.percentile(brier_diffs, 2.5))
+        ci[f"{key}_brier_ci_hi"] = float(np.percentile(brier_diffs, 97.5))
+        ci[f"{key}_logloss_ci_lo"] = float(np.percentile(ll_diffs, 2.5))
+        ci[f"{key}_logloss_ci_hi"] = float(np.percentile(ll_diffs, 97.5))
+
     # E1: calibration tables for M1, M2, M2c
     cal_frames = []
     for m, col in [("M1", "pred_m1"), ("M2", "pred_m2"), ("M2c", "pred_m2c")]:
@@ -315,6 +354,11 @@ def run_oof(
     eia_metrics: dict[str, Any] = {}
     for m, col in [("M1", "pred_m1"), ("M2", "pred_m2"), ("M2c", "pred_m2c")]:
         eia_metrics[m] = _eia_metrics_for_model(oof, col)
+
+    # DIA subgroup metrics for B0, M1, M2, M2c
+    dia_metrics: dict[str, Any] = {}
+    for m, col in [("B0", "pred_b0"), ("M1", "pred_m1"), ("M2", "pred_m2"), ("M2c", "pred_m2c")]:
+        dia_metrics[m] = _dia_metrics_for_model(oof, col)
 
     # Descriptive logistic fit on all eligible data
     X_all, y_all_series = split_xy(dataset)
@@ -337,6 +381,7 @@ def run_oof(
         calibration=calibration,
         logit_coefs=logit_coefs,
         eia_metrics=eia_metrics,
+        dia_metrics=dia_metrics,
         ablation=ablation,
         skipped=skipped_info,
     )

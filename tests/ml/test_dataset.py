@@ -42,6 +42,7 @@ def _build_ml_population_synthetic(population: pd.DataFrame) -> pd.DataFrame:
     sea["inversion_musd"] = population.get(
         "inversion_musd", pd.Series([100.0] * len(population))
     )
+    sea["seco_nombre"] = "Minería"
 
     return build_ml_population(population, sea_projects=sea)
 
@@ -228,6 +229,48 @@ def test_build_ml_population_column_schema():
         f"Extra: {set(result.columns) - expected_cols}, "
         f"Missing: {expected_cols - set(result.columns)}"
     )
+
+
+# ── Robustness: missing features after add_features ──────────────────────────
+
+def test_build_ml_population_raises_on_missing_features(monkeypatch):
+    """build_ml_population raises ValueError when add_features drops a feature."""
+    import cmip.ml.features as feat_mod
+    from cmip.config import SEA_DATA_CURRENCY_DATE
+    from cmip.ml.dataset import HORIZON_TD, build_ml_population
+    from cmip.ml.features import ALL_FEATURES
+    from cmip.ml.features import add_features as real_add_features
+
+    def _broken_add_features(df, sea_projects=None):
+        result = real_add_features(df, sea_projects=sea_projects)
+        return result.drop(columns=[ALL_FEATURES[0]])
+
+    monkeypatch.setattr(feat_mod, "add_features", _broken_add_features)
+
+    cutoff = pd.Timestamp(SEA_DATA_CURRENCY_DATE)
+    ingreso = cutoff - HORIZON_TD - pd.to_timedelta(10, unit="D")
+    pop = _make_population([{
+        "exp_id": "X1",
+        "fecha_ingreso": ingreso,
+        "fecha_cierre": ingreso + pd.to_timedelta(400, unit="D"),
+        "evento": "aprobado",
+        "duration_days": 400.0,
+        "instrumento": "DIA",
+        "tipologia": "Proyecto",
+        "region": "Atacama",
+        "macro_zona": "Norte",
+        "titular_nombre": "Empresa X",
+        "inversion_musd": 100.0,
+    }])
+    sea = pop[["exp_id", "titular_nombre", "fecha_ingreso", "fecha_cierre", "evento"]].copy()
+    sea["instrumento"] = "DIA"
+    sea["region"] = "Atacama"
+    sea["tipologia"] = "Proyecto"
+    sea["inversion_musd"] = 100.0
+    sea["seco_nombre"] = "Minería"
+
+    with pytest.raises(ValueError, match="missing features"):
+        build_ml_population(pop, sea_projects=sea)
 
 
 # ── Test 11: integration with actual data ─────────────────────────────────────

@@ -50,6 +50,12 @@ def build_ml_population(
 
     result = add_features(eligible, sea_projects=sea_projects)
 
+    missing_feats = [f for f in ALL_FEATURES if f not in result.columns]
+    if missing_feats:
+        raise ValueError(
+            f"build_ml_population: missing features after add_features: {sorted(missing_feats)}"
+        )
+
     # Drop private columns used internally during feature engineering
     result = result.drop(
         columns=[c for c in _PRIVATE_OUTPUT_COLUMNS if c in result.columns]
