@@ -234,6 +234,14 @@ locales. Las pruebas de integración SEA se omiten en CI cuando faltan esos
 datos; la lógica de transformación y los estimadores se cubren con datos
 sintéticos.
 
+### Modelo predictivo (C1-ML)
+
+¿Con lo conocido al ingreso, se puede anticipar la aprobación a 24 meses?
+El historial del titular al momento del ingreso permite ordenar el riesgo de aprobación de las DIA mejor que la tasa histórica. La calibración reduce el error de las probabilidades, pero esa mejora no es estadísticamente concluyente. No sirve para EIA.
+En validación rolling-origin por año de ingreso, M2c alcanza un ROC AUC de **0,737** dentro de las DIA, donde la tasa histórica por instrumento no ordena (es constante); en el total, **0,733** frente a 0,612 de la línea base, y Brier **0,198** frente a 0,213.
+En EIA el modelo no discrimina (ROC AUC **0,449**; 45 expedientes de prueba): no debe usarse para ese instrumento.
+Ver [docs/ml_results.md](docs/ml_results.md).
+
 ### Licencia
 
 El código se distribuye bajo licencia MIT. Los datos fuente conservan las
@@ -469,6 +477,14 @@ The `.twbx` files, intermediate/processed Parquet files, and DuckDB databases
 are local artifacts. SEA integration tests are skipped in CI when these local
 data are unavailable; synthetic fixtures cover transformation and estimator
 logic.
+
+### Predictive model (C1-ML)
+
+Can approval at 24 months be anticipated from information available at intake?
+Applicant history at intake ranks DIA approval risk better than the historical rate. Calibration lowers probability error, but the improvement is not statistically conclusive. It does not work for EIA.
+Under rolling-origin year-by-year validation, M2c reaches a ROC AUC of **0.737** within DIA, where the per-instrument historical rate cannot rank (it is constant); overall, **0.733** versus 0.612 for the baseline, and Brier **0.198** versus 0.213.
+For EIA the model does not discriminate (ROC AUC **0.449**; 45 test filings): it should not be used for that instrument.
+See [docs/ml_results.md](docs/ml_results.md).
 
 ### License
 
