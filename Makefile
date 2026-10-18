@@ -1,4 +1,4 @@
-.PHONY: setup data survival portfolio analysis validation brief brief-draft powerbi test lint
+.PHONY: setup setup-ml data survival portfolio analysis validation brief brief-draft powerbi test lint ml-features ml-train ml
 
 PYTHON ?= .venv/bin/python
 
@@ -40,3 +40,14 @@ test:
 
 lint:
 	$(PYTHON) -m ruff check .
+
+setup-ml:
+	uv pip install --python $(PYTHON) -e ".[ml]"
+
+ml-features:
+	$(PYTHON) -m cmip.ml features
+
+ml-train:
+	$(PYTHON) -m cmip.ml train
+
+ml: ml-features ml-train

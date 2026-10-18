@@ -24,3 +24,7 @@ docs/powerbi/model.md
 docs/powerbi/guia_*.md
 PROMPT_*.md
 docs/**/notas_*.md
+
+# ML outputs (no versionar)
+data/ml/*
+!data/ml/.gitkeep
