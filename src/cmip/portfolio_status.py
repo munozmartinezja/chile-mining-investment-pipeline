@@ -39,8 +39,8 @@ DECISION_CRITERIA = {
     "regla_auto",
     "regla_reingreso",
     "regla_sin_expediente",
-    "decision_J",
-    "decision_J_checklist",
+    "decision_autor",
+    "decision_autor_checklist",
     "regla_desplazada_por_checklist",
 }
 AFFIRMATIVE_CHECKLIST_RESPONSES = {
@@ -118,10 +118,10 @@ def apply_automatic_match_rules(review: pd.DataFrame) -> pd.DataFrame:
     result["historial"] = result["historial"].map(_decision_text)
 
     for _, candidates in result.groupby("cochilco_id", sort=False, dropna=False):
-        explicit_j = candidates["criterio"].eq("decision_J") & candidates[
+        explicit_author = candidates["criterio"].eq("decision_autor") & candidates[
             "match_confirmado"
         ].ne("")
-        if explicit_j.any():
+        if explicit_author.any():
             continue
         result.loc[candidates.index, ["match_confirmado", "criterio", "historial"]] = ""
         ordered = _candidate_order(candidates)
@@ -217,7 +217,7 @@ def build_doubtful_cases(review: pd.DataFrame, top_n: int = 3) -> pd.DataFrame:
     return result.loc[:, [column for column in preferred if column in result.columns]]
 
 
-def apply_j_decisions(
+def apply_author_decisions(
     review: pd.DataFrame,
     decisions: dict[str, int | str],
     sea_mining: pd.DataFrame | None = None,
@@ -232,7 +232,7 @@ def apply_j_decisions(
         raise ValueError(f"Unknown cochilco_id in J decisions: {sorted(unknown)}")
     for cochilco_id, raw_decision in decisions.items():
         candidates = result.loc[result["cochilco_id"].astype(str).eq(cochilco_id)]
-        automatic = candidates["criterio"].isin(DECISION_CRITERIA - {"decision_J"})
+        automatic = candidates["criterio"].isin(DECISION_CRITERIA - {"decision_autor"})
         if automatic.any():
             raise ValueError(f"J decision would override automatic rule for {cochilco_id}")
         decision = _decision_text(raw_decision)
@@ -271,9 +271,9 @@ def apply_j_decisions(
                         "sea_estado": sea_case.get("estado"),
                         "sea_fecha_ingreso": sea_case.get("fecha_ingreso"),
                         "score": float("nan"),
-                        "match_tipo": "manual_J",
+                        "match_tipo": "manual_autor",
                         "match_confirmado": str(exp_id),
-                        "criterio": "decision_J",
+                        "criterio": "decision_autor",
                         "historial": "fuera_de_top_n",
                     }
                 )
@@ -287,7 +287,7 @@ def apply_j_decisions(
             result = pd.concat([result, pd.DataFrame([manual_row])], ignore_index=True)
         else:
             result.loc[target_index, "match_confirmado"] = decision
-            result.loc[target_index, "criterio"] = "decision_J"
+            result.loc[target_index, "criterio"] = "decision_autor"
     return result
 
 
@@ -419,7 +419,7 @@ def apply_checklist_decisions(
         result.loc[target, "exp_id_confirmado"] = (
             principal if principal is not None else pd.NA
         )
-        result.loc[target, "criterio"] = "decision_J_checklist"
+        result.loc[target, "criterio"] = "decision_autor_checklist"
         result.loc[target, "historial"] = ""
         result.loc[target, "estado_ambiental_override"] = override
 
@@ -431,7 +431,7 @@ def apply_checklist_decisions(
     for exp_id in duplicated_ids:
         same_expediente = result["exp_id_confirmado"].eq(exp_id)
         checklist_owner = same_expediente & result["criterio"].eq(
-            "decision_J_checklist"
+            "decision_autor_checklist"
         )
         if checklist_owner.sum() != 1:
             continue
@@ -549,7 +549,7 @@ def build_confirmed_match_table(
             exp_id: object = pd.NA
         else:
             exp_id = _parse_confirmed_id(decision)
-        is_outside_top_n = criterion == "decision_J" and history == "fuera_de_top_n"
+        is_outside_top_n = criterion == "decision_autor" and history == "fuera_de_top_n"
         if history and criterion != "regla_reingreso" and not is_outside_top_n:
             raise ValueError(
                 f"historial is only valid for regla_reingreso in {cochilco_id}"

@@ -81,6 +81,7 @@ def _synthetic_register() -> pd.DataFrame:
                 "diferencia": 0.0,
                 "estado": "verificada",
                 "nota_semantica": "Fixture sintético.",
+                "tipo_verificacion": "control_aritmetico",
             }
             for claim_id, (value, unit) in values.items()
         ]
@@ -91,9 +92,9 @@ def test_compute_brief_metrics_rejects_any_unverified_used_claim() -> None:
     register = _synthetic_register()
     register.loc[
         register["claim_id"].eq("aj_EIA_aprobado_24m"), "estado"
-    ] = "pendiente_J"
+    ] = "pendiente_autor"
 
-    with pytest.raises(ValueError, match="aj_EIA_aprobado_24m.*pendiente_J"):
+    with pytest.raises(ValueError, match="aj_EIA_aprobado_24m.*pendiente_autor"):
         compute_brief_metrics(register)
 
 
@@ -257,15 +258,15 @@ def test_rendered_brief_is_byte_deterministic(tmp_path: Path) -> None:
             "es",
             "21,0% de la inversión minera 2025–2034 está en proyectos en estudio sin "
             "expediente SEIA identificado",
-            "Las cifras se reproducen con el código y los datos del repositorio, y se "
-            "verifican con tests automáticos.",
+            "Cada cifra publicada pasa por un control programático; el registro declara "
+            "si el recálculo es independiente, un control aritmético o una réplica.",
         ),
         (
             "en",
             "21.0% of 2025–2034 mining investment is in study-stage projects with no "
             "identified SEIA filing",
-            "Figures are reproducible from the repository's code and data and checked "
-            "by automated tests.",
+            "Every published figure passes a programmatic control; the register labels "
+            "each recalculation as independent, arithmetic control, or replica.",
         ),
     ],
 )

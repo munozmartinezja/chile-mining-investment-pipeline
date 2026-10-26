@@ -22,7 +22,6 @@ dependencies = [
   "rapidfuzz>=3.10,<4",
   "reportlab>=4.2,<5",
   "ruff>=0.7,<1",
-  "tableauhyperapi>=0.0.22500,<1",
 ]
 
 [project.optional-dependencies]
@@ -31,6 +30,9 @@ notebooks = [
 ]
 ml = [
     "scikit-learn>=1.9.1",
+]
+sea-extract = [
+    "tableauhyperapi>=0.0.22500,<1",
 ]
 
 [tool.hatch.build.targets.wheel]

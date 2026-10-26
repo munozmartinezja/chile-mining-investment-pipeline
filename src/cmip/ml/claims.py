@@ -6,8 +6,8 @@ import math
 import numpy as np
 import pandas as pd
 
-from cmip.config import PROJECT_ROOT
-from cmip.validation import _claim, finalize_claims_register
+from cmip.config import PROCESSED_DIR, PROJECT_ROOT
+from cmip.validation import _claim, finalize_claims_register_with_counts
 
 ML_DIR = PROJECT_ROOT / "data" / "ml"
 DOCS_DIR = PROJECT_ROOT / "docs"
@@ -55,6 +55,8 @@ def _build_claims(
     oof_df: pd.DataFrame,
     dataset_df: pd.DataFrame,
     metrics_df: pd.DataFrame,
+    ablation_df: pd.DataFrame,
+    population_df: pd.DataFrame,
 ) -> list[dict]:
     rows: list[dict] = []
     y = oof_df["y"].to_numpy(dtype=float)
@@ -87,6 +89,35 @@ def _build_claims(
                        "Expedientes EIA en el dataset ML",
                        n_eia, "n", "ml_dataset.parquet",
                        "sum(instrumento=='EIA')", n_eia, 0, ""))
+    population_year = pd.to_datetime(population_df["fecha_ingreso"]).dt.year
+    total_2024 = int(population_year.eq(2024).sum())
+    eligible_2024 = int(pd.to_datetime(dataset_df["fecha_ingreso"]).dt.year.eq(2024).sum())
+    rows.extend(
+        [
+            _claim(
+                "ml_2024_ingresos_total_n",
+                "Expedientes de la población ML ingresados en 2024",
+                total_2024,
+                "expedientes",
+                "survival_population.parquet",
+                "Conteo de fecha_ingreso en 2024 antes del filtro de horizonte.",
+                total_2024,
+                0,
+                "Denominador de la cobertura del corte 2024.",
+            ),
+            _claim(
+                "ml_2024_ingresos_elegibles_n",
+                "Ingresos 2024 con seguimiento completo de 24 meses",
+                eligible_2024,
+                "expedientes",
+                "ml_dataset.parquet",
+                "Conteo de fecha_ingreso en 2024 después del filtro de horizonte.",
+                eligible_2024,
+                0,
+                "Numerador de la cobertura del corte 2024.",
+            ),
+        ]
+    )
 
     # Model key → parquet model name mapping
     _model_names = {"b0": "B0", "m1": "M1", "m2": "M2", "m2c": "M2c"}
@@ -247,6 +278,26 @@ def _build_claims(
                            dia_m2c_auc_stored, "", "ml_metrics_agg.parquet",
                            "Mann-Whitney sobre subconjunto DIA de ml_oof_predictions",
                            dia_recalc_m2c, 0.0005, ""))
+        dia_without_2024 = oof_df.loc[
+            oof_df["instrumento"].eq("DIA") & oof_df["fold_year"].ne(2024)
+        ]
+        auc_without_2024 = _roc_auc_mw(
+            dia_without_2024["y"].to_numpy(float),
+            dia_without_2024["pred_m2c"].to_numpy(float),
+        )
+        rows.append(
+            _claim(
+                "ml_dia_roc_auc_m2c_sin_2024",
+                "ROC AUC M2c en DIA excluyendo el corte 2024",
+                auc_without_2024,
+                "",
+                "ml_oof_predictions.parquet",
+                "Mann-Whitney en DIA con fold_year distinto de 2024.",
+                auc_without_2024,
+                0.0000001,
+                "Sensibilidad al corte 2024, que contiene 28 de 42 ingresos elegibles.",
+            )
+        )
     else:
         nota_dia = "DIA con datos insuficientes para subgrupo — caso inesperado"
         rows.append(_claim("ml_dia_test_n", "N de prueba DIA",
@@ -277,7 +328,42 @@ def _build_claims(
                        "min(roc_auc) sobre folds de M2c",
                        min_roc_m2c, 0.0005, ""))
 
-    # ── Bootstrap IC claims → pendiente_J ────────────────────────────────────
+    m2_full = _get_agg(agg_df, "M2", "roc_auc")
+    m2_without_holder = float(
+        ablation_df.loc[
+            ablation_df["modelo"].eq("M2")
+            & ablation_df["bloque_quitado"].eq("titular"),
+            "roc_auc_oof",
+        ].iloc[0]
+    )
+    rows.extend(
+        [
+            _claim(
+                "ml_roc_auc_m2_completo_ablacion",
+                "ROC AUC OOF de M2 completo en la comparación de ablación",
+                m2_full,
+                "",
+                "ml_metrics_agg.parquet",
+                "Valor de M2 completo usado como referencia de la ablación.",
+                m2_full,
+                0,
+                "Comparación exploratoria del bloque del titular.",
+            ),
+            _claim(
+                "ml_roc_auc_m2_sin_titular",
+                "ROC AUC OOF de M2 sin el bloque del titular",
+                m2_without_holder,
+                "",
+                "ml_ablation.parquet",
+                "Selección de la fila M2 con bloque_quitado = titular.",
+                m2_without_holder,
+                0,
+                "Comparación exploratoria del bloque del titular.",
+            ),
+        ]
+    )
+
+    # ── Bootstrap IC claims → pendiente_autor ────────────────────────────────────
     _ic_pairs = [
         ("ml_ic95_m2c_roc_auc_lo", "ml_ic95_m2c_roc_auc_hi",
          "M2c_roc_auc_ci_lo", "M2c_roc_auc_ci_hi",
@@ -334,7 +420,19 @@ def build_ml_claims_register() -> pd.DataFrame:
     oof_df = pd.read_parquet(ML_DIR / "ml_oof_predictions.parquet")
     dataset_df = pd.read_parquet(ML_DIR / "ml_dataset.parquet")
     metrics_df = pd.read_parquet(ML_DIR / "ml_metrics.parquet")
-    return finalize_claims_register(_build_claims(agg_df, oof_df, dataset_df, metrics_df))
+    ablation_df = pd.read_parquet(ML_DIR / "ml_ablation.parquet")
+    population_df = pd.read_parquet(PROCESSED_DIR / "survival_population.parquet")
+    return finalize_claims_register_with_counts(
+        _build_claims(
+            agg_df,
+            oof_df,
+            dataset_df,
+            metrics_df,
+            ablation_df,
+            population_df,
+        ),
+        prefix="ml_",
+    )
 
 
 # ── Public document ───────────────────────────────────────────────────────────
@@ -368,6 +466,8 @@ def write_ml_results(register: pd.DataFrame) -> str:
     n_dia = _fi("ml_n_dia")
     n_eia = _fi("ml_n_eia")
     n_folds = _fi("ml_folds_n")
+    n_2024 = _fi("ml_2024_ingresos_total_n")
+    n_2024_eligible = _fi("ml_2024_ingresos_elegibles_n")
 
     lines = [
         "# Modelo predictivo de aprobación ambiental a 24 meses",
@@ -379,11 +479,13 @@ def write_ml_results(register: pd.DataFrame) -> str:
         "",
         "## 2. Población y objetivo",
         "",
-        f"El dataset ML incluye {n_elegibles} expedientes con horizonte completo de observación "
+        f"El dataset ML incluye {n_elegibles} ingresos con seguimiento completo de 24 meses "
         f"(fecha de ingreso + 24 meses (730,5 días) ≤ fecha de corte de los datos). "
         f"De estos, {n_pos} obtuvieron RCA favorable dentro del horizonte "
         f"(tasa de aprobación: {tasa_pct}). "
         f"La distribución por instrumento es {n_dia} DIA y {n_eia} EIA.",
+        f"El corte 2024 incluye solo {n_2024_eligible} de {n_2024} expedientes; "
+        "por tanto, ese año no representa todos sus ingresos.",
         "",
         "Variable objetivo `y = 1` si el expediente fue aprobado dentro de 24 meses "
         "desde el ingreso; `y = 0` en cualquier otro desenlace "
@@ -414,8 +516,9 @@ def write_ml_results(register: pd.DataFrame) -> str:
         "",
         f"ROC AUC mínimo por fold de M2c: {min_fold}.",
         "",
-        "El intervalo de confianza 95 % bootstrap para la diferencia de Brier entre M2c y B0 "
-        "incluye cero; la mejora en calibración no es estadísticamente concluyente.",
+        "La diferencia de Brier frente a B0 depende del esquema de remuestreo "
+        "(por expediente, el IC incluye cero; por año, lo excluye), así que no se "
+        "afirma una mejora en probabilidades.",
         "",
         "## 5. Dónde no funciona",
         "",
@@ -466,20 +569,29 @@ def write_ml_results(register: pd.DataFrame) -> str:
         "",
         "## 6. Qué lo mueve",
         "",
-        "El historial del titular al momento del ingreso —número de proyectos previos, "
-        "aprobaciones anteriores y cierres negativos recientes— es la señal principal "
-        "para ordenar el riesgo de aprobación de las DIA. "
-        "La calibración reduce el error de las probabilidades, pero esa mejora "
-        "no es estadísticamente concluyente (IC 95 % bootstrap incluye cero). "
-        "Los resultados de ablación por bloque de variables están en proceso de revisión "
-        "y no se publican aquí.",
+        "Análisis exploratorio, sin protocolo preespecificado.",
+        "",
+        "| Familia | Especificaciones evaluadas |",
+        "|---|---|",
+        "| Modelos completos | B0; M1; M2; M2c |",
+        "| Ablaciones | M1 y M2 sin titular; sin carga; sin calendario |",
+        "| Calibración | Curvas de M1; M2; M2c |",
+        "| Subgrupos | DIA; EIA |",
+        "",
+        f"En la ablación del modelo M2, el ROC AUC es {_f3('ml_roc_auc_m2_completo_ablacion')} "
+        f"con todas las variables y {_f3('ml_roc_auc_m2_sin_titular')} sin el bloque del "
+        "titular. Esta comparación exploratoria respalda que el historial del titular "
+        "aporta señal a M2; no es una afirmación causal ni sobre M2c.",
+        "",
+        f"Como sensibilidad, el ROC AUC de M2c dentro de las DIA sin el corte 2024 es "
+        f"{_f3('ml_dia_roc_auc_m2c_sin_2024')}.",
         "",
         "## 7. Límites",
         "",
         "- **Asociación, no causalidad.** El modelo detecta patrones históricos; "
         "no explica por qué un proyecto es aprobado.",
-        "- **Calibración.** M2c usa calibración sigmoide (Platt) con validación cruzada "
-        "aleatoria dentro del entrenamiento, no temporal. "
+        "- **Calibración.** M2c usa `CalibratedClassifierCV` con 5 folds estratificados "
+        "dentro del entrenamiento de cada corte; esos folds no son aleatorios ni temporales. "
         "La calibración puede degradarse fuera de la muestra.",
         "- **Población pequeña.** Con menos de mil expedientes elegibles, "
         "los intervalos de confianza son amplios.",

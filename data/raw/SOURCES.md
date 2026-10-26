@@ -19,7 +19,6 @@
 | `Tabla 8-Tabla 1.csv`                                                                             | `7d6b0a610134cdfc4745d86a7a3f2ac456506399029e4e7cb613f1814e672a1c` |
 | `Tabla 9-Tabla 1.csv`                                                                             | `3dbabbfd4ea097f35bc8a8f5a4b667c36ba3728db8f90801b3c647b159e129e4` |
 | `Tabla 10-11-12-13-Tabla 1.csv`                                                                   | `5f128ec8e1933adccddc58c49f9949f0ee8244e5587daec339b56f6146bf5dd1` |
-| `Índice-Tabla 1.csv`                                                                              | `7112e3656ad586cad295123ba5a2976733641e04831377b4f15afc8b0183f05e` |
 
 Raw files are immutable pipeline inputs. Generated outputs belong under
 `data/interim/`, `data/processed/`, or `data/cmip.duckdb`.

@@ -1,22 +1,22 @@
-cochilco_empresa,alias,estado,fuente
-Antofagasta Minerals,Minera Los Pelambres,confirmado,catalogo_inicial
-Antofagasta Minerals,Minera Centinela,confirmado,catalogo_inicial
-Antofagasta Minerals,Compañía Minera Zaldívar,confirmado,catalogo_inicial
-BHP,Minera Escondida,confirmado,catalogo_inicial
-BHP,Minera Escondida Limitada,confirmado,revision_J_2026-10
-BHP,Minera Spence,confirmado,revision_J_2026-10
-BHP,Compañía Minera Cerro Colorado,confirmado,revision_J_2026-10
-Capstone Copper,Mantoverde,confirmado,revision_J_2026-10
-Capstone Copper,Minera Mantoverde,confirmado,catalogo_inicial
-Capstone Copper,Minera Santo Domingo,confirmado,catalogo_inicial
-Freeport-McMoran,Sociedad Contractual Minera El Abra,confirmado,revision_J_2026-10
-Anglo American,Anglo American Sur,confirmado,revision_J_2026-10
-Lundin Mining,Minera Candelaria,confirmado,catalogo_inicial
-Kinross Gold Corporation,Compañía Minera Mantos de Oro,confirmado,catalogo_inicial
-CAP S.A.,Compañía Minera del Pacífico,confirmado,catalogo_inicial
-Codelco,Corporación Nacional del Cobre,confirmado,catalogo_inicial
-ENAMI,Empresa Nacional de Minería,confirmado,catalogo_inicial
-Rio Tinto - ENAMI,Empresa Nacional de Minería,confirmado,catalogo_inicial
-Compañía Minera Doña Inés de Collahuasi SCM,Doña Inés de Collahuasi,confirmado,catalogo_inicial
-SQM,Sociedad Química y Minera,confirmado,catalogo_inicial
-Sociedad Punta del Cobre S.A.,Pucobre,confirmado,catalogo_inicial
+cochilco_empresa,alias,estado,fuente,evidencia,momento
+Antofagasta Minerals,Minera Los Pelambres,confirmado,catalogo_inicial,2163620991;2131370195,antes_de_resultados
+Antofagasta Minerals,Minera Centinela,confirmado,catalogo_inicial,2163763372;2147474041;2140811184,antes_de_resultados
+Antofagasta Minerals,Compañía Minera Zaldívar,confirmado,catalogo_inicial,2159410455;2139258961,antes_de_resultados
+BHP,Minera Escondida,confirmado,catalogo_inicial,2167965265;2166423458;2164534221,antes_de_resultados
+BHP,Minera Escondida Limitada,confirmado,revision_autor_2026-10,2167965265;2166423458;2164534221,despues_de_resultados
+BHP,Minera Spence,confirmado,revision_autor_2026-10,2158456424;2143663525;2143645596,despues_de_resultados
+BHP,Compañía Minera Cerro Colorado,confirmado,revision_autor_2026-10,2168781721;2165082647;8342382,despues_de_resultados
+Capstone Copper,Mantoverde,confirmado,revision_autor_2026-10,2162419886;2161806677;2161617853,despues_de_resultados
+Capstone Copper,Minera Mantoverde,confirmado,catalogo_inicial,,antes_de_resultados
+Capstone Copper,Minera Santo Domingo,confirmado,catalogo_inicial,2128721261,antes_de_resultados
+Freeport-McMoran,Sociedad Contractual Minera El Abra,confirmado,revision_autor_2026-10,,despues_de_resultados
+Anglo American,Anglo American Sur,confirmado,revision_autor_2026-10,2160785113;2143785006;2129957698,despues_de_resultados
+Lundin Mining,Minera Candelaria,confirmado,catalogo_inicial,2145805600;2128574332;5876949,antes_de_resultados
+Kinross Gold Corporation,Compañía Minera Mantos de Oro,confirmado,catalogo_inicial,2165222789,antes_de_resultados
+CAP S.A.,Compañía Minera del Pacífico,confirmado,catalogo_inicial,2164006597;2162201555;2145025521,antes_de_resultados
+Codelco,Corporación Nacional del Cobre,confirmado,catalogo_inicial,2146082969;2130078899;2128952424,antes_de_resultados
+ENAMI,Empresa Nacional de Minería,confirmado,catalogo_inicial,,antes_de_resultados
+Rio Tinto - ENAMI,Empresa Nacional de Minería,confirmado,catalogo_inicial,,antes_de_resultados
+Compañía Minera Doña Inés de Collahuasi SCM,Doña Inés de Collahuasi,confirmado,catalogo_inicial,2168716154;2159615601;2142210954,antes_de_resultados
+SQM,Sociedad Química y Minera,confirmado,catalogo_inicial,,antes_de_resultados
+Sociedad Punta del Cobre S.A.,Pucobre,confirmado,catalogo_inicial,,antes_de_resultados

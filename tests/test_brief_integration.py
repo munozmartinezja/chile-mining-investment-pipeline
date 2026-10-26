@@ -145,10 +145,14 @@ def test_pdf_copy_contains_no_forbidden_adversarial_phrases() -> None:
 
 
 def test_versioned_pdfs_have_one_visible_text_layer_and_one_headline() -> None:
+    register = build_claims_register().set_index("claim_id")
+    share = float(register.loc["estado_sin_expediente_en_estudio_pct", "valor"])
+    share_en = f"{share:.1f}"
+    share_es = share_en.replace(".", ",")
     headlines = (
-        "16,3% de la inversión minera 2025–2034 está en proyectos en estudio sin "
+        f"{share_es}% de la inversión minera 2025–2034 está en proyectos en estudio sin "
         "expediente SEIA identificado",
-        "16.3% of 2025–2034 mining investment is in study-stage projects with no "
+        f"{share_en}% of 2025–2034 mining investment is in study-stage projects with no "
         "identified SEIA filing",
     )
     for path, headline in zip(PDF_PATHS, headlines, strict=True):

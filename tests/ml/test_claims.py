@@ -274,7 +274,7 @@ def test_valor_not_pre_rounded(register):
 
 @requires_local_data
 def test_eia_claims_verified_or_pending(register):
-    """EIA and DIA subgroup claims are verificada or pendiente_J."""
+    """EIA and DIA subgroup claims are verificada or pendiente_autor."""
     subgroup_claims = [
         "ml_eia_test_n", "ml_eia_test_positivos", "ml_eia_roc_auc_m2c",
         "ml_dia_test_n", "ml_dia_test_positivos", "ml_dia_roc_auc_b0", "ml_dia_roc_auc_m2c",
@@ -283,19 +283,19 @@ def test_eia_claims_verified_or_pending(register):
         rows = register[register["claim_id"] == cid]
         assert not rows.empty, f"Claim '{cid}' not found"
         estado = rows.iloc[0]["estado"]
-        assert estado in {"verificada", "pendiente_J"}, (
+        assert estado in {"verificada", "pendiente_autor"}, (
             f"Claim '{cid}' has unexpected estado='{estado}'"
         )
 
 
 @requires_local_data
 def test_bootstrap_ic_claims_are_pending(register):
-    """Bootstrap IC claims are all pendiente_J."""
+    """Bootstrap IC claims are all pendiente_autor."""
     ic_claims = register[register["claim_id"].str.startswith("ml_ic95_")]
     assert len(ic_claims) > 0, "No bootstrap IC claims found"
-    non_pending = ic_claims[ic_claims["estado"] != "pendiente_J"]
+    non_pending = ic_claims[ic_claims["estado"] != "pendiente_autor"]
     assert len(non_pending) == 0, (
-        f"Bootstrap IC claims not pendiente_J: {non_pending['claim_id'].tolist()}"
+        f"Bootstrap IC claims not pendiente_autor: {non_pending['claim_id'].tolist()}"
     )
 
 
@@ -328,3 +328,23 @@ def test_n_elegibles_matches_dataset(register):
     rows = register[register["claim_id"] == "ml_n_elegibles"]
     assert not rows.empty
     assert int(rows.iloc[0]["valor"]) == len(dataset)
+
+
+@requires_local_data
+def test_revision_claims_publish_2024_sensitivity_and_m2_ablation(register):
+    indexed = register.set_index("claim_id")
+
+    assert indexed.loc["ml_dia_roc_auc_m2c_sin_2024", "valor"] == pytest.approx(
+        0.7438156882850551
+    )
+    assert indexed.loc["ml_roc_auc_m2_completo_ablacion", "valor"] == pytest.approx(
+        0.7448099829835507
+    )
+    assert indexed.loc["ml_roc_auc_m2_sin_titular", "valor"] == pytest.approx(
+        0.6488938298830305
+    )
+    assert set(register["tipo_verificacion"]) <= {
+        "independiente",
+        "control_aritmetico",
+        "replica",
+    }

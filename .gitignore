@@ -12,6 +12,8 @@ data/powerbi/*
 !data/powerbi/README.md
 data/cmip.duckdb
 data/raw/sea/*.twbx
+data/raw/cochilco/anexo_c/Índice-Tabla 1.csv
+data/raw/cochilco/anexo_c/Índice-Tabla 1.csv
 docs/match_review.csv
 hyperd.log
 docs/validation_worksheet*.txt
@@ -28,3 +30,4 @@ docs/**/notas_*.md
 # ML outputs (no versionar)
 data/ml/*
 !data/ml/.gitkeep
+graphify-out/

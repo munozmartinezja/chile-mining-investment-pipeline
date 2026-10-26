@@ -445,7 +445,6 @@ dependencies = [
     { name = "rapidfuzz" },
     { name = "reportlab" },
     { name = "ruff" },
-    { name = "tableauhyperapi" },
 ]
 
 [package.optional-dependencies]
@@ -454,6 +453,9 @@ ml = [
 ]
 notebooks = [
     { name = "jupyterlab" },
+]
+sea-extract = [
+    { name = "tableauhyperapi" },
 ]
 
 [package.metadata]
@@ -472,9 +474,9 @@ requires-dist = [
     { name = "reportlab", specifier = ">=4.2,<5" },
     { name = "ruff", specifier = ">=0.7,<1" },
     { name = "scikit-learn", marker = "extra == 'ml'", specifier = ">=1.9.1" },
-    { name = "tableauhyperapi", specifier = ">=0.0.22500,<1" },
+    { name = "tableauhyperapi", marker = "extra == 'sea-extract'", specifier = ">=0.0.22500,<1" },
 ]
-provides-extras = ["notebooks", "ml"]
+provides-extras = ["notebooks", "ml", "sea-extract"]
 
 [[package]]
 name = "colorama"

@@ -30,6 +30,7 @@ MATCH_COLUMNS = [
     "historial",
 ]
 ALIASES_PATH = PROJECT_ROOT / "data" / "curated" / "company_aliases.csv"
+CURATED_MATCH_PATH = PROJECT_ROOT / "data" / "curated" / "cochilco_seia_match.csv"
 ALIAS_STATES = {"confirmado", "rechazado", "pendiente"}
 ABBREVIATIONS = {
     "cia": "compania",
@@ -443,12 +444,53 @@ def build_match_review(
     cochilco_path: Path = PROCESSED_DIR / "cochilco_projects.parquet",
     sea_path: Path = PROJECT_ROOT / "data" / "interim" / "sea_mining.parquet",
     output_path: Path = PROJECT_ROOT / "docs" / "match_review.csv",
+    curated_path: Path = CURATED_MATCH_PATH,
 ) -> pd.DataFrame:
     """Read pipeline outputs and write the candidate review CSV."""
     matches = rank_candidates(pd.read_parquet(cochilco_path), pd.read_parquet(sea_path))
+    if curated_path.exists():
+        matches = overlay_curated_decisions(
+            matches,
+            pd.read_csv(curated_path, keep_default_na=False),
+        )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     matches.to_csv(output_path, index=False)
     return matches
+
+
+def overlay_curated_decisions(review: pd.DataFrame, curated: pd.DataFrame) -> pd.DataFrame:
+    """Restore versioned decisions after regenerating candidate rankings."""
+    required = {"cochilco_id", "exp_id_confirmado", "criterio", "historial"}
+    missing = required - set(curated.columns)
+    if missing:
+        raise ValueError(f"Curated match table missing columns: {sorted(missing)}")
+    result = review.copy()
+    for decision in curated.itertuples(index=False):
+        candidates = result.index[result["cochilco_id"].eq(decision.cochilco_id)]
+        if candidates.empty:
+            raise ValueError(
+                f"Curated project missing from generated review: {decision.cochilco_id}"
+            )
+        confirmed = (
+            ""
+            if pd.isna(decision.exp_id_confirmado)
+            else str(decision.exp_id_confirmado).strip()
+        )
+        target = candidates[0]
+        if confirmed:
+            matching = candidates[
+                pd.to_numeric(result.loc[candidates, "exp_id"], errors="coerce").eq(
+                    int(float(confirmed))
+                )
+            ]
+            if not matching.empty:
+                target = matching[0]
+        result.loc[target, "match_confirmado"] = confirmed or "NA"
+        result.loc[target, "criterio"] = str(decision.criterio)
+        result.loc[target, "historial"] = (
+            "" if pd.isna(decision.historial) else str(decision.historial)
+        )
+    return result
 
 
 def main() -> None:

@@ -6,7 +6,8 @@ Con lo conocido al momento del ingreso al SEIA, ¿se puede anticipar si un proye
 
 ## 2. Población y objetivo
 
-El dataset ML incluye 920 expedientes con horizonte completo de observación (fecha de ingreso + 24 meses (730,5 días) ≤ fecha de corte de los datos). De estos, 617 obtuvieron RCA favorable dentro del horizonte (tasa de aprobación: 67,1 %). La distribución por instrumento es 817 DIA y 103 EIA.
+El dataset ML incluye 920 ingresos con seguimiento completo de 24 meses (fecha de ingreso + 24 meses (730,5 días) ≤ fecha de corte de los datos). De estos, 617 obtuvieron RCA favorable dentro del horizonte (tasa de aprobación: 67,1 %). La distribución por instrumento es 817 DIA y 103 EIA.
+El corte 2024 incluye solo 28 de 42 expedientes; por tanto, ese año no representa todos sus ingresos.
 
 Variable objetivo `y = 1` si el expediente fue aprobado dentro de 24 meses desde el ingreso; `y = 0` en cualquier otro desenlace (desistimiento, rechazo, en trámite sin resolución en el horizonte).
 
@@ -25,7 +26,7 @@ Se utilizó validación rolling origin con 7 folds anuales (años 2018–2024). 
 
 ROC AUC mínimo por fold de M2c: 0,514.
 
-El intervalo de confianza 95 % bootstrap para la diferencia de Brier entre M2c y B0 incluye cero; la mejora en calibración no es estadísticamente concluyente.
+La diferencia de Brier frente a B0 depende del esquema de remuestreo (por expediente, el IC incluye cero; por año, lo excluye), así que no se afirma una mejora en probabilidades.
 
 ## 5. Dónde no funciona
 
@@ -35,11 +36,22 @@ El intervalo de confianza 95 % bootstrap para la diferencia de Brier entre M2c y
 
 ## 6. Qué lo mueve
 
-El historial del titular al momento del ingreso —número de proyectos previos, aprobaciones anteriores y cierres negativos recientes— es la señal principal para ordenar el riesgo de aprobación de las DIA. La calibración reduce el error de las probabilidades, pero esa mejora no es estadísticamente concluyente (IC 95 % bootstrap incluye cero). Los resultados de ablación por bloque de variables están en proceso de revisión y no se publican aquí.
+Análisis exploratorio, sin protocolo preespecificado.
+
+| Familia | Especificaciones evaluadas |
+|---|---|
+| Modelos completos | B0; M1; M2; M2c |
+| Ablaciones | M1 y M2 sin titular; sin carga; sin calendario |
+| Calibración | Curvas de M1; M2; M2c |
+| Subgrupos | DIA; EIA |
+
+En la ablación del modelo M2, el ROC AUC es 0,745 con todas las variables y 0,649 sin el bloque del titular. Esta comparación exploratoria respalda que el historial del titular aporta señal a M2; no es una afirmación causal ni sobre M2c.
+
+Como sensibilidad, el ROC AUC de M2c dentro de las DIA sin el corte 2024 es 0,744.
 
 ## 7. Límites
 
 - **Asociación, no causalidad.** El modelo detecta patrones históricos; no explica por qué un proyecto es aprobado.
-- **Calibración.** M2c usa calibración sigmoide (Platt) con validación cruzada aleatoria dentro del entrenamiento, no temporal. La calibración puede degradarse fuera de la muestra.
+- **Calibración.** M2c usa `CalibratedClassifierCV` con 5 folds estratificados dentro del entrenamiento de cada corte; esos folds no son aleatorios ni temporales. La calibración puede degradarse fuera de la muestra.
 - **Población pequeña.** Con menos de mil expedientes elegibles, los intervalos de confianza son amplios.
 - **Sin uso operativo para EIA.** Las probabilidades para EIA no son confiables y no deben usarse para tomar decisiones.
