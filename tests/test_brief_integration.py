@@ -145,22 +145,29 @@ def test_pdf_copy_contains_no_forbidden_adversarial_phrases() -> None:
 
 
 def test_versioned_pdfs_have_one_visible_text_layer_and_one_headline() -> None:
-    register = build_claims_register().set_index("claim_id")
-    share = float(register.loc["estado_sin_expediente_en_estudio_pct", "valor"])
-    share_en = f"{share:.1f}"
-    share_es = share_en.replace(".", ",")
-    headlines = (
-        f"{share_es}% de la inversión minera 2025–2034 está en proyectos en estudio sin "
-        "expediente SEIA identificado",
-        f"{share_en}% of 2025–2034 mining investment is in study-stage projects with no "
-        "identified SEIA filing",
+    headline_patterns = (
+        r"(\d{1,2},\d)% de la inversión minera 2025–2034 está en proyectos en estudio sin "
+        r"expediente SEIA identificado",
+        r"(\d{1,2}\.\d)% of 2025–2034 mining investment is in study-stage projects with no "
+        r"identified SEIA filing",
     )
-    for path, headline in zip(PDF_PATHS, headlines, strict=True):
+    shares: list[float] = []
+    for path, pattern in zip(PDF_PATHS, headline_patterns, strict=True):
         reader = pypdf.PdfReader(path)
         text = "\n".join(page.extract_text() or "" for page in reader.pages)
         content = b"\n".join(page.get_contents().get_data() for page in reader.pages)
         assert content.count(b"3 Tr") == 0
-        assert re.sub(r"\s+", " ", text).count(headline) == 1
+        matches = re.findall(pattern, re.sub(r"\s+", " ", text))
+        assert len(matches) == 1
+        shares.append(float(matches[0].replace(",", ".")))
+    assert shares[0] == shares[1]
+
+    try:
+        register = build_claims_register().set_index("claim_id")
+    except FileNotFoundError:
+        return  # CI without local data: headline uniqueness and ES/EN parity still checked
+    share = float(register.loc["estado_sin_expediente_en_estudio_pct", "valor"])
+    assert shares[0] == round(share, 1)
 
 
 @requires_brief_data

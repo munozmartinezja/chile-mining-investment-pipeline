@@ -21,9 +21,6 @@ def build_alias_evidence(
 ) -> pd.DataFrame:
     """Return aliases with up to three locally supported SEA expediente IDs."""
     result = aliases.copy()
-    result["fuente"] = result["fuente"].replace(
-        {"revision_J_2026-10": "revision_autor_2026-10"}
-    )
     result["momento"] = result["fuente"].map(
         {
             "catalogo_inicial": "antes_de_resultados",
