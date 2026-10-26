@@ -139,9 +139,11 @@ def test_gitignore_covers_private_inputs_and_build_notes() -> None:
         "data/raw/sea_transparencia/example.csv",
         "docs/powerbi/model.md",
         "PROMPT_example.md",
+        "data/raw/cochilco/anexo_c/Índice-Tabla 1.csv",
+        "data/raw/cochilco/anexo_c/I\u0301ndice-Tabla 1.csv",
     )
     result = subprocess.run(
-        ["git", "check-ignore", "--no-index", "--stdin"],
+        ["git", "-c", "core.quotePath=false", "check-ignore", "--no-index", "--stdin"],
         cwd=ROOT,
         check=False,
         input="\n".join(ignored_paths) + "\n",
@@ -151,3 +153,27 @@ def test_gitignore_covers_private_inputs_and_build_notes() -> None:
 
     assert result.returncode == 0
     assert result.stdout.splitlines() == list(ignored_paths)
+
+
+def test_tracked_public_files_do_not_use_obsolete_reviewer_markers() -> None:
+    patterns = (
+        "decision_" + "J_checklist",
+        "decision_" + "J",
+        "revision_" + "J_2026-10",
+        "decisión " + "J",
+        "pendiente_" + "J",
+        "manual_" + "J",
+        "apply_" + "j_decisions",
+    )
+    offenders: list[str] = []
+    for relative_path in _tracked_text_files():
+        if str(relative_path).startswith("data/interim/revision_c1/"):
+            continue
+        path = ROOT / relative_path
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        if any(pattern in text for pattern in patterns):
+            offenders.append(str(relative_path))
+
+    assert offenders == []

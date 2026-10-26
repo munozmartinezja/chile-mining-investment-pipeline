@@ -86,6 +86,7 @@ def test_build_sea_frames_rejects_an_unmapped_state() -> None:
 
 
 def test_hyper_date_and_timestamp_columns_are_cast_to_text() -> None:
+    pytest.importorskip("tableauhyperapi", reason="requires the sea-extract extra")
     from tableauhyperapi import SqlType, TableDefinition
 
     date_column = TableDefinition.Column("exp_fpres", SqlType.date())

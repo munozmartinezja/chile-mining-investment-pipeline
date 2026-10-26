@@ -115,6 +115,7 @@ POWERBI_SCHEMAS = {
             pa.field("valor", pa.float64()),
             pa.field("unidad", pa.string()),
             pa.field("estado", pa.string()),
+            pa.field("tipo_verificacion", pa.string()),
         ]
     ),
 }
@@ -465,6 +466,52 @@ def _english_claim_text(claim_id: str) -> str:
         ),
         "aj_EIA_otros_desenlaces_24m": "Other EIA outcomes by 24 months",
         "aj_EIA_sin_desenlace_24m": "EIA without an outcome by 24 months",
+        "cruce_umbral90_con_alias_pct": (
+            "Investment without an automatic match at threshold 90, with aliases"
+        ),
+        "cruce_umbral90_sin_alias_pct": (
+            "Investment without an automatic match at threshold 90, without aliases"
+        ),
+        "decisiones_curadas_autor_n": "Curated author decisions",
+        "excepciones_compartidas_n": "Shared-filing exceptions",
+        "alias_con_evidencia_n": "Company aliases with SEA evidence",
+        "reingresos_aj_EIA_24m_pct": (
+            "24-month cumulative approval incidence after EIA family deduplication"
+        ),
+        "reingresos_aj_EIA_36m_pct": (
+            "36-month cumulative approval incidence after EIA family deduplication"
+        ),
+        "reingresos_aj_DIA_24m_pct": (
+            "24-month cumulative approval incidence after DIA family deduplication"
+        ),
+        "reingresos_familias_n": "Filing families after re-entry deduplication",
+        "riesgo_EIA_24m_n": "EIAs at risk at 24 months",
+        "riesgo_EIA_36m_n": "EIAs at risk at 36 months",
+        "riesgo_DIA_24m_n": "DIAs at risk at 24 months",
+        "riesgo_DIA_36m_n": "DIAs at risk at 36 months",
+        "aj_EIA_24m_ic95_familias_inf": (
+            "Lower family-cluster bootstrap 95% CI: 24-month EIA approval"
+        ),
+        "aj_EIA_24m_ic95_familias_sup": (
+            "Upper family-cluster bootstrap 95% CI: 24-month EIA approval"
+        ),
+        "aj_EIA_36m_ic95_familias_inf": (
+            "Lower family-cluster bootstrap 95% CI: 36-month EIA approval"
+        ),
+        "aj_EIA_36m_ic95_familias_sup": (
+            "Upper family-cluster bootstrap 95% CI: 36-month EIA approval"
+        ),
+        "aj_DIA_24m_ic95_familias_inf": (
+            "Lower family-cluster bootstrap 95% CI: 24-month DIA approval"
+        ),
+        "aj_DIA_24m_ic95_familias_sup": (
+            "Upper family-cluster bootstrap 95% CI: 24-month DIA approval"
+        ),
+        "verificacion_independiente_n": "Independently verified claims",
+        "verificacion_control_aritmetico_n": (
+            "Claims verified by arithmetic control"
+        ),
+        "verificacion_replica_n": "Claims verified by computational replication",
     }
     if claim_id in exact:
         return exact[claim_id]
@@ -508,6 +555,8 @@ def _kpi_table(claims: pd.DataFrame) -> pa.Table:
     numeric_values = pd.to_numeric(verified["valor"], errors="coerce")
     verified = verified.loc[numeric_values.notna()].copy()
     verified["valor"] = numeric_values.loc[numeric_values.notna()].astype(float)
+    if "tipo_verificacion" not in verified:
+        verified["tipo_verificacion"] = "control_aritmetico"
     frame = pd.DataFrame(
         {
             "claim_id": verified["claim_id"],
@@ -516,6 +565,7 @@ def _kpi_table(claims: pd.DataFrame) -> pa.Table:
             "valor": verified["valor"],
             "unidad": verified["unidad"],
             "estado": verified["estado"],
+            "tipo_verificacion": verified["tipo_verificacion"],
         }
     ).reset_index(drop=True)
     return _frame_to_table("kpi_validados", frame)

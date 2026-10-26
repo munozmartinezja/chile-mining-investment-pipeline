@@ -2,6 +2,11 @@
 
 Corte analítico: **25-08-2026**. Los eventos posteriores se tratan como censura.
 
+La conciliación cubre **1.961/1.961 expedientes**: hay **0 diferencias de
+instrumento, tipología o inversión** y **2 diferencias en la fecha de ingreso**.
+El resumen versionado (con hash SHA-256) es una atestación: el CSV oficial,
+obtenido por Ley 20.285, no se redistribuye.
+
 ## Diferencias por categoría
 
 | Categoría | Filas | Previas o al corte | Posteriores al corte |

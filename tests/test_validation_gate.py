@@ -114,7 +114,7 @@ def test_pending_update_summary_is_recalculated_by_independent_sql(tmp_path) -> 
         (100.0, 100.1, 0.1, "verificada"),
         (100.0, 100.100001, 0.1, "rechazada"),
         (7, 8, 0.0, "rechazada"),
-        (7, None, 0.0, "pendiente_J"),
+        (7, None, 0.0, "pendiente_autor"),
     ],
 )
 def test_claim_state_rejects_values_beyond_metric_tolerance(
@@ -224,7 +224,7 @@ def _synthetic_checklist_sources(tmp_path):  # noqa: ANN001
     pd.DataFrame(
         {
             "cochilco_id": ["con-expediente", "decision-na"],
-            "criterio": ["decision_J", "decision_J"],
+            "criterio": ["decision_autor", "decision_autor"],
         }
     ).to_csv(decisions_path, index=False)
     return portfolio_path, sea_path, decisions_path

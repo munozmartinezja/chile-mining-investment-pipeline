@@ -84,7 +84,8 @@ def _read_hyper(path: Path) -> pd.DataFrame | None:
         from tableauhyperapi import Connection, HyperProcess, TableName, Telemetry
     except ModuleNotFoundError as error:  # pragma: no cover - depends on optional runtime install
         raise RuntimeError(
-            "tableauhyperapi is required to read SEA TWBX extracts; install project dependencies"
+            "tableauhyperapi is required to read SEA TWBX extracts; "
+            "install the sea-extract extra with make setup-extract"
         ) from error
 
     table_name = TableName("Extract", "Extract")

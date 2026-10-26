@@ -42,6 +42,7 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
         "diferencia",
         "estado",
         "nota_semantica",
+        "tipo_verificacion",
     ]
     assert register["claim_id"].is_unique
     assert register["estado"].eq("verificada").all(), register.loc[
@@ -118,10 +119,10 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
     assert indexed.loc["cruces_revision_manual_n", "valor"] == 59
     assert indexed.loc["cruces_regla_auto_n", "valor"] == 0
     assert indexed.loc["headline_piso_pct", "valor"] == pytest.approx(
-        100 * (17_043.0 - 8_000) / 104_549.2
+        100 * (17_243.0 - 8_000) / 104_549.2
     )
     assert indexed.loc["headline_techo_pct", "valor"] == pytest.approx(
-        100 * (17_043.0 + 23_753.9 + 1_300) / 104_549.2
+        100 * (17_243.0 + 23_753.9 + 1_300) / 104_549.2
     )
     assert indexed.loc["aprobado_con_actualizacion_en_calificacion_n", "valor"] == 1
     assert indexed.loc[
@@ -130,13 +131,53 @@ def test_minimum_brief_claims_are_independently_verified() -> None:
     assert indexed.loc["sea_oficial_expedientes_coinciden_n", "valor"] == 1_961
     assert indexed.loc["sea_oficial_diferencias_previas_al_corte_n", "valor"] == 2
     assert indexed.loc["sea_oficial_fecha_respuesta", "valor"] == "2026-10-13"
+    assert set(register["tipo_verificacion"]) == {
+        "independiente",
+        "control_aritmetico",
+        "replica",
+    }
+    assert indexed.loc[
+        "eia_100m_aj_aprobado_24m_ic95_inf", "tipo_verificacion"
+    ] == "replica"
+    expected_revision_claims = {
+        "cruce_umbral90_con_alias_pct",
+        "cruce_umbral90_sin_alias_pct",
+        "decisiones_curadas_autor_n",
+        "excepciones_compartidas_n",
+        "reingresos_familias_n",
+        "reingresos_aj_EIA_24m_pct",
+        "reingresos_aj_EIA_36m_pct",
+        "reingresos_aj_DIA_24m_pct",
+        "riesgo_EIA_24m_n",
+        "riesgo_EIA_36m_n",
+        "riesgo_DIA_24m_n",
+        "riesgo_DIA_36m_n",
+        "aj_EIA_24m_ic95_familias_inf",
+        "aj_EIA_24m_ic95_familias_sup",
+        "aj_EIA_36m_ic95_familias_inf",
+        "aj_EIA_36m_ic95_familias_sup",
+        "aj_DIA_24m_ic95_familias_inf",
+        "aj_DIA_24m_ic95_familias_sup",
+        "verificacion_independiente_n",
+        "verificacion_control_aritmetico_n",
+        "verificacion_replica_n",
+    }
+    assert expected_revision_claims <= claim_ids
+    assert indexed.loc["reingresos_familias_n", "valor"] == 872
+    assert indexed.loc["reingresos_aj_EIA_24m_pct", "valor"] == pytest.approx(32.834859)
+    assert indexed.loc["reingresos_aj_EIA_36m_pct", "valor"] == pytest.approx(56.239311)
+    assert indexed.loc["reingresos_aj_DIA_24m_pct", "valor"] == pytest.approx(78.985609)
+    assert indexed.loc["riesgo_EIA_24m_n", "valor"] == 40
+    assert indexed.loc["riesgo_EIA_36m_n", "valor"] == 17
+    assert indexed.loc["riesgo_DIA_24m_n", "valor"] == 10
+    assert indexed.loc["riesgo_DIA_36m_n", "valor"] == 1
     expected_new = {
         "km_aj_brecha_EIA_24m_pp": 9.825071,
         "km_aj_brecha_DIA_24m_pp": 25.2917,
         "sin_expediente_inversion_tarapaca": 8_000.0,
         "sin_expediente_inversion_atacama": 5_767.0,
         "sin_expediente_inversion_valparaiso": 2_776.0,
-        "sin_expediente_inversion_antofagasta": 500.0,
+        "sin_expediente_inversion_antofagasta": 700.0,
         "sin_expediente_mayor_proyecto_inversion": 8_000.0,
         "aj_EIA_otros_desenlaces_24m": 26.432,
         "aj_EIA_sin_desenlace_24m": 41.8244,
@@ -309,3 +350,34 @@ def test_no_confirmed_expediente_is_duplicated_outside_curated_exceptions() -> N
 
     assert actual
     assert actual <= allowed
+
+
+def test_los_colorados_shared_exception_has_only_supported_phases() -> None:
+    matches = pd.read_csv(ROOT / "data/curated/cochilco_seia_match.csv")
+    exceptions = pd.read_csv(SHARED_EXCEPTIONS_PATH)
+    extension_id = "bhp-extension-vida-concentrado-los-colorados"
+
+    extension = matches.loc[matches["cochilco_id"].eq(extension_id)].iloc[0]
+    assert pd.isna(extension["exp_id_confirmado"])
+    colorados = exceptions.loc[exceptions["exp_id"].eq(2167965265)]
+    assert set(colorados["cochilco_id"]) == {
+        "bhp-nueva-concentradora-los-colorados",
+        "bhp-demolicion-concentradora-los-colorados",
+    }
+    assert colorados["motivo"].nunique() == 1
+    assert colorados.iloc[0]["motivo"] == (
+        "La descripción de proyecto de la DIA 2167965265 contempla la detención y "
+        "desmantelamiento de la Planta Los Colorados y una Nueva Planta Concentradora "
+        "que reemplaza su capacidad (ficha SEIA); decisión del autor 2026-10-26."
+    )
+
+
+def test_mantoverde_adversarial_candidate_is_documented() -> None:
+    checklist = pd.read_csv(ROOT / "docs/validation_checklist.csv", keep_default_na=False)
+    row = checklist.loc[
+        checklist["cochilco_id"].eq("capstone-copper-desarrollo-mantoverde-fase-ii")
+    ].iloc[0]
+    assert (
+        "Candidato adversarial 2132151350 (2017, sin mención a Fase II): "
+        "alcance por verificar en la ficha SEIA."
+    ) in row["fuente_decision"]

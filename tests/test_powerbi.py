@@ -9,9 +9,41 @@ import pytest
 
 from cmip.powerbi import (
     POWERBI_SCHEMAS,
+    _english_claim_text,
     build_powerbi_tables,
     write_powerbi_exports,
 )
+
+
+@pytest.mark.parametrize(
+    "claim_id",
+    [
+        "cruce_umbral90_con_alias_pct",
+        "cruce_umbral90_sin_alias_pct",
+        "decisiones_curadas_autor_n",
+        "excepciones_compartidas_n",
+        "alias_con_evidencia_n",
+        "reingresos_aj_EIA_24m_pct",
+        "reingresos_aj_EIA_36m_pct",
+        "reingresos_aj_DIA_24m_pct",
+        "reingresos_familias_n",
+        "riesgo_EIA_24m_n",
+        "riesgo_EIA_36m_n",
+        "riesgo_DIA_24m_n",
+        "riesgo_DIA_36m_n",
+        "aj_EIA_24m_ic95_familias_inf",
+        "aj_EIA_24m_ic95_familias_sup",
+        "aj_EIA_36m_ic95_familias_inf",
+        "aj_EIA_36m_ic95_familias_sup",
+        "aj_DIA_24m_ic95_familias_inf",
+        "aj_DIA_24m_ic95_familias_sup",
+        "verificacion_independiente_n",
+        "verificacion_control_aritmetico_n",
+        "verificacion_replica_n",
+    ],
+)
+def test_revision_claims_have_powerbi_english_labels(claim_id: str) -> None:
+    assert _english_claim_text(claim_id)
 
 
 def _write_sources(tmp_path: Path) -> dict[str, Path]:
@@ -40,7 +72,7 @@ def _write_sources(tmp_path: Path) -> dict[str, Path]:
             "instrumento": ["EIA", None],
             "fecha_ingreso": [pd.Timestamp("2020-01-02"), pd.NaT],
             "estado": ["Aprobado", None],
-            "criterio": ["decision_J", "regla_sin_expediente"],
+            "criterio": ["decision_autor", "regla_sin_expediente"],
             "titular_nombre": ["Persona privada", "Otra persona"],
         }
     ).to_parquet(sources["portfolio_path"], index=False)

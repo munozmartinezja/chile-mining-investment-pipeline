@@ -21,7 +21,7 @@ from cmip.config import (
     SEA_OFFICIAL_SUMMARY_PATH,
     SEIA_FICHA_URL,
 )
-from cmip.match import reentry_family_key
+from cmip.match import rank_candidates, reentry_family_key
 from cmip.reconcile import resolve_reconciliation_summary
 from cmip.survival import (
     COMPETING_EVENT_CODES,
@@ -37,6 +37,9 @@ SURVIVAL_POPULATION_PATH = PROCESSED_DIR / "survival_population.parquet"
 CONFIRMED_MATCH_PATH = PROJECT_ROOT / "data" / "curated" / "cochilco_seia_match.csv"
 CHECKLIST_PATH = PROJECT_ROOT / "docs" / "validation_checklist.csv"
 CHECKLIST_ORPHANS_PATH = PROJECT_ROOT / "docs" / "validation_checklist_orphans.csv"
+COCHILCO_PROJECTS_PATH = PROCESSED_DIR / "cochilco_projects.parquet"
+ALIASES_PATH = PROJECT_ROOT / "data" / "curated" / "company_aliases.csv"
+SHARED_EXCEPTIONS_PATH = PROJECT_ROOT / "data" / "curated" / "shared_expediente_exceptions.csv"
 
 CLAIM_COLUMNS = [
     "claim_id",
@@ -49,6 +52,7 @@ CLAIM_COLUMNS = [
     "diferencia",
     "estado",
     "nota_semantica",
+    "tipo_verificacion",
 ]
 ENVIRONMENTAL_STATES = [
     "aprobado",
@@ -177,7 +181,7 @@ def claim_state(
     if pd.isna(value) and (recalculated is None or pd.isna(recalculated)):
         return "verificada"
     if recalculated is None or pd.isna(recalculated):
-        return "pendiente_J"
+        return "pendiente_autor"
     try:
         value_float = float(value)
         recalculated_float = float(recalculated)
@@ -208,11 +212,77 @@ def finalize_claims_register(rows: Iterable[Mapping[str, object]]) -> pd.DataFra
                 difference = float("nan")
         row["diferencia"] = difference
         row["estado"] = claim_state(value, recalculated, tolerance)
+        row["tipo_verificacion"] = row.get("tipo_verificacion") or _verification_type(
+            str(row["claim_id"])
+        )
         records.append(row)
     result = pd.DataFrame(records, columns=CLAIM_COLUMNS)
     if result["claim_id"].duplicated().any():
         raise ValueError("claim_id values must be unique")
     return result
+
+
+def _verification_type(claim_id: str) -> str:
+    """Classify the recalculation route documented by the C1 independence audit."""
+    replica_prefixes = (
+        "eia_100m_aj_aprobado_24m_ic95_",
+        "aj_EIA_24m_ic95_familias_",
+        "aj_EIA_36m_ic95_familias_",
+        "aj_DIA_24m_ic95_familias_",
+        "cruce_umbral90_",
+        "ml_brier_",
+        "ml_logloss_",
+        "ml_ic95_",
+        "ml_roc_auc_m2_completo_ablacion",
+        "ml_roc_auc_m2_sin_titular",
+    )
+    independent_prefixes = (
+        "km_",
+        "aj_",
+        "reingresos_aj_",
+        "aprobado_con_actualizacion_",
+        "ml_roc_auc_",
+        "ml_eia_roc_auc_",
+        "ml_dia_roc_auc_",
+        "ml_fold_min_roc_auc_",
+    )
+    if claim_id.startswith(replica_prefixes):
+        return "replica"
+    if claim_id.startswith(independent_prefixes):
+        return "independiente"
+    return "control_aritmetico"
+
+
+def finalize_claims_register_with_counts(
+    rows: Iterable[Mapping[str, object]], *, prefix: str = ""
+) -> pd.DataFrame:
+    """Finalize a register and add self-consistent counts by verification type."""
+    result = finalize_claims_register(rows)
+    counts = result["tipo_verificacion"].value_counts().to_dict()
+    counts["control_aritmetico"] = counts.get("control_aritmetico", 0) + 3
+    summary = []
+    labels = {
+        "independiente": "Recálculos independientes",
+        "control_aritmetico": "Controles aritméticos",
+        "replica": "Réplicas de la misma lógica o artefacto",
+    }
+    for kind in ("independiente", "control_aritmetico", "replica"):
+        value = int(counts.get(kind, 0))
+        summary.append(
+            _claim(
+                f"{prefix}verificacion_{kind}_n",
+                labels[kind],
+                value,
+                "cifras",
+                "registro de cifras",
+                f"Conteo de filas con tipo_verificacion = '{kind}'.",
+                value,
+                0,
+                "El conteo incluye estas tres filas resumen.",
+                tipo_verificacion="control_aritmetico",
+            )
+        )
+    return pd.concat([result, finalize_claims_register(summary)], ignore_index=True)
 
 
 def _duckdb_frame(query: str, *paths: Path) -> pd.DataFrame:
@@ -355,6 +425,7 @@ def _cluster_bootstrap_cif(
     group: pd.DataFrame,
     replicas: int,
     seed: int,
+    horizon_months: int = 24,
 ) -> np.ndarray:
     clustered = group.copy()
     clustered["_family_id"] = _reentry_family_ids(clustered)
@@ -372,7 +443,7 @@ def _cluster_bootstrap_cif(
             sample["duration_days"].to_numpy(float),
             sample["competing_event"].to_numpy(int),
             event_of_interest=1,
-            horizon_days=24 * DAYS_PER_MONTH,
+            horizon_days=horizon_months * DAYS_PER_MONTH,
         )
     return estimates
 
@@ -387,6 +458,7 @@ def _claim(
     valor_recalculado: object,
     tolerancia: float,
     nota_semantica: str,
+    tipo_verificacion: str | None = None,
 ) -> dict[str, object]:
     return {
         "claim_id": claim_id,
@@ -398,6 +470,7 @@ def _claim(
         "valor_recalculado": valor_recalculado,
         "tolerancia": tolerancia,
         "nota_semantica": nota_semantica,
+        "tipo_verificacion": tipo_verificacion,
     }
 
 
@@ -1341,7 +1414,7 @@ def build_claims_register(
     ceiling_amount = float(
         portfolio.loc[portfolio["estado_ambiental"].isin(ceiling_states), "inversion_musd"].sum()
     )
-    reviewed_n = int(portfolio["criterio"].eq("decision_J_checklist").sum())
+    reviewed_n = int(portfolio["criterio"].eq("decision_autor_checklist").sum())
     automatic_n = int(portfolio["criterio"].isin({"regla_auto", "regla_reingreso"}).sum())
     period_start = int(population["fecha_ingreso"].dt.year.min())
     period_end = int(population["fecha_ingreso"].dt.year.max())
@@ -1375,8 +1448,8 @@ def build_claims_register(
                 reviewed_n,
                 "proyectos",
                 str(portfolio_path.relative_to(PROJECT_ROOT)),
-                "Conteo con criterio decision_J_checklist.",
-                int(portfolio["criterio"].astype(str).str.fullmatch("decision_J_checklist").sum()),
+                "Conteo con criterio decision_autor_checklist.",
+                int(portfolio["criterio"].astype(str).str.fullmatch("decision_autor_checklist").sum()),
                 0,
                 "No incluye los cruces automáticos pendientes de confirmación.",
             ),
@@ -1511,7 +1584,181 @@ def build_claims_register(
             ),
         ]
     )
-    return finalize_claims_register(rows)
+    cochilco = pd.read_parquet(COCHILCO_PROJECTS_PATH)
+    aliases = pd.read_csv(ALIASES_PATH, keep_default_na=False)
+    total_cochilco = float(cochilco["inversion_musd"].sum())
+    for label, alias_frame in (
+        ("con_alias", aliases),
+        ("sin_alias", aliases.iloc[0:0]),
+    ):
+        ranked = rank_candidates(cochilco, sea, top_n=1, aliases=alias_frame)
+        unmatched = ranked.loc[
+            ranked["score"].lt(90) | ranked["empresa_no_coincide"], "cochilco_id"
+        ]
+        amount = float(
+            cochilco.loc[cochilco["project_id"].isin(set(unmatched)), "inversion_musd"].sum()
+        )
+        recalculated_amount = float(
+            unmatched.to_frame("project_id")
+            .merge(cochilco[["project_id", "inversion_musd"]], on="project_id", how="left")[
+                "inversion_musd"
+            ]
+            .sum()
+        )
+        rows.append(
+            _claim(
+                f"cruce_umbral90_{label}_pct",
+                f"Inversión sin cruce automático a umbral 90 ({label.replace('_', ' ')})",
+                100 * amount / total_cochilco,
+                "%",
+                "data/processed/cochilco_projects.parquet; data/interim/sea_mining.parquet",
+                "Mejor candidato del ranker con score >=90 y empresa coincidente.",
+                100 * recalculated_amount / total_cochilco,
+                0.000001,
+                "Escenario automático de sensibilidad; no reemplaza la decisión curada.",
+            )
+        )
+
+    shared_exceptions = pd.read_csv(SHARED_EXCEPTIONS_PATH)
+    rows.extend(
+        [
+            _claim(
+                "decisiones_curadas_autor_n",
+                "Decisiones curadas por el autor",
+                int(portfolio["criterio"].eq("decision_autor_checklist").sum()),
+                "proyectos",
+                str(CONFIRMED_MATCH_PATH.relative_to(PROJECT_ROOT)),
+                "Conteo de criterio decision_autor_checklist.",
+                int(portfolio["criterio"].astype(str).str.fullmatch("decision_autor_checklist").sum()),
+                0,
+                "Incluye decisiones con y sin expediente confirmado.",
+            ),
+            _claim(
+                "excepciones_compartidas_n",
+                "Asignaciones cubiertas por excepciones de expediente compartido",
+                len(shared_exceptions),
+                "asignaciones",
+                str(SHARED_EXCEPTIONS_PATH.relative_to(PROJECT_ROOT)),
+                "Conteo de filas del catálogo de excepciones compartidas.",
+                int(shared_exceptions["cochilco_id"].nunique()),
+                0,
+                "Cada fila autoriza una asignación proyecto-expediente.",
+            ),
+            _claim(
+                "alias_con_evidencia_n",
+                "Alias societarios con evidencia SEA local",
+                int(aliases["evidencia"].astype(str).str.strip().ne("").sum()),
+                "alias",
+                str(ALIASES_PATH.relative_to(PROJECT_ROOT)),
+                "Conteo de alias con al menos un exp_id de evidencia.",
+                int(aliases["evidencia"].astype(str).str.contains(r"^\d+").sum()),
+                0,
+                "La evidencia versionada contiene solo exp_id.",
+            ),
+        ]
+    )
+
+    deduplicated = population.copy()
+    deduplicated["_family_id"] = _reentry_family_ids(deduplicated)
+    family_count = int(deduplicated["_family_id"].nunique())
+    deduplicated = (
+        deduplicated.sort_values(["fecha_ingreso", "exp_id"])
+        .drop_duplicates("_family_id", keep="last")
+        .drop(columns="_family_id")
+    )
+    for instrument, horizon in (("EIA", 24), ("EIA", 36), ("DIA", 24)):
+        group = deduplicated.loc[deduplicated["instrumento"].eq(instrument)]
+        curve = manual_aalen_johansen(
+            group["duration_days"], group["competing_event"], event_of_interest=1
+        )
+        value = 100 * _step_at(
+            curve, "cumulative_incidence", horizon * DAYS_PER_MONTH
+        )
+        recalculated = 100 * _direct_cumulative_incidence_at(
+            group["duration_days"].to_numpy(float),
+            group["competing_event"].to_numpy(int),
+            1,
+            horizon * DAYS_PER_MONTH,
+        )
+        rows.append(
+            _claim(
+                f"reingresos_aj_{instrument}_{horizon}m_pct",
+                f"Aprobación AJ {instrument} a {horizon} meses, último ingreso por familia",
+                value,
+                "%",
+                str(sea_path.relative_to(PROJECT_ROOT)),
+                "Aalen-Johansen tras conservar el último ingreso de cada familia.",
+                recalculated,
+                0.05,
+                "Sensibilidad a la dependencia entre reingresos.",
+            )
+        )
+    rows.append(
+        _claim(
+            "reingresos_familias_n",
+            "Familias de reingreso en la población principal",
+            family_count,
+            "familias",
+            str(sea_path.relative_to(PROJECT_ROOT)),
+            "Número único de identificadores producidos por _reentry_family_ids.",
+            family_count,
+            0,
+            "La población contiene 995 expedientes agrupados por titular y nombre equivalente.",
+        )
+    )
+
+    for instrument in ("EIA", "DIA"):
+        group = population.loc[population["instrumento"].eq(instrument)]
+        horizons = (24, 36) if instrument == "EIA" else (24, 36)
+        for horizon in horizons:
+            risk_n = int(group["duration_days"].ge(horizon * DAYS_PER_MONTH).sum())
+            rows.append(
+                _claim(
+                    f"riesgo_{instrument}_{horizon}m_n",
+                    f"{instrument} en riesgo a {horizon} meses",
+                    risk_n,
+                    "expedientes",
+                    str(sea_path.relative_to(PROJECT_ROOT)),
+                    "Conteo con duración observada al menos igual al horizonte.",
+                    int(
+                        np.count_nonzero(
+                            group["duration_days"].to_numpy(float)
+                            >= horizon * DAYS_PER_MONTH
+                        )
+                    ),
+                    0,
+                    "Conjunto en riesgo inmediatamente antes del horizonte.",
+                )
+            )
+
+    for instrument, horizon in (("EIA", 24), ("EIA", 36), ("DIA", 24)):
+        group = population.loc[population["instrumento"].eq(instrument)]
+        bootstrap = _cluster_bootstrap_cif(
+            group,
+            replicas=2000,
+            seed=20261026,
+            horizon_months=horizon,
+        )
+        interval = np.quantile(bootstrap, [0.025, 0.975])
+        for suffix, label, value in (
+            ("inf", "inferior", interval[0]),
+            ("sup", "superior", interval[1]),
+        ):
+            rows.append(
+                _claim(
+                    f"aj_{instrument}_{horizon}m_ic95_familias_{suffix}",
+                    f"Límite {label} IC 95% AJ {instrument} a {horizon} meses",
+                    float(value),
+                    "%",
+                    str(sea_path.relative_to(PROJECT_ROOT)),
+                    "Bootstrap percentil de 2.000 réplicas por familia de reingreso.",
+                    float(value),
+                    0,
+                    "Semilla 20261026; el recálculo replica la misma ruta.",
+                )
+            )
+
+    return finalize_claims_register_with_counts(rows)
 
 
 def build_sensitivity_table(
@@ -1612,11 +1859,13 @@ def build_validation_checklist(
     sea_source = pd.read_parquet(sea_path)
     sea = sea_source.set_index("exp_id")
     decisions = pd.read_csv(confirmed_match_path)
-    decision_ids = decisions.loc[decisions["criterio"].eq("decision_J"), "cochilco_id"]
+    decision_ids = decisions.loc[decisions["criterio"].eq("decision_autor"), "cochilco_id"]
     portfolio_by_id = portfolio.set_index("project_id", drop=False)
     missing_decisions = set(decision_ids) - set(portfolio_by_id.index)
     if missing_decisions:
-        raise ValueError(f"decision_J projects missing from portfolio: {sorted(missing_decisions)}")
+        raise ValueError(
+            f"decision_autor projects missing from portfolio: {sorted(missing_decisions)}"
+        )
 
     if candidate_review is None:
         cochilco_required = {

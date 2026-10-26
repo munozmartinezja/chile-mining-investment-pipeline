@@ -3,10 +3,11 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
+import cmip.match as match
 from cmip.portfolio_status import (
+    apply_author_decisions,
     apply_automatic_match_rules,
     apply_checklist_decisions,
-    apply_j_decisions,
     build_confirmed_match_table,
     build_doubtful_cases,
     build_portfolio_status,
@@ -36,6 +37,35 @@ def _checklist_sources(
     )
     sea = pd.DataFrame({"exp_id": [101]})
     return confirmed, checklist, sea
+
+
+def test_generated_match_review_restores_versioned_curated_decisions() -> None:
+    review = pd.DataFrame(
+        {
+            "cochilco_id": ["matched", "matched", "unmatched", "outside"],
+            "exp_id": [101, 102, 201, 301],
+            "match_confirmado": [pd.NA] * 4,
+            "criterio": [pd.NA] * 4,
+            "historial": [pd.NA] * 4,
+        }
+    )
+    curated = pd.DataFrame(
+        {
+            "cochilco_id": ["matched", "unmatched", "outside"],
+            "exp_id_confirmado": [102, pd.NA, 999],
+            "criterio": ["decision_autor", "regla_sin_expediente", "decision_autor"],
+            "historial": ["", "", "fuera_de_top_n"],
+        }
+    )
+
+    restored = match.overlay_curated_decisions(review, curated)
+    confirmed = build_confirmed_match_table(restored)
+
+    assert confirmed.set_index("cochilco_id").loc["matched", "exp_id_confirmado"] == 102
+    assert pd.isna(
+        confirmed.set_index("cochilco_id").loc["unmatched", "exp_id_confirmado"]
+    )
+    assert confirmed.set_index("cochilco_id").loc["outside", "exp_id_confirmado"] == 999
 
 
 def _review_candidates() -> pd.DataFrame:
@@ -224,18 +254,18 @@ def test_doubtful_cases_show_top_three_candidates_and_attributes() -> None:
     }.issubset(doubtful.columns)
 
 
-def test_j_decisions_fill_only_explicit_projects_with_provenance() -> None:
+def test_author_decisions_fill_only_explicit_projects_with_provenance() -> None:
     ruled = apply_automatic_match_rules(_review_candidates())
 
-    result = apply_j_decisions(ruled, {"close": 302, "company": "NA"})
+    result = apply_author_decisions(ruled, {"close": 302, "company": "NA"})
     confirmed = build_confirmed_match_table(result)
 
     assert confirmed.set_index("cochilco_id").loc["close", "exp_id_confirmado"] == 302
-    assert confirmed.set_index("cochilco_id").loc["close", "criterio"] == "decision_J"
+    assert confirmed.set_index("cochilco_id").loc["close", "criterio"] == "decision_autor"
     assert pd.isna(confirmed.set_index("cochilco_id").loc["company", "exp_id_confirmado"])
 
 
-def test_j_decision_adds_verified_sea_case_outside_top_n() -> None:
+def test_author_decision_adds_verified_sea_case_outside_top_n() -> None:
     review = apply_automatic_match_rules(
         _review_candidates().loc[lambda frame: frame["cochilco_id"].eq("close")]
     )
@@ -250,7 +280,7 @@ def test_j_decision_adds_verified_sea_case_outside_top_n() -> None:
         }
     )
 
-    result = apply_j_decisions(
+    result = apply_author_decisions(
         review, {"close": 2130502645}, sea_mining=sea_mining
     )
 
@@ -260,9 +290,9 @@ def test_j_decision_adds_verified_sea_case_outside_top_n() -> None:
     assert manual["sea_estado"] == "Aprobado"
     assert manual["sea_fecha_ingreso"] == pd.Timestamp("2015-07-21")
     assert pd.isna(manual["score"])
-    assert manual["match_tipo"] == "manual_J"
+    assert manual["match_tipo"] == "manual_autor"
     assert manual["match_confirmado"] == "2130502645"
-    assert manual["criterio"] == "decision_J"
+    assert manual["criterio"] == "decision_autor"
     assert manual["historial"] == "fuera_de_top_n"
     assert result.loc[result["exp_id"].ne(2130502645), "match_confirmado"].eq("").all()
 
@@ -271,7 +301,7 @@ def test_j_decision_adds_verified_sea_case_outside_top_n() -> None:
     assert confirmed.iloc[0]["exp_id_confirmado"] == 2130502645
 
 
-def test_j_decision_rejects_case_absent_from_sea_mining() -> None:
+def test_author_decision_rejects_case_absent_from_sea_mining() -> None:
     review = apply_automatic_match_rules(
         _review_candidates().loc[lambda frame: frame["cochilco_id"].eq("close")]
     )
@@ -287,20 +317,20 @@ def test_j_decision_rejects_case_absent_from_sea_mining() -> None:
     )
 
     with pytest.raises(ValueError, match="is not a candidate"):
-        apply_j_decisions(review, {"close": 2130502645}, sea_mining=sea_mining)
+        apply_author_decisions(review, {"close": 2130502645}, sea_mining=sea_mining)
 
 
-def test_j_decision_outside_top_n_without_sea_mining_keeps_current_error() -> None:
+def test_author_decision_outside_top_n_without_sea_mining_keeps_current_error() -> None:
     review = apply_automatic_match_rules(
         _review_candidates().loc[lambda frame: frame["cochilco_id"].eq("close")]
     )
 
     with pytest.raises(ValueError, match="is not a candidate"):
-        apply_j_decisions(review, {"close": 2130502645}, sea_mining=None)
+        apply_author_decisions(review, {"close": 2130502645}, sea_mining=None)
 
 
 @pytest.mark.parametrize("criterion", ["regla_auto", "regla_reingreso", "regla_sin_expediente"])
-def test_j_decisions_cannot_override_automatic_rules(criterion: str) -> None:
+def test_author_decisions_cannot_override_automatic_rules(criterion: str) -> None:
     review = pd.DataFrame(
         {
             "cochilco_id": ["project"],
@@ -312,7 +342,7 @@ def test_j_decisions_cannot_override_automatic_rules(criterion: str) -> None:
     )
 
     with pytest.raises(ValueError, match="override automatic rule"):
-        apply_j_decisions(review, {"project": "NA"})
+        apply_author_decisions(review, {"project": "NA"})
 
 
 @pytest.mark.parametrize(
@@ -324,7 +354,7 @@ def test_checklist_affirmative_responses_set_validated_principal(response: str) 
     result = apply_checklist_decisions(confirmed, checklist, sea)
 
     assert result.loc[0, "exp_id_confirmado"] == 101
-    assert result.loc[0, "criterio"] == "decision_J_checklist"
+    assert result.loc[0, "criterio"] == "decision_autor_checklist"
 
 
 def test_checklist_confirmado_keeps_automatic_principal_without_source_override() -> None:
@@ -335,7 +365,7 @@ def test_checklist_confirmado_keeps_automatic_principal_without_source_override(
     result = apply_checklist_decisions(confirmed, checklist, sea)
 
     assert result.loc[0, "exp_id_confirmado"] == 999
-    assert result.loc[0, "criterio"] == "decision_J_checklist"
+    assert result.loc[0, "criterio"] == "decision_autor_checklist"
 
 
 def test_checklist_confirmado_explicit_principal_overrides_automatic_assignment() -> None:
@@ -345,7 +375,7 @@ def test_checklist_confirmado_explicit_principal_overrides_automatic_assignment(
     result = apply_checklist_decisions(confirmed, checklist, sea)
 
     assert result.loc[0, "exp_id_confirmado"] == 101
-    assert result.loc[0, "criterio"] == "decision_J_checklist"
+    assert result.loc[0, "criterio"] == "decision_autor_checklist"
     assert result.loc[0, "estado_ambiental_override"] == ""
 
 
@@ -356,7 +386,7 @@ def test_checklist_empty_responses_clear_automatic_match(response: str) -> None:
     result = apply_checklist_decisions(confirmed, checklist, sea)
 
     assert pd.isna(result.loc[0, "exp_id_confirmado"])
-    assert result.loc[0, "criterio"] == "decision_J_checklist"
+    assert result.loc[0, "criterio"] == "decision_autor_checklist"
     assert result.loc[0, "estado_ambiental_override"] == ""
 
 
@@ -377,7 +407,7 @@ def test_checklist_special_responses_set_environmental_override(
     result = apply_checklist_decisions(confirmed, checklist, sea)
 
     assert pd.isna(result.loc[0, "exp_id_confirmado"])
-    assert result.loc[0, "criterio"] == "decision_J_checklist"
+    assert result.loc[0, "criterio"] == "decision_autor_checklist"
     assert result.loc[0, "estado_ambiental_override"] == expected_status
 
 
@@ -551,7 +581,7 @@ def test_confirmed_match_table_uses_decision_not_candidate_score() -> None:
             "exp_id": [101, 102, pd.NA],
             "score": [99.9, 5.0, 100.0],
             "match_confirmado": ["102", "", "NA"],
-            "criterio": ["decision_J", "", "regla_auto"],
+            "criterio": ["decision_autor", "", "regla_auto"],
         }
     )
 
@@ -560,7 +590,7 @@ def test_confirmed_match_table_uses_decision_not_candidate_score() -> None:
     assert result["cochilco_id"].tolist() == ["c1", "c2"]
     assert result.loc[0, "exp_id_confirmado"] == 102
     assert pd.isna(result.loc[1, "exp_id_confirmado"])
-    assert result["criterio"].tolist() == ["decision_J", "regla_auto"]
+    assert result["criterio"].tolist() == ["decision_autor", "regla_auto"]
 
 
 def test_confirmed_match_table_rejects_unreviewed_projects() -> None:
@@ -570,7 +600,7 @@ def test_confirmed_match_table_rejects_unreviewed_projects() -> None:
             "exp_id": [101, 102],
             "score": [99.0, 80.0],
             "match_confirmado": ["101", ""],
-            "criterio": ["decision_J", ""],
+            "criterio": ["decision_autor", ""],
         }
     )
 
@@ -691,7 +721,7 @@ def test_portfolio_status_accepts_only_listed_shared_expediente_pairs() -> None:
         {
             "cochilco_id": ["new", "demolition", "extension"],
             "exp_id_confirmado": [2167965265] * 3,
-            "criterio": ["decision_J_checklist"] * 3,
+            "criterio": ["decision_autor_checklist"] * 3,
             "historial": [""] * 3,
             "estado_ambiental_override": [""] * 3,
         }
@@ -739,7 +769,7 @@ def test_writer_emits_only_privacy_safe_confirmed_match_columns(tmp_path) -> Non
             "cochilco_id": ["c1", "c2"],
             "cochilco_empresa": ["Empresa privada", "Otra empresa"],
             "match_confirmado": ["101", "NA"],
-            "criterio": ["decision_J", "regla_sin_expediente"],
+            "criterio": ["decision_autor", "regla_sin_expediente"],
         }
     ).to_csv(review_path, index=False)
     pd.DataFrame(

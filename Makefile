@@ -1,4 +1,4 @@
-.PHONY: setup setup-ml data survival portfolio analysis validation brief brief-draft powerbi test lint ml-features ml-train ml
+.PHONY: setup setup-extract setup-ml data survival portfolio analysis validation brief brief-draft powerbi test lint ml-features ml-train ml
 
 PYTHON ?= .venv/bin/python
 
@@ -6,9 +6,13 @@ setup:
 	uv venv --python 3.12 .venv
 	uv pip install --python $(PYTHON) -e .
 
+setup-extract:
+	uv pip install --python $(PYTHON) -e ".[sea-extract]"
+
 data:
 	$(PYTHON) -m cmip.load
 	$(PYTHON) -m cmip.extract.sea
+	$(PYTHON) -m cmip.aliases_evidence
 	$(PYTHON) -m cmip.match
 
 survival:
